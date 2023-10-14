@@ -19,7 +19,7 @@ public:
 	};
 
 public:
-	GraphicalConnection(GraphicalComponentPort* sourceGraphicalPort, GraphicalComponentPort* destinationGraphicalPort, QColor color = Qt::black, QGraphicsItem *parent = nullptr);
+    GraphicalConnection(GraphicalComponentPort* sourceGraphicalPort, GraphicalComponentPort* destinationGraphicalPort, unsigned int portSourceConnection = 0, unsigned int portDestinationConnection = 0, QColor color = Qt::black, QGraphicsItem *parent = nullptr);
 	GraphicalConnection(const GraphicalConnection& orig);
 	virtual ~GraphicalConnection();
 public:
@@ -29,6 +29,8 @@ public:
 	Connection* getDestination() const;
 	void updateDimensionsAndPosition();
 	GraphicalConnection::ConnectionType connectionType() const;
+    unsigned int getPortSourceConnection() const;
+    unsigned int getPortDestinationConnection() const;
 	void setConnectionType(GraphicalConnection::ConnectionType newConnectionType);
 
 protected: // virtual
@@ -58,6 +60,8 @@ private:
 	Connection* _destinationConnection;
 	GraphicalComponentPort* _sourceGraphicalPort;
 	GraphicalComponentPort* _destinationGraphicalPort;
+    unsigned int _portSourceConnection;
+    unsigned int _portDestinationConnection;
 	QColor _color;
 };
 #endif // GRAPHICALCONNECTION_H

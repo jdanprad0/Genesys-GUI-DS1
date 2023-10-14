@@ -50,7 +50,7 @@ public:
 public: // editing graphic model
 	// TODO: AddGraphicalModelComponent should be only on scene
 	//GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position);
-	//bool removeGraphicalModelComponent(GraphicalModelComponent* gmc);
+    //bool removeComponent(GraphicalModelComponent* gmc);
 	//bool addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort);
 	//bool removeGraphicalConnection(GraphicalConnection* gc);
 	//bool addDrawing();
@@ -68,16 +68,29 @@ public:
 	QList<QGraphicsItem*> selectedItems();
 public: // events and notifications
 
-	template<typename Class> void setSceneMouseEventHandler(Class * object, void (Class::*function)(QGraphicsSceneMouseEvent*)) {
+    template<typename Class> void setSceneMouseEventHandler(Class * object, void (Class::*function)(QGraphicsSceneMouseEvent*)) {
 		sceneMouseEventHandlerMethod handlerMethod = std::bind(function, object, std::placeholders::_1);
 		this->_sceneMouseEventHandler = handlerMethod;
 	}
 
-	template<typename Class> void setGraphicalModelEventHandler(Class * object, void (Class::*function)(GraphicalModelEvent*)) {
+    template<typename Class> void setGraphicalModelEventHandler(Class * object, void (Class::*function)(GraphicalModelEvent*)) {
 		sceneGraphicalModelEventHandlerMethod handlerMethod = std::bind(function, object, std::placeholders::_1);
 		this->_sceneGraphicalModelEventHandler = handlerMethod;
-	}
-	void notifySceneMouseEventHandler(QGraphicsSceneMouseEvent* mouseEvent);
+    }
+
+    template <typename Class> void setSceneWheelInEventHandler(Class *object, void (Class::*function)()) {
+        sceneWheelEventHandlerMethod handlerMethod = std::bind(function, object);
+        this->_sceneWheelInEventHandler = handlerMethod;
+    }
+
+    template <typename Class> void setSceneWheelOutEventHandler(Class *object, void (Class::*function)()) {
+        sceneWheelEventHandlerMethod handlerMethod = std::bind(function, object);
+        this->_sceneWheelOutEventHandler = handlerMethod;
+    }
+
+    void notifySceneMouseEventHandler(QGraphicsSceneMouseEvent* mouseEvent);
+    void notifySceneWheelInEventHandler();
+    void notifySceneWheelOutEventHandler();
 	void notifySceneGraphicalModelEventHandler(GraphicalModelEvent* modelGraphicsEvent);
 	void setCanNotifyGraphicalModelEventHandlers(bool can);
 	void setParentWidget(QWidget *parentWidget);
@@ -113,8 +126,11 @@ private:
 	QColor myrgba(uint64_t color); // TODO: Should NOT be here, but in UtilGUI.h, but then it generates multiple definitions error
 private:
 	typedef std::function<void(QGraphicsSceneMouseEvent*) > sceneMouseEventHandlerMethod;
-	typedef std::function<void(GraphicalModelEvent*) > sceneGraphicalModelEventHandlerMethod;
-	sceneMouseEventHandlerMethod _sceneMouseEventHandler;
+    typedef std::function<void()> sceneWheelEventHandlerMethod;
+    typedef std::function<void(GraphicalModelEvent*) > sceneGraphicalModelEventHandlerMethod;
+    sceneMouseEventHandlerMethod _sceneMouseEventHandler;
+    sceneWheelEventHandlerMethod _sceneWheelInEventHandler;
+    sceneWheelEventHandlerMethod _sceneWheelOutEventHandler;
 	sceneGraphicalModelEventHandlerMethod _sceneGraphicalModelEventHandler;
 	Simulator* _simulator = nullptr;
 	QWidget* _parentWidget;
