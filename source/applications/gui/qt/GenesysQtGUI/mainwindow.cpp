@@ -2431,13 +2431,9 @@ void MainWindow::on_actionModelClose_triggered()
 
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
-    ui->graphicsView->getScene()->getUndoStack()->cleanIndex();
     ui->graphicsView->getScene()->clearGraphicalModelConnections();
     ui->graphicsView->getScene()->clearGraphicalModelComponents();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
-    ui->graphicsView->getScene()->clear();
-    ui->graphicsView->scene()->clear();
-    ui->graphicsView->clear();
 
     // limpando tudo a que se refere ao modelo
     simulator->getModels()->current()->getComponents()->getAllComponents()->clear();
