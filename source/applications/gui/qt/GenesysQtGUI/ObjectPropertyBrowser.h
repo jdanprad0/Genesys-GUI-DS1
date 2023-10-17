@@ -18,7 +18,7 @@ class ObjectPropertyBrowser : public QtTreePropertyBrowser
 public:
     ObjectPropertyBrowser(QWidget* parent);
     void setActiveObject(QObject *obj, ModelDataDefinition* mdd = nullptr);
-
+    void clearCurrentlyConnectedObject();
 private:
 	QtVariantPropertyManager *variantManager;
 	QObject *currentlyConnectedObject = nullptr;

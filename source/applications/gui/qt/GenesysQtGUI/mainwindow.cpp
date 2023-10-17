@@ -1433,21 +1433,21 @@ void MainWindow::sceneFocusItemChanged(QGraphicsItem *newFocusItem, QGraphicsIte
 // void sceneRectChanged(const QRectF &rect){}
 
 void MainWindow::sceneSelectionChanged() {
-	if (ui->graphicsView->selectedItems().size() == 1) {
-		QGraphicsItem * item = ui->graphicsView->selectedItems().at(0);
-		GraphicalModelComponent* gmc = dynamic_cast<GraphicalModelComponent*> (item);
-		if (gmc != nullptr) {
-			// https://doc.qt.io/archives/qq/qq18-propertybrowser.html
-			// http://qt.nokia.com/products/appdev/add-on-products/catalog/4/Widgets/qtpropertybrowser/
-			// // ui->treeViewPropertyEditor->setModelBlock(gmc->getComponent());
-			ui->treeViewPropertyEditor->setActiveObject(gmc, gmc->getComponent());
-			return;
-        } else { // nothing selected
-            ui->treeViewPropertyEditor->clear();
+    QGraphicsItem * item;
+    GraphicalModelComponent* gmc;
+
+    if (!ui->graphicsView->selectedItems().isEmpty()) {
+        if (ui->graphicsView->selectedItems().size() == 1) {
+            item = ui->graphicsView->selectedItems().at(0);
+            gmc = dynamic_cast<GraphicalModelComponent*> (item);
+            if (gmc != nullptr) {
+                ui->treeViewPropertyEditor->setActiveObject(gmc, gmc->getComponent());
+                return;
+            }
         }
-    } else if (ui->graphicsView->selectedItems().size() == 0) {
-        ui->treeViewPropertyEditor->clear();
     }
+    // Se nenhum item estiver selecionado ou se mais de um item estiver selecionado
+    ui->treeViewPropertyEditor->clear();
 }
 
 //-----------------------------------------
@@ -2415,7 +2415,7 @@ void MainWindow::on_actionModelSave_triggered()
 
 void MainWindow::on_actionModelClose_triggered()
 {
-	if (_textModelHasChanged || simulator->getModels()->current()->hasChanged()) {
+    if (_textModelHasChanged || simulator->getModels()->current()->hasChanged()) {
 		QMessageBox::StandardButton res = QMessageBox::question(this, "Close ModelSyS", "Model has changed. Do you want to save it?", QMessageBox::Yes | QMessageBox::No);
 		if (res == QMessageBox::Yes) {
 			this->on_actionModelSave_triggered();
@@ -2423,6 +2423,7 @@ void MainWindow::on_actionModelClose_triggered()
 		}
 	}
 	_insertCommandInConsole("close");
+    ObjectPropertyBrowser *view = ui->treeViewPropertyEditor;
 
     // quando a cena é fechada, limpo o grid associado a ela
     ui->graphicsView->getScene()->grid()->clear();
@@ -2434,6 +2435,11 @@ void MainWindow::on_actionModelClose_triggered()
     ui->graphicsView->getScene()->clearGraphicalModelConnections();
     ui->graphicsView->getScene()->clearGraphicalModelComponents();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
+    ui->graphicsView->getScene()->clear();
+    ui->graphicsView->clear();
+
+	// limpando referencia do ultimo elemento selecionado em property editor
+	ui->treeViewPropertyEditor->clearCurrentlyConnectedObject();
 
     // limpando tudo a que se refere ao modelo
     simulator->getModels()->current()->getComponents()->getAllComponents()->clear();

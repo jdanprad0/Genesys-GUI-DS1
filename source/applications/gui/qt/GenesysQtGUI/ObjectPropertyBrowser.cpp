@@ -13,6 +13,10 @@ ObjectPropertyBrowser::ObjectPropertyBrowser(QWidget* parent) : QtTreePropertyBr
 	this->setRootIsDecorated(true);
 }
 
+void ObjectPropertyBrowser::clearCurrentlyConnectedObject() {
+    currentlyConnectedObject = nullptr;
+}
+
 void ObjectPropertyBrowser::setActiveObject(QObject *obj, ModelDataDefinition* mdd) {
 	clear();
 	variantManager->clear();
