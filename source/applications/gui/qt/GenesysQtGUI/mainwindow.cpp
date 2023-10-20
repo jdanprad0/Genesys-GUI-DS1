@@ -399,6 +399,10 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
             GraphicalModelComponent* destination = ui->graphicsView->getScene()->findGraphicalModelComponent(destinationId);
 
             source->getComponent()->getConnections()->insertAtPort(portSource, new Connection({destination->getComponent(), portDestination}));
+
+            source->setOcupiedOutputPorts(source->getOcupiedOutputPorts() + 1);
+            destination->setOcupiedInputPorts(destination->getOcupiedInputPorts() + 1);
+
             //graphically
             GraphicalComponentPort* sourceport = source->getGraphicalOutputPorts().at(portSource);
             GraphicalComponentPort* destport = destination->getGraphicalInputPorts().at(portDestination);
@@ -2411,6 +2415,13 @@ void MainWindow::on_actionModelSave_triggered()
         _actualizeModelTextHasChanged(false);
     }
     _actualizeActions();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    // limpando referencia do ultimo elemento selecionado em property editor
+    ui->treeViewPropertyEditor->clearCurrentlyConnectedObject();
+
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::on_actionModelClose_triggered()

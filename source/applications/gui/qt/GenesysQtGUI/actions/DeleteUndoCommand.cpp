@@ -1,51 +1,176 @@
 #include "DeleteUndoCommand.h"
-#include "ModelGraphicsView.h"
 
-DeleteUndoCommand::DeleteUndoCommand(GraphicalModelComponent *gmc, ModelGraphicsScene *scene, QUndoCommand *parent)
-    : QUndoCommand(parent), myGraphicalModelComponent(gmc), myGraphicsScene(scene) {
-    initialPosition = QPointF(gmc->scenePos().x(), gmc->scenePos().y() + gmc->getHeight()/2);
+DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphicsScene *scene, QUndoCommand *parent)
+    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<QGraphicsItem *>()), _myGraphicsScene(scene) {
 
-    std::string position = "position=(x=" + std::to_string(gmc->scenePos().x()) + ", y=" + std::to_string(gmc->scenePos().y()) + ")";
+    // filtra cada tipo de item possivel em sua respectiva lista
+    for (QGraphicsItem *item : items) {
+        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *>(item)) {
+            ComponentItem componentItem;
 
-    myGraphicsScene->update();
-    setText(QObject::tr("Delete %1")
-                .arg(QString::fromStdString("name=" + gmc->getComponent()->getName() + ", " + position)));
+            componentItem.graphicalComponent = component;
+            componentItem.initialPosition = component->pos();
+
+            if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
+                componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+
+            for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
+                GraphicalComponentPort *port = component->getGraphicalOutputPorts().at(j);
+
+                if (!port->getConnections()->empty())
+                    componentItem.outputConnections.append(port->getConnections()->at(0));
+            }
+
+            _myComponentItems->append(componentItem);
+        } else if (GraphicalConnection *connection = dynamic_cast<GraphicalConnection *>(item)) {
+            _myConnectionItems->append(connection);
+        } else {
+            _myDrawingItems->append(item);
+        }
+    }
+
+    setText(QObject::tr("Delete"));
 }
 
-DeleteUndoCommand::~DeleteUndoCommand() {}
+DeleteUndoCommand::~DeleteUndoCommand() {
+    delete _myComponentItems;
+    delete _myConnectionItems;
+    delete _myDrawingItems;
+}
 
 void DeleteUndoCommand::undo() {
-    //add in model
-    myGraphicsScene->getSimulator()->getModels()->current()->insert(myGraphicalModelComponent->getComponent());
+    // adiciona tudo que e grafico
+    // comeca adicionando os componentes e suas conexoes
+    for (int i = 0; i < _myComponentItems->size(); ++i) {
+        ComponentItem componentItem = _myComponentItems->at(i);
 
-    //graphically
-    myGraphicsScene->addItem(myGraphicalModelComponent);
-    myGraphicsScene->getGraphicalModelComponents()->append(myGraphicalModelComponent);
+        _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
-    //refaz as conexões
-    myGraphicsScene->reconnectConnectionsOnRedoComponent(myGraphicalModelComponent);
+        for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
+            GraphicalConnection *connection = componentItem.inputConnections.at(j);
+            _myGraphicsScene->addItem(connection);
+        }
 
-    //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::COMPONENT, myGraphicalModelComponent);
-    dynamic_cast<ModelGraphicsView*> (myGraphicsScene->views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+        for (int j = 0; j < _myComponentItems->at(i).outputConnections.size(); ++j) {
+            GraphicalConnection *connection = componentItem.outputConnections.at(j);
+            _myGraphicsScene->addItem(connection);
+        }
+    }
 
-    myGraphicsScene->update();
+    // adiciona as conexoes selecionadas individualmente
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+        _myGraphicsScene->addItem(connection);
+    }
+
+    // varre todos os outros itens simples do tipo QGraphicsItem e adiciona da tela
+    for (int i = 0; i < _myDrawingItems->size(); ++i) {
+        QGraphicsItem *item = _myDrawingItems->at(i);
+        _myGraphicsScene->addItem(item);
+    }
+
+    // agora comeca a adicionar o que se deve no modelo
+    // varre todos os GraphicalModelComponent
+    for (int i = 0; i < _myComponentItems->size(); ++i) {
+        ComponentItem componentItem = _myComponentItems->at(i);
+
+        //add in model (apenas para delete)
+        _myGraphicsScene->getSimulator()->getModels()->current()->insert(componentItem.graphicalComponent->getComponent());
+
+        //add graphically
+        _myGraphicsScene->getGraphicalModelComponents()->append(componentItem.graphicalComponent);
+
+        //refaz as conexões
+        for (int j = 0; j < componentItem.inputConnections.size(); ++j) {
+            GraphicalConnection *connection = componentItem.inputConnections.at(j);
+            GraphicalModelComponent *source = _myGraphicsScene->findGraphicalModelComponent(connection->getSource()->component->getId());
+
+            // so refaz a conexao se ambos estiverem no modelo, se nao, quando o outro for adicionado, ele faz a conexao
+            if (source != nullptr)
+                _myGraphicsScene->connectComponents(componentItem.inputConnections.at(j), source, componentItem.graphicalComponent);
+        }
+
+        for (int j = 0; j < componentItem.outputConnections.size(); ++j) {
+            GraphicalConnection *connection = componentItem.outputConnections.at(j);
+            GraphicalModelComponent *destination = _myGraphicsScene->findGraphicalModelComponent(connection->getDestination()->component->getId());
+
+            // so refaz a conexao se ambos estiverem no modelo, se nao, quando o outro for adicionado, ele faz a conexao
+            if (destination != nullptr)
+                _myGraphicsScene->connectComponents(componentItem.outputConnections.at(j), componentItem.graphicalComponent, destination);
+        }
+    }
+
+    // varre todos os GraphicalConnection e realiza a conexao
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+
+        // verifico se a conexao ainda nao existe (ela pode ser uma conexao que foi refeita ao connectComponents)
+        // por exemplo, pode ter uma conexao selecionada que foi eliminada anteriormente pois ela fazia parte de um componente
+        // entao ao refazer as conexoes do componente, ela ja foi religada
+        if (!_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
+            _myGraphicsScene->connectComponents(connection, nullptr, nullptr);
+        }
+    }
+
+    // atualiza a cena
+    _myGraphicsScene->update();
 }
 
 void DeleteUndoCommand::redo() {
-    //remove in model
-    myGraphicsScene->removeModelComponentInModel(myGraphicalModelComponent);
+    // remove tudo que e grafico
+    // comeca removendo os componentes e suas conexoes
+    for (int i = 0; i < _myComponentItems->size(); ++i) {
+        ComponentItem componentItem = _myComponentItems->at(i);
 
-    //graphically
-    myGraphicsScene->removeItem(myGraphicalModelComponent);
-    myGraphicsScene->getGraphicalModelComponents()->removeOne(myGraphicalModelComponent);
+        _myGraphicsScene->removeItem(componentItem.graphicalComponent);
 
-    //limpa as conexoes
-    myGraphicsScene->handleClearConnectionsOnDeleteComponent(myGraphicalModelComponent);
+        for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
+            GraphicalConnection *connection = componentItem.inputConnections.at(j);
+            _myGraphicsScene->removeItem(connection);
+        }
 
-    //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::COMPONENT, myGraphicalModelComponent);
-    dynamic_cast<ModelGraphicsView*> (myGraphicsScene->views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+        for (int j = 0; j < _myComponentItems->at(i).outputConnections.size(); ++j) {
+            GraphicalConnection *connection = componentItem.outputConnections.at(j);
+            _myGraphicsScene->removeItem(connection);
+        }
+    }
 
-    myGraphicsScene->update();
+    // remove as conexoes selecionadas individualmente
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+        _myGraphicsScene->removeItem(connection);
+    }
+
+    // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
+    for (int i = 0; i < _myDrawingItems->size(); ++i) {
+        QGraphicsItem *item = _myDrawingItems->at(i);
+
+        //add graphically
+        _myGraphicsScene->removeDrawing(item);
+    }
+
+    // agora remove o que deve ser removido do modelo
+    // varre todos os GraphicalModelComponent
+    for (int i = 0; i < _myComponentItems->size(); ++i) {
+        ComponentItem componentItem = _myComponentItems->at(i);
+
+        _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
+    }
+
+    // varre todos os GraphicalConnection
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+
+        // verifica se a conexao ainda existe, pois ela pode ja ter sido removida caso fizesse parte de um componente que foi removido
+        if (_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
+            // se ela existe, a remove
+            _myGraphicsScene->removeGraphicalConnection(connection);
+        } else {
+            // se nao existe, quer dizer que a conexao faz parte de um componente que foi removido, e portando ela ja foi removida
+            // entao a remove da lista
+            _myConnectionItems->removeOne(connection);
+        }
+    }
+
+    _myGraphicsScene->update();
 }

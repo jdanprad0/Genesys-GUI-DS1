@@ -150,6 +150,9 @@ private slots:
 
     void on_actionShowSnap_triggered();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private: // VIEW
 
 private: // trace handlers

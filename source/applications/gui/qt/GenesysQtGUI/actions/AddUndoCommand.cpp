@@ -19,7 +19,7 @@ void AddUndoCommand::undo() {
     myGraphicsScene->removeModelComponentInModel(myGraphicalModelComponent);
 
     //limpa as conexoes
-    myGraphicsScene->handleClearConnectionsOnDeleteComponent(myGraphicalModelComponent);
+    myGraphicsScene->clearConnectionsComponent(myGraphicalModelComponent);
 
     //graphically
     myGraphicsScene->removeItem(myGraphicalModelComponent);
@@ -33,16 +33,16 @@ void AddUndoCommand::undo() {
 }
 
 void AddUndoCommand::redo() {
-    //add in model
-    myGraphicsScene->getSimulator()->getModels()->current()->insert(myGraphicalModelComponent->getComponent());
-
     //graphically
     myGraphicsScene->addItem(myGraphicalModelComponent);
     myGraphicsScene->getGraphicalModelComponents()->append(myGraphicalModelComponent);
 
     if (!firstExecution) {
+        //add in model
+        myGraphicsScene->getSimulator()->getModels()->current()->insert(myGraphicalModelComponent->getComponent());
+
         //refaz as conexões exceto na inicializacao do objeto
-        myGraphicsScene->reconnectConnectionsOnRedoComponent(myGraphicalModelComponent);
+        //myGraphicsScene->reconnectConnectionsOnRedoComponent(myGraphicalModelComponent);
     } else {
         firstExecution = false;
     }

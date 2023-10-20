@@ -94,7 +94,8 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
                         GraphicalComponentPort* destport = graphComp->getGraphicalInputPorts().at(0);
                         addGraphicalConnection(_sourceGraphicalComponentPort, destport, numPort, 0);
 
-                        otherGraphComp->setOcupiedOutputPorts(otherGraphComp->getOcupiedInputPorts() + 1);
+                        otherGraphComp->setOcupiedOutputPorts(otherGraphComp->getOcupiedOutputPorts() + 1);
+                        graphComp->setOcupiedInputPorts(graphComp->getOcupiedInputPorts() + 1);
                         break;
                     }
                 }
@@ -113,7 +114,10 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
 					_sourceGraphicalComponentPort = sourceGraphPort;
 					GraphicalComponentPort* destport = graphComp->getGraphicalInputPorts().at(0);
                     addGraphicalConnection(_sourceGraphicalComponentPort, destport, sourceGraphPort->portNum(), 0);
-				}
+
+                    otherGraphComp->setOcupiedOutputPorts(otherGraphComp->getOcupiedOutputPorts() + 1);
+                    graphComp->setOcupiedInputPorts(graphComp->getOcupiedInputPorts() + 1);
+                }
 			}
 		}
 	}
@@ -290,13 +294,6 @@ void ModelGraphicsScene::removeModelComponentInModel(GraphicalModelComponent* gm
 	model->getComponents()->remove(component);
 }
 
-void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc) {
-    // cria um objeto para undo e redo do delete
-    // ele propriamente remove o objeto na tela
-    QUndoCommand *deleteUndoCommand = new DeleteUndoCommand(gmc, this);
-    _undoStack->push(deleteUndoCommand);
-}
-
 void ModelGraphicsScene::clearGraphicalModelComponents() {
     QList<GraphicalModelComponent*> *componentsInModel = this->graphicalModelComponentItems();
 
@@ -328,38 +325,47 @@ void ModelGraphicsScene::clearGraphicalModelComponents() {
     }
 }
 
-// esta funcao trata da remocao das conexoes dos seus "vizinhos" de um componente
-void ModelGraphicsScene::handleClearConnectionsOnDeleteComponent(GraphicalModelComponent* gmc) {
-    GraphicalModelComponent *destination;
-    GraphicalModelComponent *source;
+// esta funcao trata da remocao das conexoes de um componente
+void ModelGraphicsScene::clearConnectionsComponent(GraphicalModelComponent* gmc) {
+    ModelGraphicsScene::clearInputConnectionsComponent(gmc);
+    ModelGraphicsScene::clearOutputConnectionsComponent(gmc);
+}
 
+// esta funcao trata da remocao das conexoes de entrada de um componente
+void ModelGraphicsScene::clearInputConnectionsComponent(GraphicalModelComponent* gmc) {
+    GraphicalConnection *graphConn; // conexao grafica
+    GraphicalModelComponent *source; // origiem da conexao
+
+    // varre todas as portas de entrada do componente a ser removido
     for (GraphicalComponentPort* port : gmc->getGraphicalInputPorts()) {
-        for (GraphicalConnection* graphConn : *port->getConnections()) {
-            source = this->findGraphicalModelComponent(graphConn->getSource()->component->getId());
+        if (port->getConnections()->size() > 0) {
+            // pega a conexao dessa porta
+            graphConn = port->getConnections()->at(0);
 
-            for (GraphicalComponentPort* portOut : source->getGraphicalOutputPorts()) {
-                portOut->removeGraphicalConnection(graphConn);
+            if (graphConn != nullptr) {
+                // pega a origem da conexao
+                source = ModelGraphicsScene::findGraphicalModelComponent(graphConn->getSource()->component->getId());
+
+                if (source != nullptr) {
+                    // remove a conexao do componente origem da conexão (conexão gráfica)
+                    source->getGraphicalOutputPorts().at(graphConn->getSource()->channel.portNumber)->removeGraphicalConnection(graphConn);
+                    // remove a conexao do componente origem da conexão (conexão no modelo)
+                    graphConn->getSource()->component->getConnections()->removeAtPort(graphConn->getSource()->channel.portNumber);
+                    // uma porta de saida a menos esta sendo ocupada no componente de origem da conexao
+                    source->setOcupiedOutputPorts(source->getOcupiedOutputPorts() - 1);
+                    // uma porta de entrada a menos esta sendo ocupada no componente de destino da conexao
+                    gmc->setOcupiedInputPorts(gmc->getOcupiedInputPorts() - 1);
+                    // remove a conexao do componente destino da conexão, que seria o gmc (conexão gráfica)
+                    // não remove do modelo, pois o modelo não guarda conexões de entrada
+                    port->removeGraphicalConnection(graphConn);
+
+                    // remove da tela
+                    removeItem(graphConn);
+
+                    // remove a conexão da lista
+                    _graphicalConnections->removeOne(graphConn);
+                }
             }
-
-            source->setOcupiedOutputPorts(source->getOcupiedOutputPorts() - 1);
-            graphConn->getSource()->component->getConnections()->removeAtPort(graphConn->getSource()->channel.portNumber);
-            removeItem(graphConn);
-            _graphicalConnections->removeOne(graphConn);
-        }
-    }
-
-    for (GraphicalComponentPort* port : gmc->getGraphicalOutputPorts()) {
-        for (GraphicalConnection* graphConn : *port->getConnections()) {
-            destination = this->findGraphicalModelComponent(graphConn->getDestination()->component->getId());
-
-            for (GraphicalComponentPort* portOut : destination->getGraphicalInputPorts()) {
-                portOut->removeGraphicalConnection(graphConn);
-            }
-
-            destination->setOcupiedInputPorts(destination->getOcupiedInputPorts() - 1);
-            graphConn->getDestination()->component->getConnections()->removeAtPort(graphConn->getDestination()->channel.portNumber);
-            removeItem(graphConn);
-            _graphicalConnections->removeOne(graphConn);
         }
     }
 
@@ -368,49 +374,146 @@ void ModelGraphicsScene::handleClearConnectionsOnDeleteComponent(GraphicalModelC
     dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
 }
 
-// esta funcao trata da reconexao de um componente com seus "vizinhos"
-void ModelGraphicsScene::reconnectConnectionsOnRedoComponent(GraphicalModelComponent* gmc) {
-    GraphicalModelComponent *destination;
-    GraphicalModelComponent *source;
+void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc) {
+    //remove in model
+    removeModelComponentInModel(gmc);
 
-    for (GraphicalComponentPort* port : gmc->getGraphicalInputPorts()) {
-        for (GraphicalConnection* graphConn : *port->getConnections()) {
-            source = this->findGraphicalModelComponent(graphConn->getSource()->component->getId());
+    //limpa as conexoes
+    clearConnectionsComponent(gmc);
 
-            for (GraphicalComponentPort* portOut : source->getGraphicalOutputPorts()) {
-                if (portOut->portNum() == graphConn->getSource()->channel.portNumber) {
-                    portOut->addGraphicalConnection(graphConn);
-                    break;
-                }
-            }
+    //graphically
+    removeItem(gmc);
+    getGraphicalModelComponents()->removeOne(gmc);
 
-            source->setOcupiedOutputPorts(source->getOcupiedOutputPorts() + 1);
-            graphConn->getSource()->component->getConnections()->insertAtPort(graphConn->getSource()->channel.portNumber, graphConn->getDestination());
-            addItem(graphConn);
-            _graphicalConnections->append(graphConn);
-        }
-    }
+    //notify graphical model change
+    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::COMPONENT, gmc);
+    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+}
 
+// esta funcao trata da remocao das conexoes de saida de um componente
+void ModelGraphicsScene::clearOutputConnectionsComponent(GraphicalModelComponent* gmc) {
+    GraphicalConnection *graphConn; // conexao grafica
+    GraphicalModelComponent *destination; // destino da conexao
+
+    // varre todas as portas de saida do componente a ser removido
     for (GraphicalComponentPort* port : gmc->getGraphicalOutputPorts()) {
-        for (GraphicalConnection* graphConn : *port->getConnections()) {
-            destination = this->findGraphicalModelComponent(graphConn->getDestination()->component->getId());
+        if (port->getConnections()->size() > 0) {
+            // pega a conexao dessa porta
+            graphConn = port->getConnections()->at(0);
 
-            for (GraphicalComponentPort* portOut : destination->getGraphicalInputPorts()) {
-                if (portOut->portNum() == graphConn->getDestination()->channel.portNumber) {
-                    portOut->addGraphicalConnection(graphConn);
-                    break;
+            if (graphConn != nullptr) {
+                // pega o destino da conexao
+                destination = this->findGraphicalModelComponent(graphConn->getDestination()->component->getId());
+
+                if (destination != nullptr) {
+                    // remove a conexao do componente de destino da conexão (conexão gráfica)
+                    // não remove do modelo do componente de destino, pois o modelo não guarda conexões de entrada
+                    destination->getGraphicalInputPorts().at(graphConn->getDestination()->channel.portNumber)->removeGraphicalConnection(graphConn);
+                    // remove a conexao do componente origem da conexão, que seria o gmc (conexão gráfica)
+                    port->removeGraphicalConnection(graphConn);
+
+                    // remove a conexao do componente origem da conexão, que seria o gmc (conexão no modelo)
+                    gmc->getComponent()->getConnections()->removeAtPort(graphConn->getSource()->channel.portNumber);
+
+                    // uma porta de entrada a menos esta sendo ocupada no componente de destino da conexao
+                    destination->setOcupiedInputPorts(destination->getOcupiedInputPorts() - 1);
+                    // uma porta de saida a menos esta sendo ocupada no componente de origem da conexao
+                    gmc->setOcupiedOutputPorts(gmc->getOcupiedOutputPorts() - 1);
+
+                    // remove da tela
+                    removeItem(graphConn);
+
+                    // remove a conexão da lista
+                    _graphicalConnections->removeOne(graphConn);
                 }
             }
-
-            destination->setOcupiedInputPorts(destination->getOcupiedInputPorts() + 1);
-            addItem(graphConn);
-            _graphicalConnections->append(graphConn);
         }
     }
 
     //notify graphical model change
     GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::CONNECTION, nullptr); // notify AFTER destroy or BEFORE it?
     dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+}
+
+// esta funcao trata da conexao dos componentes (necessario que ambos estejam no modelo)
+void ModelGraphicsScene::connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination) {
+    // faz as conexoes
+    ModelGraphicsScene::connectSource(connection, source);
+    ModelGraphicsScene::connectDestination(connection, destination);
+
+    // adiciona a conexao na lista de conexoes da cena
+    _graphicalConnections->append(connection);
+
+    //notify graphical model change
+    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::CONNECTION, nullptr); // notify AFTER destroy or BEFORE it?
+    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+}
+
+// esta funcao trata da conexao com o componente de origem
+bool ModelGraphicsScene::connectSource(GraphicalConnection* connection, GraphicalModelComponent *source) {
+    GraphicalModelComponent *src;
+
+    // necessario GraphicalModelComponent do componente, entao...
+    // se enviarem o GraphicalModelComponent de origem nao precisa buscar pelo Id componente
+    if (source != nullptr)
+        src = source;
+    // se nao enviarem o GraphicalModelComponent de origem, busca pelo Id do componente
+    else
+        src = findGraphicalModelComponent(connection->getSource()->component->getId());
+
+    if (src != nullptr) {
+        // varre todas as portas de saida do componente de origem, ate encontrar a porta correta
+        for (GraphicalComponentPort* port : src->getGraphicalOutputPorts()) {
+            // se encontrar a porta correta
+            if (port->portNum() == connection->getSource()->channel.portNumber && port->getConnections()->isEmpty()) {
+                // adiciona o componente grafico nessa porta
+                port->addGraphicalConnection(connection);
+                // adiciona a conexao no modelo do componente de origem
+                src->getComponent()->getConnections()->insertAtPort(port->portNum(), connection->getDestination());
+                break;
+            }
+        }
+
+        // diz que o componente de origem tem mais uma porta de saida ocupada
+        src->setOcupiedOutputPorts(src->getOcupiedOutputPorts() + 1);
+
+        return true;
+    }
+
+    return false;
+}
+
+// esta funcao trata da conexao com o componente de destino
+bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination) {
+    GraphicalModelComponent *dst;
+
+    // necessario GraphicalModelComponent do componente, entao...
+    // se enviarem o GraphicalModelComponent de destina nao precisa buscar pelo Id componente
+    if (destination != nullptr)
+        dst = destination;
+    // se nao enviarem o GraphicalModelComponent de destino, busca pelo Id do componente
+    else
+        dst = this->findGraphicalModelComponent(connection->getDestination()->component->getId());
+
+    if (dst != nullptr) {
+        // varre todas as portas de entrada do componente de destino, ate encontrar a porta correta
+        for (GraphicalComponentPort* port : dst->getGraphicalInputPorts()) {
+            // se encontrar a porta correta
+            if (port->portNum() == connection->getDestination()->channel.portNumber && port->getConnections()->isEmpty()) {
+                // adiciona o componente grafico nessa porta
+                port->addGraphicalConnection(connection);
+                // nao e necessario adicionar a conexao no modelo do componente de destino, pois apenas os componentes de origem a possui
+                break;
+            }
+        }
+
+        // diz que o componente de destino tem mais uma porta de saida ocupada
+        dst->setOcupiedInputPorts(dst->getOcupiedOutputPorts() + 1);
+
+        return true;
+    }
+
+    return false;
 }
 
 void ModelGraphicsScene::removeConnectionInModel(GraphicalConnection* gc) {
@@ -439,6 +542,10 @@ void ModelGraphicsScene::removeDrawing(QGraphicsItem * item) {
             delete(item);
         }
     }
+
+    //notify graphical model change
+    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::COMPONENT, item);
+    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
 }
 
 void ModelGraphicsScene::removeAnimation() {}
@@ -993,30 +1100,34 @@ void ModelGraphicsScene::keyPressEvent(QKeyEvent *keyEvent) {
 		if (reply == QMessageBox::No) {
 			return;
         }
-		Model* model = _simulator->getModels()->current();
-		for (QGraphicsItem* item : selected) {
-			GraphicalModelComponent* gmc = dynamic_cast<GraphicalModelComponent*> (item);
-			if (gmc != nullptr) {
-				// graphically
-                removeComponent(gmc);
-			} else {
-				GraphicalConnection* gc = dynamic_cast<GraphicalConnection*> (item);
-				if (gc != nullptr) {
-                    removeGraphicalConnection(gc);
-                } else {
-                    bool aux = getGraphicalDrawings()->contains(item);
-                    if (aux) {
-                        removeDrawing(item);
-                    }
-                    //Drawing* gc = dynamic_cast<GraphicalConnection*>(item);
-                    //if (gc != nullptr) {
-                    //	removeItem(item);
-                    //	gc->~Drawing();
-                    //}
-                }
-            }
 
-		}
+
+        QUndoCommand *deleteUndoCommand = new DeleteUndoCommand(selected, this);
+        _undoStack->push(deleteUndoCommand);
+
+//		for (QGraphicsItem* item : selected) {
+//			GraphicalModelComponent* gmc = dynamic_cast<GraphicalModelComponent*> (item);
+//			if (gmc != nullptr) {
+//				// graphically
+//                removeComponent(gmc);
+//			} else {
+//				GraphicalConnection* gc = dynamic_cast<GraphicalConnection*> (item);
+//				if (gc != nullptr) {
+//                    removeGraphicalConnection(gc);
+//                } else {
+//                    bool aux = getGraphicalDrawings()->contains(item);
+//                    if (aux) {
+//                        removeDrawing(item);
+//                    }
+//                    //Drawing* gc = dynamic_cast<GraphicalConnection*>(item);
+//                    //if (gc != nullptr) {
+//                    //	removeItem(item);
+//                    //	gc->~Drawing();
+//                    //}
+//                }
+//            }
+
+//		}
 	}
 	_controlIsPressed = (keyEvent->key() == Qt::Key_Control);
 }
@@ -1067,9 +1178,9 @@ QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItem
 }
 
 GraphicalModelComponent* ModelGraphicsScene::findGraphicalModelComponent(Util::identification id){
-    QList<GraphicalModelComponent*> *allComponents = ModelGraphicsScene::graphicalModelComponentItems();
+    QList<GraphicalModelComponent*> allComponents = ModelGraphicsScene::_allGraphicalModelComponents;
 
-    for(GraphicalModelComponent* item: *allComponents) {
+    for(GraphicalModelComponent* item: allComponents) {
         if (item->getComponent()->getId() == id) {
             return item;
         }

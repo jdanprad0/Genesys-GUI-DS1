@@ -83,8 +83,12 @@ public: // editing graphic model
 	void addAnimation();
     void startTextEditing();
     void removeComponent(GraphicalModelComponent* gmc);
-    void handleClearConnectionsOnDeleteComponent(GraphicalModelComponent* gmc);
-    void reconnectConnectionsOnRedoComponent(GraphicalModelComponent* gmc);
+    void clearConnectionsComponent(GraphicalModelComponent* gmc);
+    void clearInputConnectionsComponent(GraphicalModelComponent* gmc);
+    void clearOutputConnectionsComponent(GraphicalModelComponent* gmc);
+    void connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr, GraphicalModelComponent *destination = nullptr);
+    bool connectSource(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr);
+    bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
 	void removeModelComponentInModel(GraphicalModelComponent* gmc);
 	void removeGraphicalConnection(GraphicalConnection* gc);
 	void removeConnectionInModel(GraphicalConnection* gc);
