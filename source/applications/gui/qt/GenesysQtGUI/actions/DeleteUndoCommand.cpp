@@ -104,7 +104,7 @@ void DeleteUndoCommand::undo() {
     for (int i = 0; i < _myConnectionItems->size(); ++i) {
         GraphicalConnection *connection = _myConnectionItems->at(i);
 
-        // verifico se a conexao ainda nao existe (ela pode ser uma conexao que foi refeita ao connectComponents)
+        // verifico se a conexao ainda nao existe (ela pode ser uma conexao que foi refeita no connectComponents)
         // por exemplo, pode ter uma conexao selecionada que foi eliminada anteriormente pois ela fazia parte de um componente
         // entao ao refazer as conexoes do componente, ela ja foi religada
         if (!_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
@@ -160,11 +160,13 @@ void DeleteUndoCommand::redo() {
     // varre todos os GraphicalConnection
     for (int i = 0; i < _myConnectionItems->size(); ++i) {
         GraphicalConnection *connection = _myConnectionItems->at(i);
+        GraphicalModelComponent *source = _myGraphicsScene->findGraphicalModelComponent(connection->getSource()->component->getId());
+        GraphicalModelComponent *destination = _myGraphicsScene->findGraphicalModelComponent(connection->getDestination()->component->getId());
 
         // verifica se a conexao ainda existe, pois ela pode ja ter sido removida caso fizesse parte de um componente que foi removido
         if (_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
             // se ela existe, a remove
-            _myGraphicsScene->removeGraphicalConnection(connection);
+            _myGraphicsScene->removeGraphicalConnection(connection, source, destination);
         } else {
             // se nao existe, quer dizer que a conexao faz parte de um componente que foi removido, e portando ela ja foi removida
             // entao a remove da lista

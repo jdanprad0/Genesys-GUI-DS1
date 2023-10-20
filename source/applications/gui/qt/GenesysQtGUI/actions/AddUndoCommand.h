@@ -3,22 +3,30 @@
 
 #include <QUndoCommand>
 #include "ModelGraphicsScene.h"
+#include "graphicals/GraphicalConnection.h"
 #include "graphicals/GraphicalModelComponent.h"
 
+struct ComponentItem {
+    GraphicalModelComponent *graphicalComponent;
+    QPointF initialPosition;
+    QList<GraphicalConnection *> inputConnections;
+    QList<GraphicalConnection *> outputConnections;
+};
 
 class AddUndoCommand: public QUndoCommand {
 public:
-    AddUndoCommand(GraphicalModelComponent *gmc, ModelGraphicsScene *scene, QUndoCommand *parent = nullptr);
+    AddUndoCommand(QGraphicsItem *item, ModelGraphicsScene *scene, QUndoCommand *parent = nullptr);
     ~AddUndoCommand();
 
     void undo() override;
     void redo() override;
 
 private:
-    GraphicalModelComponent *myGraphicalModelComponent;
-    ModelGraphicsScene *myGraphicsScene;
-    QPointF initialPosition;
-    bool firstExecution;
+    ComponentItem _myComponentItem;
+    GraphicalConnection *_myConnectionItem;
+    QGraphicsItem *_myDrawingItem;
+    ModelGraphicsScene *_myGraphicsScene;
+    bool _firstExecution;
 };
 
 #endif // ADDUNDOCOMMAND_H

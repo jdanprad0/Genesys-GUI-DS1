@@ -2,16 +2,10 @@
 #define DELETEUNDOCOMMAND_H
 
 #include <QUndoCommand>
+#include "AddUndoCommand.h"
 #include "ModelGraphicsScene.h"
 #include "graphicals/GraphicalConnection.h"
 #include "graphicals/GraphicalModelComponent.h"
-
-struct ComponentItem {
-    GraphicalModelComponent *graphicalComponent;
-    QPointF initialPosition;
-    QList<GraphicalConnection *> inputConnections;
-    QList<GraphicalConnection *> outputConnections;
-};
 
 class DeleteUndoCommand : public QUndoCommand
 {
