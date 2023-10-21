@@ -237,6 +237,12 @@ private: // misc useful
     bool _cut;
     QList<GraphicalModelComponent*> * _gmc_copies  = new QList<GraphicalModelComponent*>();
     QList<GraphicalConnection*> * _ports_copies = new QList<GraphicalConnection*>();
+    struct COPY {
+        GraphicalModelComponent * old;
+        GraphicalModelComponent * copy;
+    };
+    QList<COPY*> * _conn_copies = new QList<COPY*>();
+
 
 
 

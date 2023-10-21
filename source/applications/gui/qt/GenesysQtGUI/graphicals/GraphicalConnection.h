@@ -27,6 +27,8 @@ public:
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 	Connection* getSource() const;
 	Connection* getDestination() const;
+    GraphicalComponentPort* getSourceGraphicalPort();
+    GraphicalComponentPort* getDestinationGraphicalPort();
 	void updateDimensionsAndPosition();
 	GraphicalConnection::ConnectionType connectionType() const;
     unsigned int getPortSourceConnection() const;

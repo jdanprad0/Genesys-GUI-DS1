@@ -165,3 +165,9 @@ unsigned int GraphicalConnection::getPortSourceConnection() const {
 unsigned int GraphicalConnection::getPortDestinationConnection() const {
     return _portDestinationConnection;
 }
+GraphicalComponentPort* GraphicalConnection::getSourceGraphicalPort() {
+	return _sourceGraphicalPort;
+}
+GraphicalComponentPort* GraphicalConnection::getDestinationGraphicalPort(){
+    return _destinationGraphicalPort;
+}
