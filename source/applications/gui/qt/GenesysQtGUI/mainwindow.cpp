@@ -2180,6 +2180,11 @@ void MainWindow::on_actionEditPaste_triggered() {
             unsigned int portSourceConnection = 0;
             unsigned int portDestinationConnection = 0;
 
+            // Ajustando a posicao da copia
+            //@TODO: Modificar para por onde o mouse clicou
+            GraphicalModelComponent * gmcSource = scene->findGraphicalModelComponent(source->getId());
+            GraphicalModelComponent * gmcDestination = scene->findGraphicalModelComponent(dst->getId());
+
             foreach (GraphicalModelComponent * comp, *_gmc_copies) {
 
                 if (comp->getComponent()->getId() == source->getId()) {
@@ -2211,12 +2216,7 @@ void MainWindow::on_actionEditPaste_triggered() {
                 ModelComponent* newSourceComponent = (ModelComponent*) pluginSource->newInstance(simulator->getModels()->current());
                 ModelComponent* newDestinationComponent = (ModelComponent*) pluginDestination->newInstance(simulator->getModels()->current());
 
-                // Ajustando a posicao da copia
-                //@TODO: Modificar para por onde o mouse clicou
-                GraphicalModelComponent * gmcSource = scene->findGraphicalModelComponent(previousSourceComponent->getId());
-                GraphicalModelComponent * gmcDestination = scene->findGraphicalModelComponent(previousDestinationComponent->getId());
-
-
+                // Copiando a função
                 QPointF positionSource = gmcSource->pos();
                 QPointF positionDestination = gmcDestination->pos();
 
@@ -2234,7 +2234,7 @@ void MainWindow::on_actionEditPaste_triggered() {
                 // Cria GraphicalComponentPort para gmc destination
                 destinationPort = gmcNewDestination->getGraphicalInputPorts().at(portDestinationConnection);
 
-                //GraphicalConnection(GraphicalComponentPort* sourceGraphicalPort, GraphicalComponentPort* destinationGraphicalPort, unsigned int portSourceConnection = 0, unsigned int portDestinationConnection = 0, QColor color = Qt::black, QGraphicsItem *parent = nullptr);/
+                // Conecta os componente graficamente e no modelo
                 GraphicalConnection * conn = scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
                 scene->connectComponents(conn, gmcNewSource, gmcNewDestination);
 
@@ -2243,7 +2243,11 @@ void MainWindow::on_actionEditPaste_triggered() {
 
 
             } else {
-                scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
+
+                // Conecta os componente graficamente e no modelo
+                GraphicalConnection * conn = scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
+                scene->connectComponents(conn, gmcSource, gmcDestination);
+                // scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
             }
 
         }
@@ -2286,6 +2290,7 @@ void MainWindow::on_actionEditPaste_triggered() {
         }
 
 
+        // Limpeza dos atributos auxiliares de copia e recorte
         _gmc_copies->clear();
         _ports_copies->clear();
         _cut = false;
