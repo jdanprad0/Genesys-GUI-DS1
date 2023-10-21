@@ -1982,45 +1982,88 @@ void MainWindow::on_actionEditReplace_triggered() {
 
 void MainWindow::on_actionEditCut_triggered() {
 
+
+    int i =  ui->graphicsView->scene()->selectedItems().size();
     if (ui->graphicsView->scene()->selectedItems().size() > 0) {
-
-        // Componenente sendo selecionado
-        QGraphicsItem * item = ui->graphicsView->scene()->selectedItems().at(0);
-
-        // Trasnformando em um elemento grafico de modelo
-        GraphicalModelComponent* previous = (GraphicalModelComponent*) item;
-
-        // Componente
-        ModelComponent * previousComp = previous->getComponent();
-
-        // Nome do plugin para a copia do componente
-        std::string pluginname = previousComp->getClassname();
-
-        // Plugin para a copia do novo component
-        Plugin* plugin = simulator->getPlugins()->find(pluginname);
-
-        // Ajustando a posicao da copia
-        QPointF position = item->pos();
-        position.setX(item->pos().x()+150);
-
-        // Copiando a cor
-        QColor color = previous->getColor();
-
-        _copied.plugin = plugin;
-        _copied.component = previousComp;
-        _copied.position = position;
-        _copied.color = color;
-        _copied.cut = true;
-
-        // Removendo o componente do modelo
-        simulator->getModels()->current()->getComponents()->remove(previousComp);
 
         // Pega a cena
         ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
 
-        // Removendo o componente graficamente
-        // scene->removeGraphicalModelComponent(previous);
-        scene->removeComponent(previous);
+        // Seta o cut
+        _cut = true;
+
+        foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
+
+            // Trasnformando em um elemento grafico de modelo
+            GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent*>(item);
+
+            if (gmc) {
+
+                _gmc_copies->append(gmc);
+
+
+                // Pega o componente
+                ModelComponent * comp = gmc->getComponent();
+
+                // Removendo o componente do modelo
+                simulator->getModels()->current()->getComponents()->remove(comp);
+
+                // Removendo o componente graficamente
+                // scene->removeGraphicalModelComponent(previous);
+                scene->removeComponent(gmc);
+
+            } else {
+                GraphicalConnection *port = dynamic_cast<GraphicalConnection*>(item);
+
+                _ports_copies->append(port);
+
+
+            }
+
+
+
+            // TODO: Trasnformando em um poligono (?? talvez nao precise)
+            // GraphicalModelComponent* polygon = (GraphicalModelComponent*) item;
+
+        }
+
+        // Componenente sendo selecionado
+        //QGraphicsItem * item = ui->graphicsView->scene()->selectedItems().at(0);
+
+        // Trasnformando em um elemento grafico de modelo
+        // GraphicalModelComponent* previous = (GraphicalModelComponent*) item;
+
+        // Componente
+        //ModelComponent * previousComp = previous->getComponent();
+
+//        // Nome do plugin para a copia do componente
+//        std::string pluginname = previousComp->getClassname();
+
+//        // Plugin para a copia do novo component
+//        Plugin* plugin = simulator->getPlugins()->find(pluginname);
+
+//        // Ajustando a posicao da copia
+//        QPointF position = item->pos();
+//        position.setX(item->pos().x()+150);
+
+//        // Copiando a cor
+//        QColor color = previous->getColor();
+
+//        _copied.plugin = plugin;
+//        _copied.component = previousComp;
+//        _copied.position = position;
+//        _copied.color = color;
+//        _copied.cut = true;
+
+        // Removendo o componente do modelo
+//        simulator->getModels()->current()->getComponents()->remove(previousComp);
+
+//        // Pega a cena
+//        ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
+
+//        // Removendo o componente graficamente
+//        // scene->removeGraphicalModelComponent(previous);
+//        scene->removeComponent(previous);
 
 
     }
@@ -2053,40 +2096,40 @@ void MainWindow::on_actionEditCopy_triggered() {
         // Copiando a cor
         QColor color = previous->getColor();
 
-        _copied.plugin = plugin;
-        _copied.component = previousComp;
-        _copied.position = position;
-        _copied.color = color;
-        _copied.cut = false;
+//        _copied.plugin = plugin;
+//        _copied.component = previousComp;
+//        _copied.position = position;
+//        _copied.color = color;
+//        _copied.cut = false;
 
     }
 }
 
 
 void MainWindow::on_actionEditPaste_triggered() {
-	    // Cena
-    if (_copied.plugin != nullptr &&
-        _copied.component != nullptr &&
-        _copied.position != QPointF() &&
-        _copied.color != QColor()) {
+//	    // Cena
+//    if (_copied.plugin != nullptr &&
+//        _copied.component != nullptr &&
+//        _copied.position != QPointF() &&
+//        _copied.color != QColor()) {
 
-        // Pega a cena
-        ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
+//        // Pega a cena
+//        ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
 
-        // Se for copy past, cria um novo componente
-        if (!_copied.cut) {
-            // Copia do componente
-            _copied.component = (ModelComponent*) _copied.plugin->newInstance(simulator->getModels()->current());
+//        // Se for copy past, cria um novo componente
+//        if (!_copied.cut) {
+//            // Copia do componente
+//            _copied.component = (ModelComponent*) _copied.plugin->newInstance(simulator->getModels()->current());
 
-            _copied.position.setX(_copied.position.x()+100);
+//            _copied.position.setX(_copied.position.x()+100);
 
-        } else {
-            // Adiciona o componente do modelo
-            simulator->getModels()->current()->getComponents()->insert(_copied.component);
-        }
+//        } else {
+//            // Adiciona o componente do modelo
+//            simulator->getModels()->current()->getComponents()->insert(_copied.component);
+//        }
 
-        scene->addGraphicalModelComponent(_copied.plugin, _copied.component, _copied.position, _copied.color);
-    }
+//        scene->addGraphicalModelComponent(_copied.plugin, _copied.component, _copied.position, _copied.color);
+//    }
 }
 
 void MainWindow::on_actionShowGrid_triggered() {

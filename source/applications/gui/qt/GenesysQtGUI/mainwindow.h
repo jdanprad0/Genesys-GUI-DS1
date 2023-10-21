@@ -233,13 +233,11 @@ private: // misc useful
 	std::map<std::string /*category*/,QColor>* _pluginCategoryColor = new std::map<std::string,QColor>();
     int _zoomValue; // todo should be set for each open graphical model, such as view rect, etc
 
-    struct COPIED_OCCUPIED {
-        Plugin *plugin;
-        ModelComponent *component;
-        QPointF position;
-        QColor color;
-        bool cut;
-    } _copied;
+
+    bool _cut;
+    QList<GraphicalModelComponent*> * _gmc_copies  = new QList<GraphicalModelComponent*>();
+    QList<GraphicalConnection*> * _ports_copies = new QList<GraphicalConnection*>();
+
 
 
 private:
