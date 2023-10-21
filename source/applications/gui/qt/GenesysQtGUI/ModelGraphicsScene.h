@@ -76,28 +76,28 @@ public: // editing graphic model
     enum DrawingMode{
         NONE, LINE, TEXT, RECTANGLE, ELLIPSE, POLYGON,  POLYGON_POINTS, POLYGON_FINISHED
     };
-	GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color = Qt::blue);
-    GraphicalConnection* addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection);
+    GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color = Qt::blue, bool notify = false);
+    GraphicalConnection* addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection, bool notify = false);
 	GraphicalModelDataDefinition* addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color = Qt::blue);
-    void addDrawing(QPointF endPoint, bool moving);
+    void addDrawing(QPointF endPoint, bool moving, bool notify = false);
 	void addAnimation();
     void startTextEditing();
-    void removeComponent(GraphicalModelComponent* gmc);
-    void removeConnection(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination);
+    void removeComponent(GraphicalModelComponent* gmc, bool notify = false);
     void clearConnectionsComponent(GraphicalModelComponent* gmc);
     void clearInputConnectionsComponent(GraphicalModelComponent* graphicalComponent);
     void clearOutputConnectionsComponent(GraphicalModelComponent* graphicalComponent);
-    void connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr, GraphicalModelComponent *destination = nullptr);
+    void connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr, GraphicalModelComponent *destination = nullptr, bool notify = false);
     bool connectSource(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr);
     bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
     void removeComponentInModel(GraphicalModelComponent* gmc);
-    void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination);
+    void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify = false);
     void removeConnectionInModel(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source);
 	void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
-    void removeDrawing(QGraphicsItem * item);
+    void removeDrawing(QGraphicsItem * item, bool notify = false);
 	void removeAnimation();
     void clearGraphicalModelComponents();
     void clearGraphicalModelConnections();
+    void notifyGraphicalModelChange(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem *item);
     QList<GraphicalModelComponent*>* graphicalModelComponentItems();
     GraphicalModelComponent* findGraphicalModelComponent(Util::identification id);
 public:

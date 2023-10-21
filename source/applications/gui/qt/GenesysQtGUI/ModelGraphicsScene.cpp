@@ -62,7 +62,12 @@ ModelGraphicsScene::~ModelGraphicsScene() {}
 
 //-----------------------------------------------------------------------
 
-GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color) {
+void ModelGraphicsScene::notifyGraphicalModelChange(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem *item) {
+    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(eventType, eventObjectType, item);
+    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+}
+
+GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color, bool notify) {
     // cria o componente gráfico
     GraphicalModelComponent* graphComp = new GraphicalModelComponent(plugin, component, position, color);
 
@@ -129,9 +134,17 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
     // ele propriamente adiciona o objeto na tela
     QUndoCommand *addUndoCommand = new AddUndoCommand(graphComp, this);
     _undoStack->push(addUndoCommand);
+
+    //notify graphical model change
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::COMPONENT;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, graphComp);
+    }
 }
 
-GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection) {
+GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection, bool notify) {
     GraphicalConnection* graphicconnection = new GraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
 
     addItem(graphicconnection);
@@ -142,14 +155,18 @@ GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalCompone
     _allGraphicalConnections.append(graphicconnection);
 
     //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::CONNECTION, graphicconnection);
-    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::CONNECTION;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, graphicconnection);
+    }
 
     return graphicconnection;
 }
 
 
-void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving) {
+void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) {
     if (_drawingMode == LINE) {
         //verifica se a linha é muito pequena antes de desenhar
         if (abs(_drawingStartPoint.x() - endPoint.x()) > _grid.interval || abs(_drawingStartPoint.y() - endPoint.y()) > _grid.interval) {
@@ -257,6 +274,14 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving) {
         _currentEllipse = nullptr;
         _currentPolygon = nullptr;
     }
+
+    //notify graphical model change (colocar aqui um ponteiro)
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
+    }
 }
 
 void ModelGraphicsScene::addAnimation() {
@@ -327,7 +352,7 @@ void ModelGraphicsScene::clearGraphicalModelConnections() {
 }
 
 // remove um componente e suas conexoes
-void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc) {
+void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc, bool notify) {
     //remove in model
     removeComponentInModel(gmc);
 
@@ -339,8 +364,12 @@ void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc) {
     getGraphicalModelComponents()->removeOne(gmc);
 
     //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::COMPONENT, gmc);
-    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::COMPONENT;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, gmc);
+    }
 }
 
 // remove o componente do modelo
@@ -412,7 +441,7 @@ void ModelGraphicsScene::clearOutputConnectionsComponent(GraphicalModelComponent
 }
 
 // remove uma conexao grafica (e consequentemente, faz a limpeza no modelo)
-void ModelGraphicsScene::removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination) {
+void ModelGraphicsScene::removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify) {
     unsigned int sourcePortNumber = graphicalConnection->getSource()->channel.portNumber;
     unsigned int destinationPortNumber = graphicalConnection->getDestination()->channel.portNumber;
 
@@ -434,8 +463,12 @@ void ModelGraphicsScene::removeGraphicalConnection(GraphicalConnection* graphica
     _graphicalConnections->removeOne(graphicalConnection);
 
     //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::CONNECTION, nullptr); // notify AFTER destroy or BEFORE it?
-    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::CONNECTION;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, graphicalConnection);
+    }
 }
 
 // remove uma conexao do modelo
@@ -446,7 +479,7 @@ void ModelGraphicsScene::removeConnectionInModel(GraphicalConnection* graphicalC
 }
 
 // trata da conexao dos componentes (necessario que ambos estejam no modelo)
-void ModelGraphicsScene::connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination) {
+void ModelGraphicsScene::connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify) {
     // faz as conexoes
     ModelGraphicsScene::connectSource(connection, source);
     ModelGraphicsScene::connectDestination(connection, destination);
@@ -455,8 +488,12 @@ void ModelGraphicsScene::connectComponents(GraphicalConnection* connection, Grap
     _graphicalConnections->append(connection);
 
     //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::REMOVE, GraphicalModelEvent::EventObjectType::CONNECTION, nullptr); // notify AFTER destroy or BEFORE it?
-    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::CONNECTION;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, connection);
+    }
 }
 
 // esta funcao trata da conexao com o componente de origem
@@ -528,7 +565,7 @@ bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, Gra
 
 // ----------------------------------------- DANIEL -----------------------------------------
 
-void ModelGraphicsScene::removeDrawing(QGraphicsItem * item) {
+void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
     for (int i = 0 ; i < getGraphicalDrawings()->size(); i++) {
         if (getGraphicalDrawings()->at(i) == item) {
             getGraphicalDrawings()->removeAt(i);
@@ -538,8 +575,12 @@ void ModelGraphicsScene::removeDrawing(QGraphicsItem * item) {
     }
 
     //notify graphical model change
-    GraphicalModelEvent* modelGraphicsEvent = new GraphicalModelEvent(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::COMPONENT, item);
-    dynamic_cast<ModelGraphicsView*> (views().at(0))->notifySceneGraphicalModelEventHandler(modelGraphicsEvent);
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, item);
+    }
 }
 
 void ModelGraphicsScene::removeAnimation() {}
@@ -1051,7 +1092,7 @@ void ModelGraphicsScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
                     // create component in the model
                     ModelComponent* component = (ModelComponent*) plugin->newInstance(_simulator->getModels()->current());
                     // create graphically
-                    addGraphicalModelComponent(plugin, component, event->scenePos(), color);
+                    addGraphicalModelComponent(plugin, component, event->scenePos(), color, true);
                     return;
                 }
             }

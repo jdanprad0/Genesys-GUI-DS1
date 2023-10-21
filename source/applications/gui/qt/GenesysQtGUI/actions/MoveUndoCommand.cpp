@@ -3,6 +3,7 @@
 
 MoveUndoCommand::MoveUndoCommand(QList<GraphicalModelComponent*> gmc, ModelGraphicsScene *scene, QList<QPointF> &oldPos, QList<QPointF> &newPos, QUndoCommand *parent)
     : QUndoCommand(parent), _myGraphicalModelComponent(gmc), _myGraphicsScene(scene), _myOldPos(oldPos), _myNewPos(newPos), _firstExecution(true) {
+    setText(QObject::tr("Move"));
 }
 
 MoveUndoCommand::~MoveUndoCommand() {}

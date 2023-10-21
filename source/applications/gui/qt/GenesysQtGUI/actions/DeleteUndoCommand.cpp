@@ -112,6 +112,8 @@ void DeleteUndoCommand::undo() {
         }
     }
 
+    _myGraphicsScene->notifyGraphicalModelChange(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::OTHER, nullptr);
+
     // atualiza a cena
     _myGraphicsScene->update();
 }
@@ -173,6 +175,11 @@ void DeleteUndoCommand::redo() {
             _myConnectionItems->removeOne(connection);
         }
     }
+
+    GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
+    GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::OTHER;
+
+    _myGraphicsScene->notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
 
     _myGraphicsScene->update();
 }

@@ -32,6 +32,7 @@ AddUndoCommand::AddUndoCommand(QGraphicsItem *item, ModelGraphicsScene *scene, Q
         _myDrawingItem = item;
     }
 
+
     setText(QObject::tr("Add"));
 }
 
@@ -64,7 +65,7 @@ void AddUndoCommand::undo() {
 
     // agora remove o que deve ser removido do modelo
     if (_myComponentItem.graphicalComponent != nullptr)
-        _myGraphicsScene->removeComponent(_myComponentItem.graphicalComponent);
+        _myGraphicsScene->removeComponent(_myComponentItem.graphicalComponent, true);
 
     // varre todos os GraphicalConnection
     if (_myConnectionItem != nullptr) {
@@ -74,7 +75,7 @@ void AddUndoCommand::undo() {
         // verifica se a conexao ainda existe, pois ela pode ja ter sido removida caso fizesse parte de um componente que foi removido
         if (_myGraphicsScene->getGraphicalConnections()->contains(_myConnectionItem)) {
             // se ela existe, a remove
-            _myGraphicsScene->removeGraphicalConnection(_myConnectionItem, source, destination);
+            _myGraphicsScene->removeGraphicalConnection(_myConnectionItem, source, destination, true);
         } else {
             // se nao existe, quer dizer que a conexao faz parte de um componente que foi removido, e portando ela ja foi removida
             // entao a limpa sua referencia
@@ -139,21 +140,21 @@ void AddUndoCommand::redo() {
                 if (destination != nullptr)
                     _myGraphicsScene->connectComponents(_myComponentItem.outputConnections.at(j), _myComponentItem.graphicalComponent, destination);
             }
+
+            _myGraphicsScene->notifyGraphicalModelChange(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::COMPONENT, _myComponentItem.graphicalComponent);
+
         } else {
             _firstExecution = false;
         }
-
     }
 
     // realiza a conexao do objeto GraphicalConnection
     if (_myConnectionItem != nullptr) {
-        GraphicalConnection *connection = _myConnectionItem;
-
         // verifico se a conexao ainda nao existe (ela pode ser uma conexao que foi refeita no connectComponents)
         // por exemplo, pode ter uma conexao selecionada que foi eliminada anteriormente pois ela fazia parte de um componente
         // entao ao refazer as conexoes do componente, ela ja foi religada
-        if (!_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
-            _myGraphicsScene->connectComponents(connection, nullptr, nullptr);
+        if (!_myGraphicsScene->getGraphicalConnections()->contains(_myConnectionItem)) {
+            _myGraphicsScene->connectComponents(_myConnectionItem, nullptr, nullptr, true);
         }
     }
 
