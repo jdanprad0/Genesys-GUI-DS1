@@ -2098,6 +2098,7 @@ void MainWindow::on_actionZoom_All_triggered() {
 
 
 void MainWindow::on_actionDrawLine_triggered() {
+    ui->actionDrawLine->setChecked(true);
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     // Ative a ferramenta de desenho de linha
     scene->setDrawingMode(ModelGraphicsScene::DrawingMode::LINE); // Enumeração que representa o modo de desenho de linha

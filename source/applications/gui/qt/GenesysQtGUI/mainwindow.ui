@@ -1612,6 +1612,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionDrawLine">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/mxgraph/resources/icons/pack4/iconsMxGraph/hline.png</normaloff>:/mxgraph/resources/icons/pack4/iconsMxGraph/hline.png</iconset>
@@ -1621,6 +1624,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionDrawRectangle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/mxgraph/resources/icons/pack4/iconsMxGraph/rectangle.png</normaloff>:/mxgraph/resources/icons/pack4/iconsMxGraph/rectangle.png</iconset>
@@ -1630,6 +1636,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionDrawEllipse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/resources/ToolBar/_elipse.bmp</normaloff>:/resources/ToolBar/_elipse.bmp</iconset>
@@ -1849,6 +1858,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionDrawPoligon">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/resources/ToolBar/_retang.bmp</normaloff>:/resources/ToolBar/_retang.bmp</iconset>

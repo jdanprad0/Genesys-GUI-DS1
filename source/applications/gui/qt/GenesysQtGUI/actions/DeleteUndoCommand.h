@@ -20,6 +20,7 @@ private:
     QList<ComponentItem> *_myComponentItems;
     QList<GraphicalConnection *> *_myConnectionItems;
     QList<QGraphicsItem *> *_myDrawingItems;
+    QList<QGraphicsItemGroup*> *_myGroupItems;
     ModelGraphicsScene *_myGraphicsScene;
 };
 

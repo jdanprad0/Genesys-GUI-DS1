@@ -95,6 +95,7 @@ public: // editing graphic model
 	void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
     void removeDrawing(QGraphicsItem * item, bool notify = false);
 	void removeAnimation();
+    void removeGroup(QGraphicsItemGroup* group, bool notify = false);
     void clearGraphicalModelComponents();
     void clearGraphicalModelConnections();
     void notifyGraphicalModelChange(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem *item);

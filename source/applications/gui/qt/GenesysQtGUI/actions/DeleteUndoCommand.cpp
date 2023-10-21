@@ -1,7 +1,7 @@
 #include "DeleteUndoCommand.h"
 
 DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphicsScene *scene, QUndoCommand *parent)
-    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<QGraphicsItem *>()), _myGraphicsScene(scene) {
+    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<QGraphicsItem *>()), _myGroupItems(new QList<QGraphicsItemGroup *>()), _myGraphicsScene(scene) {
 
     // filtra cada tipo de item possivel em sua respectiva lista
     for (QGraphicsItem *item : items) {
@@ -24,6 +24,8 @@ DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphics
             _myComponentItems->append(componentItem);
         } else if (GraphicalConnection *connection = dynamic_cast<GraphicalConnection *>(item)) {
             _myConnectionItems->append(connection);
+        } else if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (item)){
+            _myGroupItems->append(group);
         } else {
             _myDrawingItems->append(item);
         }
@@ -36,6 +38,7 @@ DeleteUndoCommand::~DeleteUndoCommand() {
     delete _myComponentItems;
     delete _myConnectionItems;
     delete _myDrawingItems;
+    delete _myGroupItems;
 }
 
 void DeleteUndoCommand::undo() {
@@ -67,6 +70,12 @@ void DeleteUndoCommand::undo() {
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
         QGraphicsItem *item = _myDrawingItems->at(i);
         _myGraphicsScene->addItem(item);
+    }
+
+    for (int i = 0; i < _myGroupItems->size(); ++i) {
+        QGraphicsItemGroup *group = _myGroupItems->at(i);
+        ///_myGraphicsScene->addItem(group);
+        ////
     }
 
     // agora comeca a adicionar o que se deve no modelo

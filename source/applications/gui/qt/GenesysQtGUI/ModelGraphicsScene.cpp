@@ -167,6 +167,8 @@ GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalCompone
 
 
 void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) {
+    QGraphicsItem *drawingItem = nullptr;
+
     if (_drawingMode == LINE) {
         //verifica se a linha é muito pequena antes de desenhar
         if (abs(_drawingStartPoint.x() - endPoint.x()) > _grid.interval || abs(_drawingStartPoint.y() - endPoint.y()) > _grid.interval) {
@@ -185,7 +187,8 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 line->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 line->setFlag(QGraphicsItem::ItemIsMovable, true);
                 getGraphicalDrawings()->append(line);
-                addItem(line);
+                drawingItem = line;
+                //addItem(line);
             }
         }
 
@@ -221,7 +224,8 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 rectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 rectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
                 getGraphicalDrawings()->append(rectangle);
-                addItem(rectangle);
+                drawingItem = rectangle;
+                //addItem(rectangle);
             }
         }
     } else if (_drawingMode == ELLIPSE) {
@@ -243,7 +247,8 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 ellipse->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 ellipse->setFlag(QGraphicsItem::ItemIsMovable, true);
                 getGraphicalDrawings()->append(ellipse);
-                addItem(ellipse);
+                drawingItem = ellipse;
+                //addItem(ellipse);
             }
         }
     } else if (_drawingMode == POLYGON) {
@@ -265,6 +270,7 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
         _currentPolygon->setFlag(QGraphicsItem::ItemIsSelectable, true);
         _currentPolygon->setFlag(QGraphicsItem::ItemIsMovable, true);
         getGraphicalDrawings()->append(_currentPolygon);
+        drawingItem = _currentPolygon;
     }
     // Redefina o estado de desenho
     if (!moving && !(_drawingMode == POLYGON) && !(_drawingMode == POLYGON_POINTS)) {
@@ -273,14 +279,18 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
         _currentLine = nullptr;
         _currentEllipse = nullptr;
         _currentPolygon = nullptr;
-    }
 
-    //notify graphical model change (colocar aqui um ponteiro)
-    if (notify) {
-        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
-        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
+        //notify graphical model change (colocar aqui um ponteiro)
+        if (notify) {
+            GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+            GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
 
-        notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
+            notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
+        }
+
+
+        QUndoCommand *addUndoCommand = new AddUndoCommand(drawingItem , this);
+        _undoStack->push(addUndoCommand);
     }
 }
 
@@ -566,13 +576,9 @@ bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, Gra
 // ----------------------------------------- DANIEL -----------------------------------------
 
 void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
-    for (int i = 0 ; i < getGraphicalDrawings()->size(); i++) {
-        if (getGraphicalDrawings()->at(i) == item) {
-            getGraphicalDrawings()->removeAt(i);
-            //removeItem(item);
-            delete(item);
-        }
-    }
+    removeItem(item);
+
+    _graphicalDrawings->removeOne(item);
 
     //notify graphical model change
     if (notify) {
@@ -720,17 +726,17 @@ void ModelGraphicsScene::groupComponents() {
     int size = selectedItems().size();
     int num_groups = getGraphicalGroups()->size();
     //verifica se algum item selecionado já faz parte de um grupo
-    bool component_in_group = false;
+    bool isItemGroup = false;
     if (size > 1 && num_groups > 0) {
-        for (int i = 0; (i < size) && !component_in_group; i++) {  //percorrer todos os itens selecionados
+        for (int i = 0; (i < size) && !isItemGroup; i++) {  //percorrer todos os itens selecionados
             QGraphicsItem* c = selectedItems().at(i);
-            int group_children = c->childItems().size();
-            if (group_children > 1) {
-                component_in_group = true;
+            QGraphicsItemGroup* isGroup = dynamic_cast<QGraphicsItemGroup*>(c);
+            if (isGroup) {
+                isItemGroup = true;
             }
         }
     }
-    if (!component_in_group) {
+    if (!isItemGroup) {
 
         QList<QGraphicsItem*> group = selectedItems();
 
@@ -738,7 +744,10 @@ void ModelGraphicsScene::groupComponents() {
 
         for (int i = 0; i < group.size(); i++) {
             QGraphicsItem* c = group.at(i);
-            new_group->addToGroup(c);
+            QGraphicsItem* gmc = dynamic_cast<GraphicalModelComponent*>(c);
+            if (gmc) {
+                new_group->addToGroup(gmc);
+            }
         }
 
         // Adicione o novo grupo à sua cena
@@ -749,6 +758,7 @@ void ModelGraphicsScene::groupComponents() {
         getGraphicalGroups()->append(new_group);
     }
 }
+
 
 void ModelGraphicsScene::ungroupComponents() {
     int size = selectedItems().size();
@@ -772,13 +782,35 @@ void ModelGraphicsScene::ungroupComponents() {
                 item->setFlag(QGraphicsItem::ItemIsMovable, true);
             }
             // Remova o grupo da cena
-            removeItem(group);
-            delete group;
 
+            getGraphicalGroups()->removeOne(group);
+            removeItem(group);
         }
     }
-    selectedItems().clear();
 }
+
+void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
+    // Recupere os itens individuais no grupo
+    QList<QGraphicsItem*> itemsInGroup = group->childItems();
+
+
+    // remover todos os componentes do grupo
+    for (int i = 0; i < itemsInGroup.size(); i++) {
+        QGraphicsItem * item = itemsInGroup.at(i);
+        //remova item por item do grupo
+        group->removeFromGroup(item);
+        //adicionar novamente a cena
+        _graphicalModelComponents->removeOne(item);
+        removeItem(item);
+        delete(item);
+    }
+    // Remova o grupo da cena
+
+    _graphicalGroups->removeOne(group);
+    removeItem(group);
+
+}
+
 
 
 void ModelGraphicsScene::arranjeModels(int direction) {
