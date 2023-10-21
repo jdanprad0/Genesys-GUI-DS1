@@ -129,6 +129,8 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
     // ele propriamente adiciona o objeto na tela
     QUndoCommand *addUndoCommand = new AddUndoCommand(graphComp, this);
     _undoStack->push(addUndoCommand);
+
+    return graphComp;
 }
 
 GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection) {
@@ -1158,6 +1160,11 @@ void ModelGraphicsScene::setParentWidget(QWidget *parentWidget) {
 
 void ModelGraphicsScene::setDrawingMode(DrawingMode drawingMode) {
     _drawingMode = drawingMode;
+}
+
+void ModelGraphicsScene::setGraphicalComponentPort(GraphicalComponentPort * in) {
+    _sourceGraphicalComponentPort = in;
+
 }
 
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){

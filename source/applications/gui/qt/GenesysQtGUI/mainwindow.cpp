@@ -1994,6 +1994,7 @@ void MainWindow::on_actionEditCut_triggered() {
         // Seta o cut
         _cut = true;
 
+        // Adiciona na lista de cópias (conexoes, componentes e poligonos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
 
             // Tenta transforma em um componente grafico de modelo
@@ -2091,6 +2092,7 @@ void MainWindow::on_actionEditCopy_triggered() {
         // Seta o cut
         _cut = false;
 
+        // Adiciona na lista de cópias (conexoes, componentes e poligonos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
 
             // Tenta transforma em um componente grafico de modelo
@@ -2120,6 +2122,39 @@ void MainWindow::on_actionEditCopy_triggered() {
             }
         }
 
+        // Removendo as conexoes em que os seus componentes não foram selecionados
+        foreach (GraphicalConnection *conn, *_ports_copies) {
+            std::cout << "Ainda nao foi tratado" << std::endl;
+
+            ModelComponent * source = conn->getSource()->component;
+            ModelComponent * dst = conn->getDestination()->component;
+
+            GraphicalModelComponent * sourceSelected = nullptr;
+            GraphicalModelComponent * dstSelected = nullptr;
+            foreach (GraphicalModelComponent * comp, *_gmc_copies) {
+
+                if (source != nullptr) {
+
+                    if (comp->getComponent()->getId() == source->getId()) {
+                        sourceSelected = comp;
+                    }
+                }
+
+                if (dst != nullptr) {
+
+                    if (comp->getComponent()->getId() == dst->getId()) {
+                        dstSelected = comp;
+                    }
+                }
+            }
+
+            // Os dois componentes foram copiados, para conseguir copiar as conexoes~
+            if (!(sourceSelected != nullptr && dstSelected != nullptr)) {
+                _ports_copies->removeOne(conn);
+
+            }
+
+        }
     }
 
 }
@@ -2133,8 +2168,87 @@ void MainWindow::on_actionEditPaste_triggered() {
         // Pega a cena
         ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
 
+        // Adicionando as conexões (e seus respectivos componentes)
+        foreach (GraphicalConnection * conn, *_ports_copies) {
 
-        // Adicionando os componentes
+            ModelComponent * source = conn->getSource()->component;
+            ModelComponent * dst = conn->getDestination()->component;
+
+            GraphicalComponentPort* sourcePort = nullptr;
+            GraphicalComponentPort* destinationPort = nullptr;
+
+            unsigned int portSourceConnection = 0;
+            unsigned int portDestinationConnection = 0;
+
+            foreach (GraphicalModelComponent * comp, *_gmc_copies) {
+
+                if (comp->getComponent()->getId() == source->getId()) {
+                    sourcePort = conn->getSourceGraphicalPort();
+                    portSourceConnection = conn->getPortSourceConnection();
+
+                }
+
+                if (comp->getComponent()->getId() == dst->getId()) {
+                    destinationPort = conn->getDestinationGraphicalPort();
+                    portDestinationConnection = conn->getPortDestinationConnection();
+                }
+            }
+            // Se for copia
+            if (!_cut) {
+
+                // Componente
+                ModelComponent * previousSourceComponent = source;
+                ModelComponent * previousDestinationComponent = dst;
+
+                // Nome do plugin para a copia do componente
+                std::string pluginNameSource = previousSourceComponent->getClassname();
+                std::string pluginNameDestination = previousDestinationComponent->getClassname();
+
+                // Plugin para a copia do novo component
+                Plugin* pluginSource = simulator->getPlugins()->find(pluginNameSource);
+                Plugin* pluginDestination = simulator->getPlugins()->find(pluginNameDestination);
+
+                ModelComponent* newSourceComponent = (ModelComponent*) pluginSource->newInstance(simulator->getModels()->current());
+                ModelComponent* newDestinationComponent = (ModelComponent*) pluginDestination->newInstance(simulator->getModels()->current());
+
+                // Ajustando a posicao da copia
+                //@TODO: Modificar para por onde o mouse clicou
+                GraphicalModelComponent * gmcSource = scene->findGraphicalModelComponent(previousSourceComponent->getId());
+                GraphicalModelComponent * gmcDestination = scene->findGraphicalModelComponent(previousDestinationComponent->getId());
+
+
+                QPointF positionSource = gmcSource->pos();
+                QPointF positionDestination = gmcDestination->pos();
+
+                // Copiando a cor
+                QColor colorSource = gmcSource->getColor();
+                QColor colorDestination = gmcDestination->getColor();
+
+                // Adiciona o componente graficamente
+                GraphicalModelComponent * gmcNewSource = scene->addGraphicalModelComponent(pluginSource, newSourceComponent, positionSource, colorSource);
+                GraphicalModelComponent * gmcNewDestination = scene->addGraphicalModelComponent(pluginDestination, newDestinationComponent, positionDestination, colorDestination);
+
+                // Cria GraphicalComponentPort para gmc source
+                sourcePort = gmcNewSource->getGraphicalOutputPorts().at(portSourceConnection);
+
+                // Cria GraphicalComponentPort para gmc destination
+                destinationPort = gmcNewDestination->getGraphicalInputPorts().at(portDestinationConnection);
+
+                //GraphicalConnection(GraphicalComponentPort* sourceGraphicalPort, GraphicalComponentPort* destinationGraphicalPort, unsigned int portSourceConnection = 0, unsigned int portDestinationConnection = 0, QColor color = Qt::black, QGraphicsItem *parent = nullptr);/
+                GraphicalConnection * conn = scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
+                scene->connectComponents(conn, gmcNewSource, gmcNewDestination);
+
+                _gmc_copies->removeOne(gmcSource);
+                _gmc_copies->removeOne(gmcDestination);
+
+
+            } else {
+                scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
+            }
+
+        }
+
+        // Adicionando os componentes sem conexão
         foreach (GraphicalModelComponent * gmc , *_gmc_copies) {
 
             // Componente
@@ -2161,71 +2275,21 @@ void MainWindow::on_actionEditPaste_triggered() {
             ModelComponent * component;
             if (_cut) {
                 component = previousComponent;
-            } /*else {
-                COPY * temp;
-                temp->old = component;
-                component = (ModelComponent*) _copied.plugin->newInstance(simulator->getModels()->current());
-                temp->copy = component;
-                position.setX(temp->old->pos().x()+100);
-                _conn_copies->append(temp);
-            }*/
+            } else {
+                component = (ModelComponent*) plugin->newInstance(simulator->getModels()->current());
+                position.setX(position.x()+100);
+            }
 
             // Adiciona o componente graficamente
             scene->addGraphicalModelComponent(plugin, component, position, color);
 
         }
 
-        // Adicionando as conexões
-        foreach (GraphicalConnection * conn, *_ports_copies) {
 
-
-            ModelComponent * source = conn->getSource()->component;
-            ModelComponent * dst = conn->getDestination()->component;
-
-            GraphicalComponentPort* sourcePort = nullptr;
-            GraphicalComponentPort* destinationPort = nullptr;
-            unsigned int portSourceConnection = 0;
-            unsigned int portDestinationConnection = 0;
-
-            foreach (GraphicalModelComponent * comp, *_gmc_copies) {
-
-                if (comp->getComponent()->getId() == source->getId()) {
-                    sourcePort = conn->getSourceGraphicalPort();
-                    portSourceConnection = conn->getPortSourceConnection();
-                }
-
-
-                if (comp->getComponent()->getId() == dst->getId()) {
-                    destinationPort = conn->getDestinationGraphicalPort();
-                    portDestinationConnection = conn->getPortDestinationConnection();
-                }
-            }
-            // Se for copia
-//            if (!_cut) {
-//                foreach (COPY * copies, *_conn_copies) {
-
-//                    if (copies->old->getComponent() == source) {
-//                        sourcePort == copies->copy;
-//                        sourcePort->getComponent()->getConnections()->insertAtPort(conn->getSourceGraphicalPort()->portNum(), new Connection({component, 0}));
-//                    }
-
-//                    if (copies->old->getComponent() == dst) {
-//                        destinationPort = copies->copy;
-//                    }
-//                }
-
-//            }
-
-            scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
-
-        }
         _gmc_copies->clear();
         _ports_copies->clear();
         _cut = false;
-
-
     }
-
 
 //    }
 }

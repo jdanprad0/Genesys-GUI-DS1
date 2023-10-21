@@ -76,7 +76,7 @@ public: // editing graphic model
     enum DrawingMode{
         NONE, LINE, TEXT, RECTANGLE, ELLIPSE, POLYGON,  POLYGON_POINTS, POLYGON_FINISHED
     };
-	GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color = Qt::blue);
+    GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color = Qt::blue);
     GraphicalConnection* addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection);
 	GraphicalModelDataDefinition* addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color = Qt::blue);
     void addDrawing(QPointF endPoint, bool moving);
@@ -126,6 +126,7 @@ public:
     void ungroupComponents();
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
+    void setGraphicalComponentPort(GraphicalComponentPort * in);
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
 	QList<QGraphicsItem*>*getGraphicalModelComponents() const;
@@ -175,7 +176,7 @@ private:
 	unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source, 2: waiting click on destination and after that creates the connection and backs to 0
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;
-	GraphicalComponentPort* _sourceGraphicalComponentPort;
+    GraphicalComponentPort* _sourceGraphicalComponentPort;
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
 	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();
