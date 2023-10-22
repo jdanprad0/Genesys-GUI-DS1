@@ -150,8 +150,6 @@ private slots:
 
     void on_actionShowSnap_triggered();
 
-    void on_horizontalSlider_ZoomGraphical_actionTriggered(int action);
-
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -216,6 +214,7 @@ private: // view
 	void _showMessageNotImplemented();
 	void _recursivalyGenerateGraphicalModelFromModel(ModelComponent* component, List<ModelComponent*>* visited, std::map<ModelComponent*,GraphicalModelComponent*>* map, int *x, int *y, int *ymax, int sequenceInline);
 	void _generateGraphicalModelFromModel();
+    void saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QList<GraphicalConnection*> * connList);
 	//bool _checkStartSimulation();
 private: // graphical model persistence
     bool _saveGraphicalModel(QString filename);
@@ -240,6 +239,7 @@ private: // misc useful
     QList<GraphicalModelComponent*> * _gmc_copies  = new QList<GraphicalModelComponent*>();
     QList<GraphicalConnection*> * _ports_copies = new QList<GraphicalConnection*>();
     QList<QGraphicsItem *>  *_draw_copy = new QList<QGraphicsItem *>();
+    QList<QGraphicsItemGroup *>  *_group_copy = new QList<QGraphicsItemGroup *>();
 
     struct COPY {
         GraphicalModelComponent * old;

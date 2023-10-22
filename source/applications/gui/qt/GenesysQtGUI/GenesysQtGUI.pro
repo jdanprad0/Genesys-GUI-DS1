@@ -141,6 +141,7 @@ SOURCES += \
     actions/DeleteUndoCommand.cpp \
     actions/GroupUndoCommand.cpp \
     actions/MoveUndoCommand.cpp \
+    actions/PasteUndoCommand.cpp \
     actions/UngroupUndoCommand.cpp \
     dialogs/DialogFind.cpp \
 	dialogs/Dialogmodelinformation.cpp \
@@ -339,6 +340,7 @@ HEADERS += \
     actions/DeleteUndoCommand.h \
     actions/GroupUndoCommand.h \
     actions/MoveUndoCommand.h \
+    actions/PasteUndoCommand.h \
     actions/UngroupUndoCommand.h \
     dialogs/DialogFind.h \
 	dialogs/Dialogmodelinformation.h \

@@ -1253,30 +1253,6 @@ void ModelGraphicsScene::keyPressEvent(QKeyEvent *keyEvent) {
 
         QUndoCommand *deleteUndoCommand = new DeleteUndoCommand(selected, this);
         _undoStack->push(deleteUndoCommand);
-
-//		for (QGraphicsItem* item : selected) {
-//			GraphicalModelComponent* gmc = dynamic_cast<GraphicalModelComponent*> (item);
-//			if (gmc != nullptr) {
-//				// graphically
-//                removeComponent(gmc);
-//			} else {
-//				GraphicalConnection* gc = dynamic_cast<GraphicalConnection*> (item);
-//				if (gc != nullptr) {
-//                    removeGraphicalConnection(gc);
-//                } else {
-//                    bool aux = getGraphicalDrawings()->contains(item);
-//                    if (aux) {
-//                        removeDrawing(item);
-//                    }
-//                    //Drawing* gc = dynamic_cast<GraphicalConnection*>(item);
-//                    //if (gc != nullptr) {
-//                    //	removeItem(item);
-//                    //	gc->~Drawing();
-//                    //}
-//                }
-//            }
-
-//		}
     }
     _controlIsPressed = (keyEvent->key() == Qt::Key_Control);
 }

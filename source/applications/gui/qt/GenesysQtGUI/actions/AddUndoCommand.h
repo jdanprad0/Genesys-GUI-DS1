@@ -13,6 +13,11 @@ struct ComponentItem {
     QList<GraphicalConnection *> outputConnections;
 };
 
+struct GroupItem {
+    QGraphicsItemGroup *group;
+    QList<ComponentItem> myComponentItems;
+};
+
 class AddUndoCommand: public QUndoCommand {
 public:
     AddUndoCommand(QGraphicsItem *item, ModelGraphicsScene *scene, QUndoCommand *parent = nullptr);
