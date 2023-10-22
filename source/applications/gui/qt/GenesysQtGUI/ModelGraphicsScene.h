@@ -167,7 +167,7 @@ private:
 
 private:
     DrawingMode _drawingMode;
-    QGraphicsRectItem* _currentRectangle;
+	QGraphicsRectItem* _currentRectangle;
     QGraphicsLineItem* _currentLine;
     QGraphicsPolygonItem* _currentPolygon;
     QGraphicsEllipseItem* _currentEllipse;

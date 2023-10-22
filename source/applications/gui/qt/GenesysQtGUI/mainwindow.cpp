@@ -2117,6 +2117,8 @@ void MainWindow::on_actionEditCopy_triggered() {
 
                     // Então é um poligono (desenho)
                 } else {
+
+                    // _draw_copy->append(item);
                     std::cout << "Ainda nao foi tratado" << std::endl;
                 }
             }
@@ -2163,7 +2165,7 @@ void MainWindow::on_actionEditCopy_triggered() {
 void MainWindow::on_actionEditPaste_triggered() {
 
     // Se tiver componente copiados
-    if (_gmc_copies->size() > 0) {
+    if (_gmc_copies->size() > 0 || _draw_copy->size() > 0) {
 
         // Pega a cena
         ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
@@ -2216,7 +2218,6 @@ void MainWindow::on_actionEditPaste_triggered() {
             aux->append(temp);
 
         }
-
 
         // Adicionando as conexões (e seus respectivos componentes)
         foreach (GraphicalConnection * conn, *_ports_copies) {
@@ -2308,9 +2309,42 @@ void MainWindow::on_actionEditPaste_triggered() {
 
         }
 
+        // Adicionando os desenhos
+        foreach(QGraphicsItem * draw, *_draw_copy) {
+
+            QGraphicsRectItem* rectItem = dynamic_cast<QGraphicsRectItem*>(draw);
+            QGraphicsItem *copiedItem;
+            if (rectItem) {
+               scene->_currentRectangle = new QGraphicsRectItem(rectItem->pos().x(), rectItem->pos().y(), rectItem->rect().width(), rectItem->rect().height());
+               scene->_currentRectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
+               scene->_currentRectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
+               scene->getGraphicalDrawings()->append(scene->_currentRectangle);
+               scene->addItem(scene->_currentRectangle);
+               scene->update();
+            }
+
+            QGraphicsEllipseItem* ellipseItem = dynamic_cast<QGraphicsEllipseItem*>(draw);
+            if (ellipseItem) {
+               copiedItem = new QGraphicsEllipseItem(ellipseItem);
+            }
+
+            QGraphicsPolygonItem* polygonItem = dynamic_cast<QGraphicsPolygonItem*>(draw);
+            if (polygonItem) {
+               copiedItem = new QGraphicsPolygonItem(polygonItem);
+            }
+            QGraphicsLineItem *lineItem = dynamic_cast<QGraphicsLineItem*>(draw);
+            if (lineItem) {
+               copiedItem = new QGraphicsLineItem(lineItem);
+            }
+
+//            scene->addItem(copiedItem);
+            // scene->getGraphicalDrawings()->append(copiedItem);
+        }
+
         // Limpeza dos atributos auxiliares de copia e recorte
         _gmc_copies->clear();
         _ports_copies->clear();
+        _draw_copy->clear();
         _cut = false;
     }
 
