@@ -1405,8 +1405,10 @@ void MainWindow::sceneChanged(const QList<QRectF> &region) {
 
     ui->actionEditUndo->setEnabled(canUndo);
     ui->actionEditRedo->setEnabled(canRedo);
-	//_graphicalModelHasChanged = true;
-    // _actualizeTabPanes();
+
+    _textModelHasChanged = canUndo;
+
+    ui->graphicsView->scene()->update();
 }
 
 void MainWindow::sceneFocusItemChanged(QGraphicsItem *newFocusItem, QGraphicsItem *oldFocusItem, Qt::FocusReason reason) {
@@ -1716,7 +1718,7 @@ void MainWindow::on_horizontalSlider_Zoom_valueChanged(int value) {
 	//}
 
 	//zoomInAct->setEnabled(scaleFactor < 3.0);
-	//zoomOutAct->setEnabled(scaleFactor > 0.333);
+    //zoomOutAct->setEnabled(scaleFactor > 0.333);
 }
 
 void MainWindow::on_checkBox_ShowRecursive_stateChanged(int arg1) {
@@ -2343,50 +2345,68 @@ void MainWindow::on_actionModelNew_triggered() {
 
 void MainWindow::on_actionModelOpen_triggered()
 {
-	QString fileName = QFileDialog::getOpenFileName(
-			this, "Open Model", "./models/",
-			tr("All files (*.*);;Genesys model (*.gen)"));
-	if (fileName == "") {
-		return;
-	}
-	_insertCommandInConsole("load " + fileName.toStdString());
-	// load Model (in the simulator)
-	if (this->_loadGraphicalModel(fileName.toStdString())) {
-		QMessageBox::information(this, "Open Model", "Model successfully oppened");
-	} else {
-		QMessageBox::warning(this, "Open Model", "Error while opening model");
-		_actualizeActions();
-		_actualizeTabPanes();
-	}
+    Model *m;
+    if ((m = simulator->getModels()->current()) != nullptr) {
+
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setWindowTitle("New Model");
+        msgBox.setText("There is a model already opened. Do you want to close it and create a new model?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        int reply = msgBox.exec();
+
+        if (reply == QMessageBox::No) return;
+        else on_actionModelClose_triggered();
+    }
+
+    QString fileName = QFileDialog::getOpenFileName(
+        this, "Open Model", "./models/",
+        tr("Genesys Graphic Model (*.gui)"), nullptr, QFileDialog::DontUseNativeDialog);
+
+    if (fileName == "")
+    {
+        return;
+    }
+    _insertCommandInConsole("load " + fileName.toStdString());
+    // load Model (in the simulator)
+    if (this->_loadGraphicalModel(fileName.toStdString()))
+    {
+        QMessageBox::information(this, "Open Model", "Model successfully oppened");
+    }
+    else
+    {
+        QMessageBox::warning(this, "Open Model", "Error while opening model");
+        _actualizeActions();
+        _actualizeTabPanes();
+    }
     ui->graphicsView->getScene()->getUndoStack()->clear();
 }
 
 void MainWindow::on_actionModelSave_triggered()
 {
-    QString fileName = QFileDialog::getSaveFileName(this,
-            tr("Save Model"), _modelfilename,
-            tr("Genesys Model (*.gen);;All Files (*)"));
-    if (fileName.isEmpty())
-        return;
-    else {
-        _insertCommandInConsole("save " + fileName.toStdString());
-        QFile file(fileName);
-        if (!file.open(QIODevice::WriteOnly)) {
-            QMessageBox::information(this, tr("Unable to access file to save"),
-                    file.errorString());
-            return;
-        }
-        std::ofstream savefile;
-        savefile.open(fileName.toStdString(), std::ofstream::out);
-        QString data = ui->TextCodeEditor->toPlainText();
-        QStringList strList = data.split(QRegExp("[\n]"), QString::SkipEmptyParts);
-        for (unsigned int i = 0; i < strList.size(); i++) {
+    QString filename = QFileDialog::getSaveFileName(this,
+        tr("Save Model"), _modelfilename,
+        tr("Genesys Model (*.gen)"), nullptr, QFileDialog::DontUseNativeDialog);
 
-            savefile << strList.at(i).toStdString() << std::endl;
+    if (filename.isEmpty()) return;
+    else
+    {
+        _insertCommandInConsole("save " + filename.toStdString());
+        QString finalFileName = filename + ".gen";
+        QFile saveFile(finalFileName);
+
+        if (!saveFile.open(QIODevice::WriteOnly))
+        {
+            QMessageBox::information(this, tr("Unable to access file to save"),
+                                     saveFile.errorString());
+            return;
+        } else {
+            _saveTextModel(&saveFile, ui->TextCodeEditor->toPlainText());
+            saveFile.close();
         }
-        savefile.close();
-        _saveGraphicalModel(fileName + ".gui");
-        _modelfilename = fileName;
+        _saveGraphicalModel(filename + ".gui");
+        _modelfilename = filename;
         QMessageBox::information(this, "Save Model", "Model successfully saved");
         // convert text info Model
         _setSimulationModelBasedOnText();
@@ -2394,6 +2414,7 @@ void MainWindow::on_actionModelSave_triggered()
         _actualizeModelTextHasChanged(false);
     }
     _actualizeActions();
+    ui->graphicsView->getScene()->getUndoStack()->clear();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -2406,14 +2427,20 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 void MainWindow::on_actionModelClose_triggered()
 {
     if (_textModelHasChanged || simulator->getModels()->current()->hasChanged()) {
-		QMessageBox::StandardButton res = QMessageBox::question(this, "Close ModelSyS", "Model has changed. Do you want to save it?", QMessageBox::Yes | QMessageBox::No);
-		if (res == QMessageBox::Yes) {
-			this->on_actionModelSave_triggered();
-			return;
-		}
-	}
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setWindowTitle("Close ModelSyS");
+        msgBox.setText("Model has changed. Do you want to save it?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        int reply = msgBox.exec();
+
+        if (reply == QMessageBox::Yes) {
+            this->on_actionModelSave_triggered();
+            return;
+        }
+    }
 	_insertCommandInConsole("close");
-    ObjectPropertyBrowser *view = ui->treeViewPropertyEditor;
 
     // quando a cena é fechada, limpo o grid associado a ela
     ui->graphicsView->getScene()->grid()->clear();
@@ -2423,7 +2450,6 @@ void MainWindow::on_actionModelClose_triggered()
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
     ui->graphicsView->getScene()->clearGraphicalModelConnections();
-    ui->graphicsView->getScene()->clearGraphicalModelComponents();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
     ui->graphicsView->getScene()->clear();
     ui->graphicsView->clear();

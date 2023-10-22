@@ -5,7 +5,12 @@
 #include "AddUndoCommand.h"
 #include "ModelGraphicsScene.h"
 #include "graphicals/GraphicalConnection.h"
-#include "graphicals/GraphicalModelComponent.h"
+
+struct GroupItem {
+    QGraphicsItemGroup *group;
+    QList<ComponentItem> myComponentItems;
+};
+
 
 class DeleteUndoCommand : public QUndoCommand
 {
@@ -20,7 +25,7 @@ private:
     QList<ComponentItem> *_myComponentItems;
     QList<GraphicalConnection *> *_myConnectionItems;
     QList<QGraphicsItem *> *_myDrawingItems;
-    QList<QGraphicsItemGroup*> *_myGroupItems;
+    QList<GroupItem> *_myGroupItems;
     ModelGraphicsScene *_myGraphicsScene;
 };
 

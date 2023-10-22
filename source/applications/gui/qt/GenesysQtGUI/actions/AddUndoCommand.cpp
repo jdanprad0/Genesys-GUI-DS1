@@ -123,23 +123,7 @@ void AddUndoCommand::redo() {
             _myGraphicsScene->getSimulator()->getModels()->current()->insert(_myComponentItem.graphicalComponent->getComponent());
 
             //refaz as conexões
-            for (int j = 0; j < _myComponentItem.inputConnections.size(); ++j) {
-                GraphicalConnection *connection = _myComponentItem.inputConnections.at(j);
-                GraphicalModelComponent *source = _myGraphicsScene->findGraphicalModelComponent(connection->getSource()->component->getId());
-
-                // so refaz a conexao se ambos estiverem no modelo, se nao, quando o outro for adicionado, ele faz a conexao
-                if (source != nullptr)
-                    _myGraphicsScene->connectComponents(_myComponentItem.inputConnections.at(j), source, _myComponentItem.graphicalComponent);
-            }
-
-            for (int j = 0; j < _myComponentItem.outputConnections.size(); ++j) {
-                GraphicalConnection *connection = _myComponentItem.outputConnections.at(j);
-                GraphicalModelComponent *destination = _myGraphicsScene->findGraphicalModelComponent(connection->getDestination()->component->getId());
-
-                // so refaz a conexao se ambos estiverem no modelo, se nao, quando o outro for adicionado, ele faz a conexao
-                if (destination != nullptr)
-                    _myGraphicsScene->connectComponents(_myComponentItem.outputConnections.at(j), _myComponentItem.graphicalComponent, destination);
-            }
+            _myGraphicsScene->redoConnections(_myComponentItem.graphicalComponent, &_myComponentItem.inputConnections, &_myComponentItem.outputConnections);
 
             _myGraphicsScene->notifyGraphicalModelChange(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::COMPONENT, _myComponentItem.graphicalComponent);
 

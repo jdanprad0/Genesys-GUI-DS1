@@ -1537,7 +1537,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </action>
   <action name="actionEditPaste">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">

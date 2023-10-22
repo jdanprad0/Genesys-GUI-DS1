@@ -150,6 +150,8 @@ private slots:
 
     void on_actionShowSnap_triggered();
 
+    void on_horizontalSlider_ZoomGraphical_actionTriggered(int action);
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 

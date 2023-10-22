@@ -89,6 +89,7 @@ public: // editing graphic model
     void connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr, GraphicalModelComponent *destination = nullptr, bool notify = false);
     bool connectSource(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr);
     bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
+    void redoConnections(GraphicalModelComponent *graphicalComponent, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections);
     void removeComponentInModel(GraphicalModelComponent* gmc);
     void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify = false);
     void removeConnectionInModel(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source);

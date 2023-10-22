@@ -87,7 +87,7 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
             unsigned int maxOutputsOtherComp = otherGraphComp->getGraphicalOutputPorts().size();
 
             // verifica se ainda posso criar conexoes com aquele componente
-            if (otherGraphComp->getOcupiedOutputPorts() < maxOutputsOtherComp) {
+            if (otherGraphComp->getComponent()->getConnections()->connections()->size() < maxOutputsOtherComp) {
                 // caso tenha portas disponíveis, busca qual delas é
                 for (unsigned int numPort = 0; numPort < maxOutputsOtherComp; numPort++) {
                     // caso seja um ponteiro vazio, ele esta livre
@@ -575,6 +575,27 @@ bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, Gra
     return false;
 }
 
+
+void ModelGraphicsScene::redoConnections(GraphicalModelComponent *graphicalComponent, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections) {
+    for (int j = 0; j < inputConnections->size(); ++j) {
+        GraphicalConnection *connection = inputConnections->at(j);
+        GraphicalModelComponent *source = findGraphicalModelComponent(connection->getSource()->component->getId());
+
+        // so refaz a conexao se ambos estiverem no modelo, se nao, quando o outro for adicionado, ele faz a conexao
+        if (source != nullptr)
+            connectComponents(inputConnections->at(j), source, graphicalComponent);
+    }
+
+    for (int j = 0; j < outputConnections->size(); ++j) {
+        GraphicalConnection *connection = outputConnections->at(j);
+        GraphicalModelComponent *destination = findGraphicalModelComponent(connection->getDestination()->component->getId());
+
+        // so refaz a conexao se ambos estiverem no modelo, se nao, quando o outro for adicionado, ele faz a conexao
+        if (destination != nullptr)
+            connectComponents(outputConnections->at(j), graphicalComponent, destination);
+    }
+}
+
 // ----------------------------------------- DANIEL -----------------------------------------
 
 void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
@@ -779,6 +800,8 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
     // Adicione o grupo à sua lista de grupos (se necessário)
     getGraphicalGroups()->append(group);
 
+    group->boundingRect();
+
     addItem(group);
 }
 
@@ -849,20 +872,15 @@ void ModelGraphicsScene::ungroupModelComponents(QGraphicsItemGroup *group) {
 }
 
 void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
-    // Recupere os itens individuais no grupo
-    //QList<QGraphicsItem*> itemsInGroup = group->childItems();
+    //Recupere os itens individuais no grupo
+    QList<QGraphicsItem*> itemsInGroup = group->childItems();
 
 
-    /*/ remover todos os componentes do grupo
+    //remover todos os componentes do grupo
     for (int i = 0; i < itemsInGroup.size(); i++) {
-        QGraphicsItem * item = itemsInGroup.at(i);
-        //remova item por item do grupo
-        group->removeFromGroup(item);
-        //adicionar novamente a cena
-        _graphicalModelComponents->removeOne(item);
-        removeItem(item);
+        GraphicalModelComponent * item = dynamic_cast<GraphicalModelComponent *> (itemsInGroup.at(i));
+        removeComponent(item);
     }
-    // Remova o grupo da cena */
 
     _graphicalGroups->removeOne(group);
     removeItem(group);
@@ -874,9 +892,6 @@ void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
         notifyGraphicalModelChange(eventType, eventObjectType, group);
     }
 }
-
-
-
 
 void ModelGraphicsScene::arranjeModels(int direction) {
     int size = selectedItems().size();
@@ -1070,8 +1085,6 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
         addDrawing(drawingEndPoint, false);
         ((ModelGraphicsView *) (this->parent()))->unsetCursor();
     }
-
-    this->update();
 }
 
 void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent) {
