@@ -42,6 +42,8 @@
 #include "actions/AddUndoCommand.h"
 #include "actions/DeleteUndoCommand.h"
 #include "actions/MoveUndoCommand.h"
+#include "actions/GroupUndoCommand.h"
+#include "actions/UngroupUndoCommand.h"
 
 ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent) : QGraphicsScene(x, y, width, height, parent) {
     // grid
@@ -722,12 +724,12 @@ void ModelGraphicsScene::beginConnection() {
     ((QGraphicsView*)this->parent())->setCursor(Qt::CrossCursor);
 }
 
-void ModelGraphicsScene::groupComponents() {
+void ModelGraphicsScene::groupComponents(bool notify) {
     int size = selectedItems().size();
     int num_groups = getGraphicalGroups()->size();
     //verifica se algum item selecionado já faz parte de um grupo
     bool isItemGroup = false;
-    if (size > 1 && num_groups > 0) {
+    if (num_groups > 0) {
         for (int i = 0; (i < size) && !isItemGroup; i++) {  //percorrer todos os itens selecionados
             QGraphicsItem* c = selectedItems().at(i);
             QGraphicsItemGroup* isGroup = dynamic_cast<QGraphicsItemGroup*>(c);
@@ -738,35 +740,56 @@ void ModelGraphicsScene::groupComponents() {
     }
     if (!isItemGroup) {
 
-        QList<QGraphicsItem*> group = selectedItems();
-
-        QGraphicsItemGroup* new_group = new QGraphicsItemGroup();
+        QList<QGraphicsItem *> group = selectedItems();
+        QList<GraphicalModelComponent *> graphicalComponents;
 
         for (int i = 0; i < group.size(); i++) {
             QGraphicsItem* c = group.at(i);
-            QGraphicsItem* gmc = dynamic_cast<GraphicalModelComponent*>(c);
+            GraphicalModelComponent* gmc = dynamic_cast<GraphicalModelComponent*>(c);
             if (gmc) {
-                new_group->addToGroup(gmc);
+                graphicalComponents.append(gmc);
             }
         }
 
-        // Adicione o novo grupo à sua cena
-        addItem(new_group);
-        new_group->setFlag(QGraphicsItem::ItemIsSelectable, true);
-        new_group->setFlag(QGraphicsItem::ItemIsMovable, true);
-        // Adicione o grupo à sua lista de grupos (se necessário)
-        getGraphicalGroups()->append(new_group);
+        if (!graphicalComponents.empty()) {
+            QUndoCommand *groupCommand = new GroupUndoCommand(graphicalComponents , this);
+            _undoStack->push(groupCommand);
+
+            //notify graphical model change (colocar aqui um ponteiro)
+            if (notify) {
+                GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+                GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::OTHER;
+
+                notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
+            }
+        }
     }
 }
 
+void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group) {
+    for (int i = 0; i < graphicalComponents->size(); i++) {
+        group->addToGroup(graphicalComponents->at(i));
+    }
 
-void ModelGraphicsScene::ungroupComponents() {
+    // Adicione o novo grupo à sua cena
+    //addItem(new_group);
+    group->setFlag(QGraphicsItem::ItemIsSelectable, true);
+    group->setFlag(QGraphicsItem::ItemIsMovable, true);
+
+    // Adicione o grupo à sua lista de grupos (se necessário)
+    getGraphicalGroups()->append(group);
+
+    addItem(group);
+}
+
+
+void ModelGraphicsScene::ungroupComponents(bool notify) {
     int size = selectedItems().size();
     if (size == 1) {
         QGraphicsItem* item = selectedItems().at(0);
-        QGraphicsItemGroup* group = dynamic_cast<QGraphicsItemGroup*>(item);
+        QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup*>(item);
 
-        if (group) {
+        /*if (group) {
             // Recupere os itens individuais no grupo
             QList<QGraphicsItem*> itemsInGroup = group->childItems();
 
@@ -785,16 +808,52 @@ void ModelGraphicsScene::ungroupComponents() {
 
             getGraphicalGroups()->removeOne(group);
             removeItem(group);
+        }*/
+        if (group) {
+            QUndoCommand *ungroupCommand = new UngroupUndoCommand(group , this);
+            _undoStack->push(ungroupCommand);
+        }
+
+        //notify graphical model change (colocar aqui um ponteiro)
+        if (notify) {
+            GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+            GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::OTHER;
+
+            notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
         }
     }
 }
 
-void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
-    // Recupere os itens individuais no grupo
+void ModelGraphicsScene::ungroupModelComponents(QGraphicsItemGroup *group) {
     QList<QGraphicsItem*> itemsInGroup = group->childItems();
 
+    // Adicione novamente os itens individuais à cena
+    for (int i = 0; i < itemsInGroup.size(); i++) {
+        QGraphicsItem * item = itemsInGroup.at(i);
+        //remova item por item do grupo
+        group->removeFromGroup(item);
+        //adicionar novamente a cena
+        addItem(item);
+        item->setFlag(QGraphicsItem::ItemIsSelectable, true);
+        item->setFlag(QGraphicsItem::ItemIsMovable, true);
 
-    // remover todos os componentes do grupo
+        //item->setActive(true);
+        item->setSelected(false);
+    }
+    // Remova o grupo da cena
+
+    QList<QGraphicsItem *> selecteds = selectedItems();
+
+    getGraphicalGroups()->removeOne(group);
+    removeItem(group);
+}
+
+void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
+    // Recupere os itens individuais no grupo
+    //QList<QGraphicsItem*> itemsInGroup = group->childItems();
+
+
+    /*/ remover todos os componentes do grupo
     for (int i = 0; i < itemsInGroup.size(); i++) {
         QGraphicsItem * item = itemsInGroup.at(i);
         //remova item por item do grupo
@@ -802,14 +861,20 @@ void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
         //adicionar novamente a cena
         _graphicalModelComponents->removeOne(item);
         removeItem(item);
-        delete(item);
     }
-    // Remova o grupo da cena
+    // Remova o grupo da cena */
 
     _graphicalGroups->removeOne(group);
     removeItem(group);
 
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::OTHER;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, group);
+    }
 }
+
 
 
 
@@ -1005,6 +1070,8 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
         addDrawing(drawingEndPoint, false);
         ((ModelGraphicsView *) (this->parent()))->unsetCursor();
     }
+
+    this->update();
 }
 
 void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent) {

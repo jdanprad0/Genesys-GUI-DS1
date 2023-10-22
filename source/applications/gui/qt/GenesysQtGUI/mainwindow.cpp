@@ -217,6 +217,7 @@ bool MainWindow::_saveGraphicalModel(QString filename)
                 }
             }
         }
+
         saveFile.close();
         return true;
     }
@@ -2541,7 +2542,7 @@ void MainWindow::on_actionShowSnap_triggered()
 void MainWindow::on_actionViewGroup_triggered()
 {
     ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
-    scene->groupComponents();
+    scene->groupComponents(false);
 }
 
 

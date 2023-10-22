@@ -74,8 +74,7 @@ void DeleteUndoCommand::undo() {
 
     for (int i = 0; i < _myGroupItems->size(); ++i) {
         QGraphicsItemGroup *group = _myGroupItems->at(i);
-        ///_myGraphicsScene->addItem(group);
-        ////
+        _myGraphicsScene->addItem(group);
     }
 
     // agora comeca a adicionar o que se deve no modelo
@@ -166,6 +165,12 @@ void DeleteUndoCommand::redo() {
         ComponentItem componentItem = _myComponentItems->at(i);
 
         _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
+    }
+
+    for (int i = 0; i < _myGroupItems->size(); ++i) {
+        QGraphicsItemGroup *group = _myGroupItems->at(i);
+
+        _myGraphicsScene->removeGroup(group);
     }
 
     // varre todos os GraphicalConnection

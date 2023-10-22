@@ -139,7 +139,9 @@ SOURCES += \
 	PropertyEditor.cpp \
     actions/AddUndoCommand.cpp \
     actions/DeleteUndoCommand.cpp \
+    actions/GroupUndoCommand.cpp \
     actions/MoveUndoCommand.cpp \
+    actions/UngroupUndoCommand.cpp \
     dialogs/DialogFind.cpp \
 	dialogs/Dialogmodelinformation.cpp \
 	dialogs/dialogBreakpoint.cpp \
@@ -335,7 +337,9 @@ HEADERS += \
     UtilGUI.h \
     actions/AddUndoCommand.h \
     actions/DeleteUndoCommand.h \
+    actions/GroupUndoCommand.h \
     actions/MoveUndoCommand.h \
+    actions/UngroupUndoCommand.h \
     dialogs/DialogFind.h \
 	dialogs/Dialogmodelinformation.h \
 	dialogs/dialogBreakpoint.h \

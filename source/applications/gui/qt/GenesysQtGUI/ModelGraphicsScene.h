@@ -52,7 +52,7 @@ public:
 	};
 
 	enum class EventObjectType : int {
-		COMPONENT = 1, DATADEFINITION = 2, CONNECTION = 3, DRAWING = 4, ANIMATION = 5, OTHER = 6
+        COMPONENT = 1, DATADEFINITION = 2, CONNECTION = 3, DRAWING = 4, ANIMATION = 5, OTHER = 6
 	};
 
 public:
@@ -98,6 +98,10 @@ public: // editing graphic model
     void removeGroup(QGraphicsItemGroup* group, bool notify = false);
     void clearGraphicalModelComponents();
     void clearGraphicalModelConnections();
+    void groupComponents(bool notify = false); // tenta agrupar (verifica se sao ModelGraphicalComponents)
+    void groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents, QGraphicsItemGroup *group); // agrupa componentes
+    void ungroupComponents(bool notify = false);
+    void ungroupModelComponents(QGraphicsItemGroup *group);
     void notifyGraphicalModelChange(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem *item);
     QList<GraphicalModelComponent*>* graphicalModelComponentItems();
     GraphicalModelComponent* findGraphicalModelComponent(Util::identification id);
@@ -123,8 +127,6 @@ public:
 	void setConnectingStep(unsigned short connectingStep);
     void setSnapToGrid(bool activated);
     bool getSnapToGrid();
-    void groupComponents();
-    void ungroupComponents();
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
 public:
