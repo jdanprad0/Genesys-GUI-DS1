@@ -2549,7 +2549,7 @@ void MainWindow::_initUiForNewModel(Model* m) {
 void MainWindow::_actualizeUndo() {
     undoView = new QUndoView(ui->graphicsView->getScene()->getUndoStack());
     undoView->setWindowTitle(tr("Command List"));
-    undoView->setVisible(true);
+    undoView->setVisible(false);
     undoView->setAttribute(Qt::WA_QuitOnClose, false);
 }
 
