@@ -5,8 +5,7 @@ DialogFind::DialogFind(QWidget *parent, ModelGraphicsScene * scene)
 {
     counter = 0;
     QLabel *findLabel = new QLabel(tr("Enter the name of a component:"));
-    //countLabel = new QLabel(tr("%1/%2").arg(counter).arg(finded->size()));
-    lineEdit = new MyLineEdit;
+    lineEdit = new FindLineEdit;
 
     previousButton = new QPushButton(tr("&previous"));
     nextButton = new QPushButton(tr("&next"));
@@ -16,7 +15,6 @@ DialogFind::DialogFind(QWidget *parent, ModelGraphicsScene * scene)
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(findLabel);
     layout->addWidget(lineEdit);
-    //layout->addWidget(countLabel);
     layout->addWidget(findButton);
     layout->addWidget(nextButton);
     layout->addWidget(previousButton);
@@ -25,7 +23,6 @@ DialogFind::DialogFind(QWidget *parent, ModelGraphicsScene * scene)
     setLayout(layout);
     setWindowTitle(tr("Find a component"));
 
-    // Find button
     connect(findButton, &QPushButton::clicked,
             this, &DialogFind::findClicked);
 
@@ -58,6 +55,7 @@ void DialogFind::findClicked()
 
         int size = copia->size();
 
+        //cria uma lista com todos os componentes que encontrar com aquela pesquisa
         for (int i = 0; i < size; i++) {
 
             GraphicalModelComponent * gmc = (GraphicalModelComponent * )copia->at(i);
@@ -85,7 +83,7 @@ void DialogFind::findClicked()
                 nextButton->setFocus();
             }
 
-
+        // Não encontrou
         } else {
             lineEdit->setStyleSheet("color: red");
         }

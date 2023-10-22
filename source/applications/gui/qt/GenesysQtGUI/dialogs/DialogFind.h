@@ -16,12 +16,12 @@
 class QLineEdit;
 class QPushButton;
 
-class MyLineEdit : public QLineEdit {
+class FindLineEdit : public QLineEdit {
     Q_OBJECT
 
 public:
-    MyLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) {
-        connect(this, &QLineEdit::textChanged, this, &MyLineEdit::onTextChanged);
+    FindLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) {
+        connect(this, &QLineEdit::textChanged, this, &FindLineEdit::onTextChanged);
     }
 
 private slots:
@@ -54,11 +54,10 @@ public slots:
     void previousClicked();
 
 private:
-    //QLabel * countLabel;
     QPushButton *findButton;
     QPushButton *nextButton;
     QPushButton *previousButton;
-    MyLineEdit *lineEdit;
+    FindLineEdit *lineEdit;
     bool clicked;
     int counter;
     QList<QGraphicsItem*>* finded = new QList<QGraphicsItem*>();
