@@ -2168,6 +2168,56 @@ void MainWindow::on_actionEditPaste_triggered() {
         // Pega a cena
         ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->scene());
 
+        struct COPY {
+            GraphicalModelComponent * old;
+            GraphicalModelComponent * copy;
+        };
+
+        QList<COPY*> * aux = new QList<COPY *>();
+
+        // Adicionando todos os componentes antes
+        foreach (GraphicalModelComponent * gmc , *_gmc_copies) {
+
+            // Componente
+            ModelComponent * previousComponent = gmc->getComponent();
+
+            // Adiciona o componente no modelo
+            simulator->getModels()->current()->getComponents()->insert(previousComponent);
+
+            // Nome do plugin para a copia do componente
+            std::string pluginname = previousComponent->getClassname();
+
+            // Plugin para a copia do novo component
+            Plugin* plugin = simulator->getPlugins()->find(pluginname);
+
+            // Ajustando a posicao da copia
+            //@TODO: Modificar para por onde o mouse clicou
+            QPointF position = gmc->pos();
+
+            // Copiando a cor
+            QColor color = gmc->getColor();
+
+
+            // Componente de Copia ou Recorte
+            ModelComponent * component;
+            if (_cut) {
+                component = previousComponent;
+            } else {
+                component = (ModelComponent*) plugin->newInstance(simulator->getModels()->current());
+                position.setX(position.x()+100);
+            }
+
+            // Adiciona o componente graficamente
+            GraphicalModelComponent * oldgmc = scene->findGraphicalModelComponent(previousComponent->getId());
+            GraphicalModelComponent * newgmc = scene->addGraphicalModelComponent(plugin, component, position, color);
+            COPY * temp = new COPY();
+            temp->old = oldgmc;
+            temp->copy = newgmc;
+            aux->append(temp);
+
+        }
+
+
         // Adicionando as conexões (e seus respectivos componentes)
         foreach (GraphicalConnection * conn, *_ports_copies) {
 
@@ -2201,32 +2251,41 @@ void MainWindow::on_actionEditPaste_triggered() {
             // Se for copia
             if (!_cut) {
 
-                // Componente
-                ModelComponent * previousSourceComponent = source;
-                ModelComponent * previousDestinationComponent = dst;
+//                // Componente
+//                ModelComponent * previousSourceComponent = source;
+//                ModelComponent * previousDestinationComponent = dst;
 
-                // Nome do plugin para a copia do componente
-                std::string pluginNameSource = previousSourceComponent->getClassname();
-                std::string pluginNameDestination = previousDestinationComponent->getClassname();
+//                // Nome do plugin para a copia do componente
+//                std::string pluginNameSource = previousSourceComponent->getClassname();
+//                std::string pluginNameDestination = previousDestinationComponent->getClassname();
 
-                // Plugin para a copia do novo component
-                Plugin* pluginSource = simulator->getPlugins()->find(pluginNameSource);
-                Plugin* pluginDestination = simulator->getPlugins()->find(pluginNameDestination);
+//                // Plugin para a copia do novo component
+//                Plugin* pluginSource = simulator->getPlugins()->find(pluginNameSource);
+//                Plugin* pluginDestination = simulator->getPlugins()->find(pluginNameDestination);
 
-                ModelComponent* newSourceComponent = (ModelComponent*) pluginSource->newInstance(simulator->getModels()->current());
-                ModelComponent* newDestinationComponent = (ModelComponent*) pluginDestination->newInstance(simulator->getModels()->current());
 
-                // Copiando a função
-                QPointF positionSource = gmcSource->pos();
-                QPointF positionDestination = gmcDestination->pos();
+//                ModelComponent* newSourceComponent = (ModelComponent*) pluginSource->newInstance(simulator->getModels()->current());
+//                ModelComponent* newDestinationComponent = (ModelComponent*) pluginDestination->newInstance(simulator->getModels()->current());
 
-                // Copiando a cor
-                QColor colorSource = gmcSource->getColor();
-                QColor colorDestination = gmcDestination->getColor();
+//                // Copiando a função
+//                QPointF positionSource = gmcSource->pos();
+//                QPointF positionDestination = gmcDestination->pos();
+
+//                // Copiando a cor
+//                QColor colorSource = gmcSource->getColor();
+//                QColor colorDestination = gmcDestination->getColor();
 
                 // Adiciona o componente graficamente
-                GraphicalModelComponent * gmcNewSource = scene->addGraphicalModelComponent(pluginSource, newSourceComponent, positionSource, colorSource);
-                GraphicalModelComponent * gmcNewDestination = scene->addGraphicalModelComponent(pluginDestination, newDestinationComponent, positionDestination, colorDestination);
+                GraphicalModelComponent * gmcNewSource;
+                GraphicalModelComponent * gmcNewDestination;
+
+                foreach (COPY * c, *aux) {
+
+                    if (c->old == gmcSource) gmcNewSource = c->copy;
+                    if (c->old == gmcDestination) gmcNewDestination = c->copy;
+
+
+                }
 
                 // Cria GraphicalComponentPort para gmc source
                 sourcePort = gmcNewSource->getGraphicalOutputPorts().at(portSourceConnection);
@@ -2238,9 +2297,6 @@ void MainWindow::on_actionEditPaste_triggered() {
                 GraphicalConnection * conn = scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
                 scene->connectComponents(conn, gmcNewSource, gmcNewDestination);
 
-                _gmc_copies->removeOne(gmcSource);
-                _gmc_copies->removeOne(gmcDestination);
-
 
             } else {
 
@@ -2251,44 +2307,6 @@ void MainWindow::on_actionEditPaste_triggered() {
             }
 
         }
-
-        // Adicionando os componentes sem conexão
-        foreach (GraphicalModelComponent * gmc , *_gmc_copies) {
-
-            // Componente
-            ModelComponent * previousComponent = gmc->getComponent();
-
-            // Adiciona o componente no modelo
-            simulator->getModels()->current()->getComponents()->insert(previousComponent);
-
-            // Nome do plugin para a copia do componente
-            std::string pluginname = previousComponent->getClassname();
-
-            // Plugin para a copia do novo component
-            Plugin* plugin = simulator->getPlugins()->find(pluginname);
-
-            // Ajustando a posicao da copia
-            //@TODO: Modificar para por onde o mouse clicou
-            QPointF position = gmc->pos();
-
-            // Copiando a cor
-            QColor color = gmc->getColor();
-
-
-            // Componente de Copia ou Recorte
-            ModelComponent * component;
-            if (_cut) {
-                component = previousComponent;
-            } else {
-                component = (ModelComponent*) plugin->newInstance(simulator->getModels()->current());
-                position.setX(position.x()+100);
-            }
-
-            // Adiciona o componente graficamente
-            scene->addGraphicalModelComponent(plugin, component, position, color);
-
-        }
-
 
         // Limpeza dos atributos auxiliares de copia e recorte
         _gmc_copies->clear();
