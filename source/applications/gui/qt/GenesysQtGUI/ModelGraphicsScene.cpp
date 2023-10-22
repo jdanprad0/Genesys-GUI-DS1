@@ -144,6 +144,8 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
 
         notifyGraphicalModelChange(eventType, eventObjectType, graphComp);
     }
+
+    return graphComp;
 }
 
 GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection, bool notify) {
@@ -1311,6 +1313,11 @@ void ModelGraphicsScene::setParentWidget(QWidget *parentWidget) {
 
 void ModelGraphicsScene::setDrawingMode(DrawingMode drawingMode) {
     _drawingMode = drawingMode;
+}
+
+void ModelGraphicsScene::setGraphicalComponentPort(GraphicalComponentPort * in) {
+    _sourceGraphicalComponentPort = in;
+
 }
 
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){

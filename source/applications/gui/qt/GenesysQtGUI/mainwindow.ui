@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1081</width>
-    <height>763</height>
+    <height>777</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -700,7 +700,7 @@
      <x>0</x>
      <y>0</y>
      <width>1081</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuModel">
@@ -889,7 +889,7 @@
    <property name="minimumSize">
     <size>
      <width>118</width>
-     <height>137</height>
+     <height>138</height>
     </size>
    </property>
    <property name="windowIcon">
@@ -1260,6 +1260,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="toolTip">
     <string>Exit Genesys</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+X</string>
    </property>
   </action>
   <action name="actionSimulationStart">

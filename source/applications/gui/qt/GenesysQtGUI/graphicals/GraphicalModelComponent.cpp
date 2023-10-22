@@ -307,7 +307,7 @@ bool GraphicalModelComponent::sceneEvent(QEvent *event) {
 }
 
 QList<GraphicalComponentPort *> GraphicalModelComponent::getGraphicalOutputPorts() const {
-	return _graphicalOutputPorts;
+    return _graphicalOutputPorts;
 }
 
 QList<GraphicalComponentPort *> GraphicalModelComponent::getGraphicalInputPorts() const {

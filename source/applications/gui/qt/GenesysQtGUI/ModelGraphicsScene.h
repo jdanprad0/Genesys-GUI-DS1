@@ -130,6 +130,7 @@ public:
     bool getSnapToGrid();
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
+    void setGraphicalComponentPort(GraphicalComponentPort * in);
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
 	QList<QGraphicsItem*>*getGraphicalModelComponents() const;
@@ -170,7 +171,7 @@ private:
 
 private:
     DrawingMode _drawingMode;
-    QGraphicsRectItem* _currentRectangle;
+	QGraphicsRectItem* _currentRectangle;
     QGraphicsLineItem* _currentLine;
     QGraphicsPolygonItem* _currentPolygon;
     QGraphicsEllipseItem* _currentEllipse;
@@ -179,7 +180,7 @@ private:
 	unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source, 2: waiting click on destination and after that creates the connection and backs to 0
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;
-	GraphicalComponentPort* _sourceGraphicalComponentPort;
+    GraphicalComponentPort* _sourceGraphicalComponentPort;
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
 	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();
