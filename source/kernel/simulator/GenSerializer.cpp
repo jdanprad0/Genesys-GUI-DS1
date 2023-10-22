@@ -25,15 +25,15 @@ bool GenSerializer::dump(std::ostream& output) {
 
 	fields->clear();
 	found = get("SimulatorInfo", fields.get()) ? true : get("Simulator", fields.get());
-	if (found) output << linearize(fields.get()) << "\n";
+	if (found) output << linearize(fields.get());
 
 	fields->clear();
 	found = get("ModelInfo", fields.get());
-	if (found) output << linearize(fields.get()) << "\n";
+	if (found) output << linearize(fields.get());
 
 	fields->clear();
 	found = get("ModelSimulation", fields.get());
-	if (found) output << linearize(fields.get()) << "\n";
+	if (found) output << linearize(fields.get());
 
 	output << "\n# Model Data Definitions\n";
 	err = for_each([&](auto& key) {
@@ -45,7 +45,7 @@ bool GenSerializer::dump(std::ostream& output) {
 			if (plugin == nullptr) return 1;
 				if (plugin->getPluginInfo()->isComponent()) return 0;
 						_model->getTracer()->trace(linearize(fields.get()));
-						output << linearize(fields.get()) << "\n";
+						output << linearize(fields.get());
 					return 0;
 				});
 
@@ -59,7 +59,7 @@ bool GenSerializer::dump(std::ostream& output) {
 			if (plugin == nullptr) return 1;
 				if (!plugin->getPluginInfo()->isComponent()) return 0;
 						_model->getTracer()->trace(linearize(fields.get()));
-						output << linearize(fields.get()) << "\n";
+						output << linearize(fields.get());
 					return 0;
 				});
 
@@ -90,7 +90,7 @@ std::string GenSerializer::linearize(PersistenceRecord *fields) {
 	while (type.length() < 10) type += " ";
 
 	// compose line
-	std::string line = id + " " + type + " " + name + " " + attrs;// + "\n";
+	std::string line = id + " " + type + " " + name + " " + attrs + "\n";
 
 	return line;
 };
