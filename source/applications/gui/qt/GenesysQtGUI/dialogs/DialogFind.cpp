@@ -70,11 +70,13 @@ void DialogFind::findClicked()
             }
         }
 
+        // Encontrou
         if (!finded->isEmpty()) {
 
             if (!finded->at(0)->isSelected()) {
                 scene->clearSelection();
                 finded->at(0)->setSelected(true);
+                counter = 0;
             }
 
             if (finded->size() > 1){
