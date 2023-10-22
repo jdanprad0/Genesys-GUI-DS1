@@ -2252,31 +2252,6 @@ void MainWindow::on_actionEditPaste_triggered() {
             // Se for copia
             if (!_cut) {
 
-//                // Componente
-//                ModelComponent * previousSourceComponent = source;
-//                ModelComponent * previousDestinationComponent = dst;
-
-//                // Nome do plugin para a copia do componente
-//                std::string pluginNameSource = previousSourceComponent->getClassname();
-//                std::string pluginNameDestination = previousDestinationComponent->getClassname();
-
-//                // Plugin para a copia do novo component
-//                Plugin* pluginSource = simulator->getPlugins()->find(pluginNameSource);
-//                Plugin* pluginDestination = simulator->getPlugins()->find(pluginNameDestination);
-
-
-//                ModelComponent* newSourceComponent = (ModelComponent*) pluginSource->newInstance(simulator->getModels()->current());
-//                ModelComponent* newDestinationComponent = (ModelComponent*) pluginDestination->newInstance(simulator->getModels()->current());
-
-//                // Copiando a função
-//                QPointF positionSource = gmcSource->pos();
-//                QPointF positionDestination = gmcDestination->pos();
-
-//                // Copiando a cor
-//                QColor colorSource = gmcSource->getColor();
-//                QColor colorDestination = gmcDestination->getColor();
-
-                // Adiciona o componente graficamente
                 GraphicalModelComponent * gmcNewSource;
                 GraphicalModelComponent * gmcNewDestination;
 
@@ -2285,9 +2260,7 @@ void MainWindow::on_actionEditPaste_triggered() {
                     if (c->old == gmcSource) gmcNewSource = c->copy;
                     if (c->old == gmcDestination) gmcNewDestination = c->copy;
 
-
                 }
-
                 // Cria GraphicalComponentPort para gmc source
                 sourcePort = gmcNewSource->getGraphicalOutputPorts().at(portSourceConnection);
 
@@ -2304,7 +2277,6 @@ void MainWindow::on_actionEditPaste_triggered() {
                 // Conecta os componente graficamente e no modelo
                 GraphicalConnection * conn = scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
                 scene->connectComponents(conn, gmcSource, gmcDestination);
-                // scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
             }
 
         }
@@ -2312,30 +2284,30 @@ void MainWindow::on_actionEditPaste_triggered() {
         // Adicionando os desenhos
         foreach(QGraphicsItem * draw, *_draw_copy) {
 
-            QGraphicsRectItem* rectItem = dynamic_cast<QGraphicsRectItem*>(draw);
-            QGraphicsItem *copiedItem;
-            if (rectItem) {
-               scene->_currentRectangle = new QGraphicsRectItem(rectItem->pos().x(), rectItem->pos().y(), rectItem->rect().width(), rectItem->rect().height());
-               scene->_currentRectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
-               scene->_currentRectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
-               scene->getGraphicalDrawings()->append(scene->_currentRectangle);
-               scene->addItem(scene->_currentRectangle);
-               scene->update();
-            }
+//            QGraphicsRectItem* rectItem = dynamic_cast<QGraphicsRectItem*>(draw);
+//            QGraphicsItem *copiedItem;
+//            if (rectItem) {
+//               scene->_currentRectangle = new QGraphicsRectItem(rectItem->pos().x(), rectItem->pos().y(), rectItem->rect().width(), rectItem->rect().height());
+//               scene->_currentRectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
+//               scene->_currentRectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
+//               scene->getGraphicalDrawings()->append(scene->_currentRectangle);
+//               scene->addItem(scene->_currentRectangle);
+//               scene->update();
+//            }
 
-            QGraphicsEllipseItem* ellipseItem = dynamic_cast<QGraphicsEllipseItem*>(draw);
-            if (ellipseItem) {
-               copiedItem = new QGraphicsEllipseItem(ellipseItem);
-            }
+//            QGraphicsEllipseItem* ellipseItem = dynamic_cast<QGraphicsEllipseItem*>(draw);
+//            if (ellipseItem) {
+//               copiedItem = new QGraphicsEllipseItem(ellipseItem);
+//            }
 
-            QGraphicsPolygonItem* polygonItem = dynamic_cast<QGraphicsPolygonItem*>(draw);
-            if (polygonItem) {
-               copiedItem = new QGraphicsPolygonItem(polygonItem);
-            }
-            QGraphicsLineItem *lineItem = dynamic_cast<QGraphicsLineItem*>(draw);
-            if (lineItem) {
-               copiedItem = new QGraphicsLineItem(lineItem);
-            }
+//            QGraphicsPolygonItem* polygonItem = dynamic_cast<QGraphicsPolygonItem*>(draw);
+//            if (polygonItem) {
+//               copiedItem = new QGraphicsPolygonItem(polygonItem);
+//            }
+//            QGraphicsLineItem *lineItem = dynamic_cast<QGraphicsLineItem*>(draw);
+//            if (lineItem) {
+//               copiedItem = new QGraphicsLineItem(lineItem);
+//            }
 
 //            scene->addItem(copiedItem);
             // scene->getGraphicalDrawings()->append(copiedItem);

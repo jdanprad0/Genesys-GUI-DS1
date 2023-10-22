@@ -237,7 +237,7 @@ private: // misc useful
     bool _cut;
     QList<GraphicalModelComponent*> * _gmc_copies  = new QList<GraphicalModelComponent*>();
     QList<GraphicalConnection*> * _ports_copies = new QList<GraphicalConnection*>();
-    // QList<QGraphicsItem *>  *_draw_copy = new QList<QGraphicsItem *>();
+    QList<QGraphicsItem *>  *_draw_copy = new QList<QGraphicsItem *>();
 
 
 
