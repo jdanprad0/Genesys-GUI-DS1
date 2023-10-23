@@ -700,7 +700,7 @@
      <x>0</x>
      <y>0</y>
      <width>1081</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuModel">
@@ -1515,6 +1515,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionEditCut">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/icons3/resources/icons/pack3/ico/cut.ico</normaloff>:/icons3/resources/icons/pack3/ico/cut.ico</iconset>
@@ -1527,6 +1530,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionEditCopy">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/icons3/resources/icons/pack3/ico/copy.ico</normaloff>:/icons3/resources/icons/pack3/ico/copy.ico</iconset>
@@ -1540,7 +1546,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </action>
   <action name="actionEditPaste">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">

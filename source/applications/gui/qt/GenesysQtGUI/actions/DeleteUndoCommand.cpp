@@ -167,7 +167,7 @@ void DeleteUndoCommand::undo() {
 
         //QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
 
-
+        groupItem.group->update();
 
         _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group);
 
@@ -181,6 +181,12 @@ void DeleteUndoCommand::undo() {
 }
 
 void DeleteUndoCommand::redo() {
+    // remove as conexoes selecionadas individualmente
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+        _myGraphicsScene->removeItem(connection);
+    }
+
     // remove tudo que e grafico
     // comeca removendo os componentes e suas conexoes
     for (int i = 0; i < _myComponentItems->size(); ++i) {
@@ -199,12 +205,6 @@ void DeleteUndoCommand::redo() {
         }
     }
 
-    // remove as conexoes selecionadas individualmente
-    for (int i = 0; i < _myConnectionItems->size(); ++i) {
-        GraphicalConnection *connection = _myConnectionItems->at(i);
-        _myGraphicsScene->removeItem(connection);
-    }
-
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
         QGraphicsItem *item = _myDrawingItems->at(i);
@@ -219,12 +219,6 @@ void DeleteUndoCommand::redo() {
         ComponentItem componentItem = _myComponentItems->at(i);
 
         _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
-    }
-
-    for (int i = 0; i < _myGroupItems->size(); ++i) {
-        QGraphicsItemGroup *group = _myGroupItems->at(i).group;
-
-        _myGraphicsScene->removeGroup(group);
     }
 
     // varre todos os GraphicalConnection
@@ -242,6 +236,12 @@ void DeleteUndoCommand::redo() {
             // entao a remove da lista
             _myConnectionItems->removeOne(connection);
         }
+    }
+
+    for (int i = 0; i < _myGroupItems->size(); ++i) {
+        QGraphicsItemGroup *group = _myGroupItems->at(i).group;
+
+        _myGraphicsScene->removeGroup(group);
     }
 
     GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;

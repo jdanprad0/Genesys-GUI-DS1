@@ -531,15 +531,16 @@ void MainWindow::_actualizeActions() {
     ui->toolBarArranje->setEnabled(opened);
 	// TODO: MUDAR, ESTÁ HARDCODED, DEVERIA SER DISPONIBILIZADO COM UM COMPONENENTE FOSSE 
 	// TODO: SELECIONADO
-    ui->actionEditCopy->setEnabled(1);
-    ui->actionEditCut->setEnabled(1);
+    ui->actionEditCopy->setEnabled(0);
+    ui->actionEditCut->setEnabled(0);
 	ui->actionEditDelete->setEnabled(numSelectedGraphicals>0);
 
 	// sliders
 	ui->horizontalSlider_ZoomGraphical->setEnabled(opened);
 	if (_modelWasOpened && !opened) {
 		_clearModelEditors();
-	}
+    }
+
 	_modelWasOpened = opened;
 }
 
@@ -1411,6 +1412,22 @@ void MainWindow::sceneChanged(const QList<QRectF> &region) {
     _textModelHasChanged = canUndo;
 
     ui->graphicsView->scene()->update();
+
+    QList<QGraphicsItem *> items = ui->graphicsView->getScene()->items();
+
+    if (items.empty()) {
+        ui->actionEditCut->setEnabled(false);
+        ui->actionEditCopy->setEnabled(false);
+    } else {
+        ui->actionEditCut->setEnabled(true);
+        ui->actionEditCopy->setEnabled(true);
+    }
+
+    if (!_draw_copy->empty() || !_gmc_copies->empty() || !_group_copy->empty() || !_ports_copies->empty()) {
+        ui->actionEditPaste->setEnabled(true);
+    } else {
+        ui->actionEditPaste->setEnabled(false);
+    }
 }
 
 void MainWindow::sceneFocusItemChanged(QGraphicsItem *newFocusItem, QGraphicsItem *oldFocusItem, Qt::FocusReason reason) {
@@ -1965,6 +1982,7 @@ void MainWindow::on_actionEditReplace_triggered() {
 void MainWindow::on_actionEditCut_triggered() {
     _gmc_copies->clear();
     _ports_copies->clear();
+    _group_copy->clear();
 
     QList<QGraphicsItem *> selecteds =  ui->graphicsView->scene()->selectedItems();
 
@@ -1979,7 +1997,7 @@ void MainWindow::on_actionEditCut_triggered() {
 
         // Adiciona na lista de cópias (conexoes, componentes e poligonos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
-            QList<GraphicalModelComponent*> * groupComponents  = new QList<GraphicalModelComponent*>();
+            QList<GraphicalModelComponent*> groupComponents  = QList<GraphicalModelComponent*>();
             QList<GraphicalConnection*> * connGroup = new QList<GraphicalConnection*>();
 
             // Tenta transforma em um componente grafico de modelo
@@ -2004,12 +2022,12 @@ void MainWindow::on_actionEditCut_triggered() {
                     }
 
                     _gmc_copies->append(component);
-                    groupComponents->append(component);
+                    groupComponents.append(component);
                 }
-                saveItemForCopy(groupComponents, connGroup);
+                saveItemForCopy(&groupComponents, connGroup);
 
                 _group_copy->append(group);
-
+                ui->graphicsView->getScene()->insertComponentGroup(group, groupComponents);
                 for (unsigned int k = 0; k < (unsigned int) connGroup->size(); k++) {
                     _ports_copies->append(connGroup->at(k));
                 }
@@ -2017,7 +2035,6 @@ void MainWindow::on_actionEditCut_triggered() {
                 _ports_copies->append(port);
             }
 
-            delete groupComponents;
             delete connGroup;
         }
 
@@ -2061,7 +2078,6 @@ void::MainWindow::saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QLi
         if (!(sourceSelected != nullptr && dstSelected != nullptr)) {
             sourceSelected = scene->findGraphicalModelComponent(conn->getSource()->component->getId());
             dstSelected = scene->findGraphicalModelComponent(conn->getDestination()->component->getId());
-            //scene->removeGraphicalConnection(conn, sourceSelected, dstSelected);
             _ports_copies->removeOne(conn);
 
         }
@@ -2164,10 +2180,9 @@ void MainWindow::on_actionEditPaste_triggered() {
         _gmc_copies->clear();
         _ports_copies->clear();
         _draw_copy->clear();
+        _group_copy->clear();
         _cut = false;
     }
-
-    //    }
 }
 
 
@@ -2707,6 +2722,7 @@ void MainWindow::on_actionModelClose_triggered()
 
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
+    ui->graphicsView->getScene()->clearGraphicalModelComponents();
     ui->graphicsView->getScene()->clearGraphicalModelConnections();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
     ui->graphicsView->getScene()->clear();

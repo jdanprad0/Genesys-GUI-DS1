@@ -1,7 +1,11 @@
 #include "PasteUndoCommand.h"
 
 PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalComponents, QList<GraphicalConnection *> *connections, QList<QGraphicsItemGroup *> *groups, QList<QGraphicsItem *> *drawing, ModelGraphicsScene *scene, QUndoCommand *parent)
-    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(connections), _myDrawingItems(drawing), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
+    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(drawing), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
+
+    for (int i = 0; i < connections->size(); i++) {
+        _myConnectionItems->append(connections->at(i));
+    }
 
     for (int i = 0; i < graphicalComponents->size(); i++) {
         GraphicalModelComponent *component = graphicalComponents->at(i);
@@ -30,8 +34,9 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
 
             groupItem.group = group;
 
-            for (int j = 0; j < group->childItems().size(); j++) {
-                GraphicalModelComponent * component = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(i));
+            QList<GraphicalModelComponent *> components = _myGraphicsScene->getListComponentsGroup()[group];
+            for (int j = 0; j < components.size(); j++) {
+                GraphicalModelComponent * component = dynamic_cast<GraphicalModelComponent *>(components.at(j));
 
                 ComponentItem componentItem;
 
@@ -60,12 +65,19 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
 PasteUndoCommand::~PasteUndoCommand() {}
 
 void PasteUndoCommand::undo() {
+    // remove as conexoes selecionadas individualmente
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+        _myGraphicsScene->removeItem(connection);
+    }
+
     // remove tudo que e grafico
     // comeca removendo os componentes e suas conexoes
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        _myGraphicsScene->removeItem(componentItem.graphicalComponent);
+        if (!componentItem.graphicalComponent->group())
+            _myGraphicsScene->removeItem(componentItem.graphicalComponent);
 
         for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
             GraphicalConnection *connection = componentItem.inputConnections.at(j);
@@ -76,12 +88,6 @@ void PasteUndoCommand::undo() {
             GraphicalConnection *connection = componentItem.outputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
         }
-    }
-
-    // remove as conexoes selecionadas individualmente
-    for (int i = 0; i < _myConnectionItems->size(); ++i) {
-        GraphicalConnection *connection = _myConnectionItems->at(i);
-        _myGraphicsScene->removeItem(connection);
     }
 
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
@@ -97,13 +103,8 @@ void PasteUndoCommand::undo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
-    }
-
-    for (int i = 0; i < _myGroupItems->size(); ++i) {
-        QGraphicsItemGroup *group = _myGroupItems->at(i).group;
-
-        _myGraphicsScene->removeGroup(group);
+        if (!componentItem.graphicalComponent->group())
+            _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
     }
 
     // varre todos os GraphicalConnection
@@ -112,16 +113,14 @@ void PasteUndoCommand::undo() {
         GraphicalModelComponent *source = _myGraphicsScene->findGraphicalModelComponent(connection->getSource()->component->getId());
         GraphicalModelComponent *destination = _myGraphicsScene->findGraphicalModelComponent(connection->getDestination()->component->getId());
 
-        // verifica se a conexao ainda existe, pois ela pode ja ter sido removida caso fizesse parte de um componente que foi removido
-        if (_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
-            // se ela existe, a remove
-            _myGraphicsScene->removeGraphicalConnection(connection, source, destination);
-        } else {
-            // se nao existe, quer dizer que a conexao faz parte de um componente que foi removido, e portando ela ja foi removida
-            // entao a remove da lista
-            _myConnectionItems->removeOne(connection);
-        }
+        _myGraphicsScene->removeGraphicalConnection(connection, source, destination);
     }
+
+    for (int i = 0; i < _myGroupItems->size(); ++i) {
+        QGraphicsItemGroup *group = _myGroupItems->at(i).group;
+        _myGraphicsScene->removeGroup(group);
+    }
+
 
     GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
     GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::OTHER;
@@ -137,7 +136,7 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        componentItem.initialPosition.setX(componentItem.initialPosition.x() + 100);
+        componentItem.initialPosition.setX(componentItem.initialPosition.x()); /// ----------------
 
         _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
@@ -183,12 +182,8 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myConnectionItems->size(); ++i) {
         GraphicalConnection *connection = _myConnectionItems->at(i);
 
-        // verifico se a conexao ainda nao existe (ela pode ser uma conexao que foi refeita no connectComponents)
-        // por exemplo, pode ter uma conexao selecionada que foi eliminada anteriormente pois ela fazia parte de um componente
-        // entao ao refazer as conexoes do componente, ela ja foi religada
-        if (!_myGraphicsScene->getGraphicalConnections()->contains(connection)) {
-            _myGraphicsScene->connectComponents(connection, nullptr, nullptr);
-        }
+        _myGraphicsScene->connectComponents(connection, nullptr, nullptr);
+
     }
 
     // volta os grupos no modelo

@@ -687,6 +687,14 @@ bool ModelGraphicsScene::getSnapToGrid() {
     return _snapToGrid;
 }
 
+QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> ModelGraphicsScene::getListComponentsGroup() {
+    return _listComponentsGroup;
+}
+
+void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup) {
+    _listComponentsGroup.insert(group, componentsGroup);
+}
+
 void ModelGraphicsScene::snapItemsToGrid()
 {
     if (_snapToGrid) {
@@ -790,21 +798,33 @@ void ModelGraphicsScene::groupComponents(bool notify) {
 }
 
 void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group) {
+    // Limpar o itemsBoundingRect do grupo
+    group->boundingRect().setRect(0, 0, 0, 0);
+
+    group->update();
+
     for (int i = 0; i < graphicalComponents->size(); i++) {
         group->addToGroup(graphicalComponents->at(i));
     }
 
     // Adicione o novo grupo à sua cena
     //addItem(new_group);
+    addItem(group);
+
     group->setFlag(QGraphicsItem::ItemIsSelectable, true);
+
+    for (QGraphicsItem *item : group->childItems()) {
+        item->setSelected(false);
+    }
+
+    group->setSelected(true);
+
     group->setFlag(QGraphicsItem::ItemIsMovable, true);
 
     // Adicione o grupo à sua lista de grupos (se necessário)
     getGraphicalGroups()->append(group);
 
-    group->boundingRect();
-
-    addItem(group);
+    group->update();
 }
 
 
@@ -877,14 +897,17 @@ void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
     //Recupere os itens individuais no grupo
     QList<QGraphicsItem*> itemsInGroup = group->childItems();
 
-
     //remover todos os componentes do grupo
-    for (int i = 0; i < itemsInGroup.size(); i++) {
-        GraphicalModelComponent * item = dynamic_cast<GraphicalModelComponent *> (itemsInGroup.at(i));
-        removeComponent(item);
-    }
+    // caso seja necessario desfazer o grupo
 
+    for (int i = 0; i < itemsInGroup.size(); i++) {
+        GraphicalModelComponent * gmc = dynamic_cast<GraphicalModelComponent *> (itemsInGroup.at(i));
+
+        group->removeFromGroup(gmc);
+        removeComponent(gmc);
+    }
     _graphicalGroups->removeOne(group);
+    group->update();
     removeItem(group);
 
     if (notify) {

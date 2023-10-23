@@ -131,6 +131,8 @@ public:
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
     void setGraphicalComponentPort(GraphicalComponentPort * in);
+    QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
+    void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
 	QList<QGraphicsItem*>*getGraphicalModelComponents() const;
@@ -168,7 +170,7 @@ private:
     QList<GraphicalModelComponent*> _allGraphicalModelComponents;
     QList<GraphicalConnection*> _allGraphicalConnections;
     QUndoStack *_undoStack = nullptr;
-
+    QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
 private:
     DrawingMode _drawingMode;
 	QGraphicsRectItem* _currentRectangle;
