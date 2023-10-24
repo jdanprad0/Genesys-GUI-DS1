@@ -218,6 +218,16 @@ bool MainWindow::_saveGraphicalModel(QString filename)
                     out << line << Qt::endl;
                 }
             }
+            /*/Lines
+            out << "LINE" << Qt::endl;
+            for (QGraphicsItem *item : *ui->graphicsView->getScene()->getGraphicalModelComponents())
+            {
+                QGraphicsLineItem *drawLine = dynamic_cast<QGraphicsLineItem *> (item);
+                if (drawLine)
+                {
+                    line = QString::fromStdString(std::to_string(drawLine->))
+                }
+            }*/
         }
 
         saveFile.close();
@@ -2371,26 +2381,89 @@ void MainWindow::on_actionZoom_All_triggered() {
 
 
 void MainWindow::on_actionDrawLine_triggered() {
-    ui->actionDrawLine->setChecked(true);
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
-    // Ative a ferramenta de desenho de linha
-    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::LINE); // Enumeração que representa o modo de desenho de linha
+    if (!checkSelectedDrawIcons() && ui->actionDrawLine->isChecked()) {
+        ui->actionDrawLine->setChecked(true);
+        // Ative a ferramenta de desenho de linha
+        scene->setAction(ui->actionDrawLine);
+        scene->setDrawingMode(ModelGraphicsScene::DrawingMode::LINE); // Enumeração que representa o modo de desenho de linha
+    } else {
+        unselectDrawIcons();
+    }
 }
 
 
 void MainWindow::on_actionDrawRectangle_triggered() {
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     // Ative a ferramenta de desenho de retangulo
-    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::RECTANGLE);
+    if (!checkSelectedDrawIcons() && ui->actionDrawRectangle->isChecked()) {
+        ui->actionDrawRectangle->setChecked(true);
+        scene->setAction(ui->actionDrawRectangle);
+        scene->setDrawingMode(ModelGraphicsScene::DrawingMode::RECTANGLE);
+    } else {
+        unselectDrawIcons();
+    }
 }
 
 
 void MainWindow::on_actionDrawEllipse_triggered() {
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     // Ative a ferramenta de desenho de ellipse
-    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::ELLIPSE);
+    if (!checkSelectedDrawIcons() && ui->actionDrawEllipse->isChecked()) {
+        ui->actionDrawEllipse->setChecked(true);
+        scene->setAction(ui->actionDrawEllipse);
+        scene->setDrawingMode(ModelGraphicsScene::DrawingMode::ELLIPSE);
+    } else {
+        unselectDrawIcons();
+    }
 }
 
+void MainWindow::on_actionDrawText_triggered()
+{
+    ModelGraphicsScene* scene = ui->graphicsView->getScene();
+    if (!checkSelectedDrawIcons() && ui->actionDrawText->isChecked()) {
+        ui->actionDrawText->setChecked(true);
+        scene->setAction(ui->actionDrawText);
+        // Ative a ferramenta de desenho do texto
+        scene->setDrawingMode(ModelGraphicsScene::DrawingMode::TEXT);
+    } else {
+        unselectDrawIcons();
+    }
+}
+
+void MainWindow::on_actionDrawPoligon_triggered()
+{
+    ModelGraphicsScene* scene = ui->graphicsView->getScene();
+    if (!checkSelectedDrawIcons() && ui->actionDrawPoligon->isChecked()) {
+        ui->actionDrawPoligon->setChecked(true);
+        scene->setAction(ui->actionDrawPoligon);
+        // Ative a ferramenta de desenho do polygon
+        scene->setDrawingMode(ModelGraphicsScene::DrawingMode::POLYGON);
+    } else {
+        unselectDrawIcons();
+    }
+}
+
+void MainWindow::unselectDrawIcons() {
+    ModelGraphicsScene* scene = ui->graphicsView->getScene();
+    ui->actionDrawLine->setChecked(false);
+    ui->actionDrawRectangle->setChecked(false);
+    ui->actionDrawEllipse->setChecked(false);
+    ui->actionDrawPoligon->setChecked(false);
+    ui->actionDrawText->setChecked(false);
+    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::NONE);
+}
+
+bool MainWindow::checkSelectedDrawIcons() {
+    int alreadyChecked = 0;
+    if(ui->actionDrawLine->isChecked()) alreadyChecked++;
+    if(ui->actionDrawRectangle->isChecked()) alreadyChecked++;
+    if(ui->actionDrawEllipse->isChecked()) alreadyChecked++;
+    if(ui->actionDrawPoligon->isChecked()) alreadyChecked++;
+    if(ui->actionDrawText->isChecked()) alreadyChecked++;
+    if (alreadyChecked > 1) return true;
+    else return false;
+}
 
 void MainWindow::on_actionAnimateVariable_triggered() {
 	_showMessageNotImplemented();
@@ -2455,20 +2528,6 @@ void MainWindow::on_actionAlignLeft_triggered()
 void MainWindow::on_actionAnimateSimulatedTime_triggered()
 {
     _showMessageNotImplemented();
-}
-
-void MainWindow::on_actionDrawText_triggered()
-{
-    ModelGraphicsScene* scene = ui->graphicsView->getScene();
-    // Ative a ferramenta de desenho do texto
-    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::TEXT);
-}
-
-void MainWindow::on_actionDrawPoligon_triggered()
-{
-    ModelGraphicsScene* scene = ui->graphicsView->getScene();
-    // Ative a ferramenta de desenho do polygon
-    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::POLYGON);
 }
 
 void MainWindow::on_actionAnimateCounter_triggered()
@@ -2903,12 +2962,10 @@ void MainWindow::on_actionGModelShowConnect_triggered()
     }
 }
 
-
-//void MainWindow::on_actionSelect_all_triggered()
-//{
-//    QList<QGraphicsItem *> itensToScene = ui->graphicsView->getScene()->items();
-//    for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
-//        itensToScene.at(i)->setSelected(true);
-//    }
-//}
-
+void MainWindow::on_actionSelect_all_triggered()
+{
+    QList<QGraphicsItem *> itensToScene = ui->graphicsView->getScene()->items();
+    for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
+        itensToScene.at(i)->setSelected(true);
+    }
+}
