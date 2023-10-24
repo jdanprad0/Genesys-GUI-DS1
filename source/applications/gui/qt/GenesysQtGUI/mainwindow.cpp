@@ -1429,7 +1429,7 @@ void MainWindow::sceneChanged(const QList<QRectF> &region) {
         ui->actionEditPaste->setEnabled(false);
     }
 
-    if (!ui->graphicsView->getScene()->connectingStep())
+    if (ui->graphicsView->getScene()->connectingStep() == 0)
         ui->actionGModelShowConnect->setChecked(false);
 
     ui->graphicsView->scene()->update();
@@ -1476,8 +1476,6 @@ void MainWindow::_initModelGraphicsView() {
 	connect(ui->graphicsView->scene(), &QGraphicsScene::selectionChanged, this, &MainWindow::sceneSelectionChanged);
 
     ui->graphicsView->getScene()->setUndoStack(new QUndoStack(this));
-    // ui->actionEditUndo = ui->graphicsView->getScene()->getUndoStack()->createUndoAction((QObject*) this, tr("&actionEditUndo"));
-    // ui->actionEditRedo = ui->graphicsView->getScene()->getUndoStack()->createRedoAction((QObject*) this, tr("&actionEditRedo"));
 }
 
 void MainWindow::_setOnEventHandlers() {
@@ -2131,6 +2129,7 @@ void MainWindow::on_actionEditCopy_triggered() {
 
                     // Então é um poligono (desenho)
                 } else {
+                    port->setSelected(false);
                     _draw_copy->append(item);
                 }
             }
@@ -2903,4 +2902,13 @@ void MainWindow::on_actionGModelShowConnect_triggered()
         _firstClickShowConnection = false;
     }
 }
+
+
+//void MainWindow::on_actionSelect_all_triggered()
+//{
+//    QList<QGraphicsItem *> itensToScene = ui->graphicsView->getScene()->items();
+//    for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
+//        itensToScene.at(i)->setSelected(true);
+//    }
+//}
 

@@ -104,14 +104,15 @@ void AddUndoCommand::redo() {
         }
     }
 
-    // remove as conexoes individuais
+    // add as conexoes individuais
     if (_myConnectionItem != nullptr) {
         _myGraphicsScene->addItem(_myConnectionItem);
     }
 
     // remove os itens simples da tela
-    if (_myDrawingItem != nullptr)
+    if (_myDrawingItem != nullptr) {
         _myGraphicsScene->addItem(_myDrawingItem);
+    }
 
     // agora comeca a adicionar o que se deve no modelo
     if (_myComponentItem.graphicalComponent != nullptr) {

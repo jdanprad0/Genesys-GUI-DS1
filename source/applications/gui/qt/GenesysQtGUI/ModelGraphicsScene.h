@@ -126,7 +126,6 @@ public:
 	void setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged);
 	void setParentWidget(QWidget *parentWidget);
 	unsigned short connectingStep() const;
-    GraphicalComponentPort* getSourceGraphicalComponentPort() const;
 	void setConnectingStep(unsigned short connectingStep);
     void setSnapToGrid(bool activated);
     bool getSnapToGrid();
@@ -182,10 +181,11 @@ private:
     QGraphicsEllipseItem* _currentEllipse;
     QPolygonF _currentPolygonPoints;
     QPointF _drawingStartPoint;
-    unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source, 2: waiting click on destination and after that creates the connection and backs to 0
+    unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source or destination, 2: click on source, 3: click on destination
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;
+    GraphicalComponentPort* _destinationGraphicalComponentPort;
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
 	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();

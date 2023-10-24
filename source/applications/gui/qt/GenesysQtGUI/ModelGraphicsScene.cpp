@@ -1041,15 +1041,40 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
             if (item != nullptr) {
                 GraphicalComponentPort* port = dynamic_cast<GraphicalComponentPort*> (item);
                 if (port != nullptr) {
-                    if (_connectingStep == 1 && !port->isInputPort()) {
-                        _sourceGraphicalComponentPort = port;
-                        _connectingStep = 2;
-                        return;
-                    } else if (_connectingStep == 2 && port->isInputPort()) {
-                        _connectingStep = 3;
+                    GraphicalComponentPort* src = dynamic_cast<GraphicalComponentPort*> (_sourceGraphicalComponentPort);
+                    GraphicalComponentPort* dst = dynamic_cast<GraphicalComponentPort*> (_destinationGraphicalComponentPort);
+
+                    if (_connectingStep == 1 && src != nullptr && dst != nullptr) {
+                        if (!port->isInputPort() && port->getConnections()->empty()) {
+                            _sourceGraphicalComponentPort = port;
+                            _connectingStep = 2;
+                            return;
+                        } else if (port->isInputPort() && port->getConnections()->empty()) {
+                            _destinationGraphicalComponentPort = port;
+                            _connectingStep = 3;
+                            return;
+                        }
+                    } else if (_connectingStep == 2 && port->isInputPort() && _sourceGraphicalComponentPort != nullptr && port->getConnections()->empty() && port->graphicalComponent() != _sourceGraphicalComponentPort->graphicalComponent()) {
+                        _destinationGraphicalComponentPort = port;
                         // create connection
                         // in the model
                         GraphicalConnection* graphicconnection = new GraphicalConnection(_sourceGraphicalComponentPort, port);
+
+                        // faz essa limpeza pois quando cria a conexao ela ja adiciona essa conexao nas portas
+                        // porem o connectComponents ja faz isso pra quando há necessidade de fazer reconexao
+                        QUndoCommand *addUndoCommand = new AddUndoCommand(graphicconnection, this);
+                        _undoStack->push(addUndoCommand);
+
+                        addItem(graphicconnection);
+
+                        ((ModelGraphicsView *) (this->parent()))->unsetCursor();
+
+                        _connectingStep = 0;
+                        return;
+                    } else if (_connectingStep == 3 && !port->isInputPort() && _destinationGraphicalComponentPort != nullptr && port->getConnections()->empty() && port->graphicalComponent() != _destinationGraphicalComponentPort->graphicalComponent()) {
+                        // create connection
+                        // in the model
+                        GraphicalConnection* graphicconnection = new GraphicalConnection(port, _destinationGraphicalComponentPort);
 
                         // faz essa limpeza pois quando cria a conexao ela ja adiciona essa conexao nas portas
                         // porem o connectComponents ja faz isso pra quando há necessidade de fazer reconexao
@@ -1126,16 +1151,24 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 
 void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseDoubleClickEvent(mouseEvent);
-    GraphicalComponentPort* port = dynamic_cast<GraphicalComponentPort*> (this->itemAt(mouseEvent->scenePos(), QTransform()));
-    if (port != nullptr) { // if doubleclick on a port, then start connecting
-        if (!port->isInputPort() && this->_connectingStep == 0) {
-            _sourceGraphicalComponentPort = port;
-            _connectingStep = 2;
 
+    if (_connectingStep == 0) {
+        _connectingStep = 1;
+
+        GraphicalComponentPort* port = dynamic_cast<GraphicalComponentPort*> (this->itemAt(mouseEvent->scenePos(), QTransform()));
+
+        if (port != nullptr) { // if doubleclick on a port, then start connecting
+            if (!port->isInputPort() && this->_connectingStep == 1 && port->getConnections()->empty()) {
+                _sourceGraphicalComponentPort = port;
+                _connectingStep = 2;
+            } else if (port->isInputPort() && this->_connectingStep == 1 && port->getConnections()->empty()) {
+                _destinationGraphicalComponentPort = port;
+                _connectingStep = 3;
+            }
         }
-    }
-    if (_drawingMode == POLYGON || _drawingMode == POLYGON_POINTS) {
-        _drawingMode = POLYGON_FINISHED;
+        if (_drawingMode == POLYGON || _drawingMode == POLYGON_POINTS) {
+            _drawingMode = POLYGON_FINISHED;
+        }
     }
 }
 
@@ -1184,9 +1217,16 @@ void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
         if (item != nullptr) {
             GraphicalComponentPort* port = dynamic_cast<GraphicalComponentPort*> (item);
             if (port != nullptr) {
-                if (_connectingStep == 1 && !port->isInputPort()) {
+                if (_connectingStep == 1 && !port->getConnections()->empty()) {
+                    port->getConnections();
+                    GraphicalModelComponent *teste = port->graphicalComponent();
+                    teste->getComponent();
+                }
+                if (_connectingStep == 1 && port->getConnections()->empty()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
-                } else if (_connectingStep == 2 && port->isInputPort()) {
+                } else if (_connectingStep == 2 && port->isInputPort() && port->getConnections()->empty() && port->graphicalComponent() != _sourceGraphicalComponentPort->graphicalComponent()) {
+                    ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
+                } else if (_connectingStep == 3 && !port->isInputPort() && port->getConnections()->empty() && port->graphicalComponent() != _destinationGraphicalComponentPort->graphicalComponent()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
                 }
                 return;
@@ -1318,10 +1358,6 @@ unsigned short ModelGraphicsScene::connectingStep() const {
 
 void ModelGraphicsScene::setConnectingStep(unsigned short connectingStep) {
     _connectingStep = connectingStep;
-}
-
-GraphicalComponentPort* ModelGraphicsScene::getSourceGraphicalComponentPort() const {
-    return _sourceGraphicalComponentPort;
 }
 
 void ModelGraphicsScene::setParentWidget(QWidget *parentWidget) {

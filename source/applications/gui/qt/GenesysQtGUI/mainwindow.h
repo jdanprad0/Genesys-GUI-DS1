@@ -152,6 +152,8 @@ private slots:
 
     void on_actionGModelShowConnect_triggered();
 
+    void on_actionSelect_all_triggered();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
