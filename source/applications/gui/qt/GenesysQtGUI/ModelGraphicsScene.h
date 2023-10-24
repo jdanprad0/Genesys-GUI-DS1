@@ -86,6 +86,7 @@ public: // editing graphic model
     void clearConnectionsComponent(GraphicalModelComponent* gmc);
     void clearInputConnectionsComponent(GraphicalModelComponent* graphicalComponent);
     void clearOutputConnectionsComponent(GraphicalModelComponent* graphicalComponent);
+    void clearPorts(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination);
     void connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr, GraphicalModelComponent *destination = nullptr, bool notify = false);
     bool connectSource(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr);
     bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
@@ -125,12 +126,14 @@ public:
 	void setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged);
 	void setParentWidget(QWidget *parentWidget);
 	unsigned short connectingStep() const;
+    GraphicalComponentPort* getSourceGraphicalComponentPort() const;
 	void setConnectingStep(unsigned short connectingStep);
     void setSnapToGrid(bool activated);
     bool getSnapToGrid();
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
     void setGraphicalComponentPort(GraphicalComponentPort * in);
+    QList<GraphicalModelComponent*> *getAllComponents();
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
 public:
@@ -179,7 +182,7 @@ private:
     QGraphicsEllipseItem* _currentEllipse;
     QPolygonF _currentPolygonPoints;
     QPointF _drawingStartPoint;
-	unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source, 2: waiting click on destination and after that creates the connection and backs to 0
+    unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source, 2: waiting click on destination and after that creates the connection and backs to 0
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;

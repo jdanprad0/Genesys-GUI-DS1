@@ -1714,6 +1714,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionGModelShowConnect">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/mxgraph/resources/icons/pack4/iconsMxGraph/vertical.png</normaloff>:/mxgraph/resources/icons/pack4/iconsMxGraph/vertical.png</iconset>

@@ -151,6 +151,8 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
 GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection, bool notify) {
     GraphicalConnection* graphicconnection = new GraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
 
+    graphicconnection->getDestination();
+
     addItem(graphicconnection);
 
     _graphicalConnections->append(graphicconnection);
@@ -313,7 +315,6 @@ void ModelGraphicsScene::startTextEditing() {
     }
 }
 
-// ----------------------------------------- DANIEL -----------------------------------------
 
 // limpa todo o modelo
 void ModelGraphicsScene::clearGraphicalModelComponents() {
@@ -356,7 +357,6 @@ void ModelGraphicsScene::clearGraphicalModelConnections() {
     for (GraphicalConnection* gmc : _allGraphicalConnections) {
         if (gmc) {
             // remove da lista de conexões graficas
-            _graphicalConnections->removeOne(gmc);
             _allGraphicalConnections.removeOne(gmc);
 
             // libera o ponteiro alocado
@@ -367,15 +367,15 @@ void ModelGraphicsScene::clearGraphicalModelConnections() {
 
 // remove um componente e suas conexoes
 void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc, bool notify) {
+    //graphically
+    removeItem(gmc);
+    getGraphicalModelComponents()->removeOne(gmc);
+
     //remove in model
     removeComponentInModel(gmc);
 
     //limpa as conexoes
     clearConnectionsComponent(gmc);
-
-    //graphically
-    removeItem(gmc);
-    getGraphicalModelComponents()->removeOne(gmc);
 
     //notify graphical model change
     if (notify) {
@@ -492,9 +492,15 @@ void ModelGraphicsScene::removeConnectionInModel(GraphicalConnection* graphicalC
     source->getComponent()->getConnections()->removeAtPort(portNumber);
 }
 
+void ModelGraphicsScene::clearPorts(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination) {
+    source->getGraphicalOutputPorts().at(connection->getSource()->channel.portNumber)->removeGraphicalConnection(connection);
+    destination->getGraphicalInputPorts().at(connection->getDestination()->channel.portNumber)->removeGraphicalConnection(connection);
+}
+
 // trata da conexao dos componentes (necessario que ambos estejam no modelo)
 void ModelGraphicsScene::connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify) {
     // faz as conexoes
+
     ModelGraphicsScene::connectSource(connection, source);
     ModelGraphicsScene::connectDestination(connection, destination);
 
@@ -598,7 +604,6 @@ void ModelGraphicsScene::redoConnections(GraphicalModelComponent *graphicalCompo
     }
 }
 
-// ----------------------------------------- DANIEL -----------------------------------------
 
 void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
     removeItem(item);
@@ -919,96 +924,102 @@ void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
 }
 
 void ModelGraphicsScene::arranjeModels(int direction) {
-    int size = selectedItems().size();
-    qreal most_direction;
-    qreal most_up;
-    qreal most_down;
-    qreal most_left;
-    qreal most_right;
-    qreal middle;
-    qreal center;
+    QList<QGraphicsItem *> items = selectedItems();
 
-    if (size >= 2) {
-        switch (direction) {
-        case 0: //left
-            most_direction = sceneRect().right();
-            break;
-        case 1: //right
-            most_direction = sceneRect().left();
-            break;
-        case 2: //top
-            most_direction = sceneRect().bottom();
-            break;
-        case 3: //bottom
-            most_direction = sceneRect().top();
-            break;
-        case 4: //center
-            most_left = sceneRect().right();
-            most_right = sceneRect().left();
-            for (int i =0; i < size; i++) {
-                GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                qreal item_posX = c->x();
-                if (item_posX < most_left) {
-                    most_left = item_posX;
-                }
-                if (item_posX > most_right) {
-                    most_right = item_posX;
-                }
-            }
-            center = (most_right + most_left) / 2;
-            for (int i =0; i < size; i++) {
-                GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                c->setX(center);
-            }
-            break;
-        case 5: //middle
-            most_up = sceneRect().bottom();
-            most_down = sceneRect().top();
-            for (int i =0; i < size; i++) {
-                GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                qreal item_posY = c->y();
-                if (item_posY < most_up) {
-                    most_up = item_posY;
-                }
-                if (item_posY > most_down) {
-                    most_down = item_posY;
-                }
-            }
-            middle = (most_up + most_down) / 2;
-            for (int i =0; i < size; i++) {
-                GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                c->setY(middle);
-            }
-            break;
-        }
-        if (direction < 4) {
-            for (int i =0; i < size; i++) {
-                GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                if (direction < 2) {
-                    qreal item_pos = c->x();
-                    if ((item_pos < most_direction && direction == 0) || (item_pos > most_direction && direction == 1) ) {
-                        most_direction = item_pos;
-                    }
-                } else {
-                    qreal item_pos = c->y();
-                    if ((item_pos < most_direction && direction == 2) || (item_pos > most_direction && direction == 3) ) {
-                        most_direction = item_pos;
-                    }
-                }
-            }
-            if (direction < 2) {
-                for (int i =0; i < size; i++) {
-                    GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                    c->setX(most_direction);
-                }
-            } else {
-                for (int i =0; i < size; i++) {
-                    GraphicalModelComponent* c = dynamic_cast<GraphicalModelComponent*> (selectedItems().at(i));
-                    c->setY(most_direction);
-                }
-            }
-        }
+    for (int i =0; i < items.size(); i++) {
+        items.at(i)->setX(items.at(i)->pos().x() + 100);
     }
+
+//    int size = selectedItems().size();
+//    qreal most_direction;
+//    qreal most_up;
+//    qreal most_down;
+//    qreal most_left;
+//    qreal most_right;
+//    qreal middle;
+//    qreal center;
+
+//    if (size >= 2) {
+//        switch (direction) {
+//        case 0: //left
+//            most_direction = sceneRect().right();
+//            break;
+//        case 1: //right
+//            most_direction = sceneRect().left();
+//            break;
+//        case 2: //top
+//            most_direction = sceneRect().bottom();
+//            break;
+//        case 3: //bottom
+//            most_direction = sceneRect().top();
+//            break;
+//        case 4: //center
+//            most_left = sceneRect().right();
+//            most_right = sceneRect().left();
+//            for (int i =0; i < size; i++) {
+//                QGraphicsItem* c = selectedItems().at(i);
+//                qreal item_posX = c->x();
+//                if (item_posX < most_left) {
+//                    most_left = item_posX;
+//                }
+//                if (item_posX > most_right) {
+//                    most_right = item_posX;
+//                }
+//            }
+//            center = (most_right + most_left) / 2;
+//            for (int i =0; i < size; i++) {
+//                QGraphicsItem* c = selectedItems().at(i);
+//                c->setX(center);
+//            }
+//            break;
+//        case 5: //middle
+//            most_up = sceneRect().bottom();
+//            most_down = sceneRect().top();
+//            for (int i =0; i < size; i++) {
+//                QGraphicsItem* c = selectedItems().at(i);
+//                qreal item_posY = c->y();
+//                if (item_posY < most_up) {
+//                    most_up = item_posY;
+//                }
+//                if (item_posY > most_down) {
+//                    most_down = item_posY;
+//                }
+//            }
+//            middle = (most_up + most_down) / 2;
+//            for (int i =0; i < size; i++) {
+//                QGraphicsItem* c = selectedItems().at(i);
+//                c->setY(middle);
+//            }
+//            break;
+//        }
+//        if (direction < 4) {
+//            for (int i =0; i < size; i++) {
+//                QGraphicsItem* c = selectedItems().at(i);
+//                if (direction < 2) {
+//                    qreal item_pos = c->x();
+//                    if ((item_pos < most_direction && direction == 0) || (item_pos > most_direction && direction == 1) ) {
+//                        most_direction = item_pos;
+//                    }
+//                } else {
+//                    qreal item_pos = c->y();
+//                    if ((item_pos < most_direction && direction == 2) || (item_pos > most_direction && direction == 3) ) {
+//                        most_direction = item_pos;
+//                    }
+//                }
+//            }
+//            if (direction < 2) {
+//                for (int i =0; i < size; i++) {
+//                    QGraphicsItem* c = selectedItems().at(i);
+//                    c->setX(most_direction);
+//                }
+//            } else {
+//                for (int i =0; i < size; i++) {
+//                    QGraphicsItem* c = selectedItems().at(i);
+//                    c->setY(most_direction);
+//                }
+//            }
+//        }
+//    }
 }
 
 
@@ -1038,15 +1049,16 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                         _connectingStep = 3;
                         // create connection
                         // in the model
-                        ModelComponent* sourceComp = _sourceGraphicalComponentPort->graphicalComponent()->getComponent();
-                        ModelComponent* destComp = port->graphicalComponent()->getComponent();
-                        sourceComp->getConnections()->insertAtPort(_sourceGraphicalComponentPort->portNum(), new Connection({destComp, port->portNum()}));
-                        // graphically
                         GraphicalConnection* graphicconnection = new GraphicalConnection(_sourceGraphicalComponentPort, port);
-                        _sourceGraphicalComponentPort->addGraphicalConnection(graphicconnection);
-                        port->addGraphicalConnection(graphicconnection);
+
+                        // faz essa limpeza pois quando cria a conexao ela ja adiciona essa conexao nas portas
+                        // porem o connectComponents ja faz isso pra quando há necessidade de fazer reconexao
+
+                        QUndoCommand *addUndoCommand = new AddUndoCommand(graphicconnection, this);
+                        _undoStack->push(addUndoCommand);
+
                         addItem(graphicconnection);
-                        //
+
                         ((ModelGraphicsView *) (this->parent()))->unsetCursor();
                         _connectingStep = 0;
                         return;
@@ -1204,6 +1216,8 @@ void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
             ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::ClosedHandCursor);
         }*/
     }
+
+    update();
 }
 
 void ModelGraphicsScene::focusInEvent(QFocusEvent *focusEvent) {
@@ -1306,6 +1320,10 @@ void ModelGraphicsScene::setConnectingStep(unsigned short connectingStep) {
     _connectingStep = connectingStep;
 }
 
+GraphicalComponentPort* ModelGraphicsScene::getSourceGraphicalComponentPort() const {
+    return _sourceGraphicalComponentPort;
+}
+
 void ModelGraphicsScene::setParentWidget(QWidget *parentWidget) {
     _parentWidget = parentWidget;
 }
@@ -1318,6 +1336,11 @@ void ModelGraphicsScene::setGraphicalComponentPort(GraphicalComponentPort * in) 
     _sourceGraphicalComponentPort = in;
 
 }
+
+QList<GraphicalModelComponent*> *ModelGraphicsScene::getAllComponents() {
+    return &_allGraphicalModelComponents;
+}
+
 
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){
     QList<GraphicalModelComponent*>* list = new QList<GraphicalModelComponent*>();

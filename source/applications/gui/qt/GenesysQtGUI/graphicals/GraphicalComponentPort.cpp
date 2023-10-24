@@ -195,7 +195,8 @@ void GraphicalComponentPort::addGraphicalConnection(GraphicalConnection* connect
 }
 
 void GraphicalComponentPort::removeGraphicalConnection(GraphicalConnection* connection) {
-	_connections->removeOne(connection);
+    if (_connections->size() > 0 && connection != nullptr)
+        _connections->removeOne(connection);
 }
 
 

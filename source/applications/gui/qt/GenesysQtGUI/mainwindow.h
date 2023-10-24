@@ -150,6 +150,8 @@ private slots:
 
     void on_actionShowSnap_triggered();
 
+    void on_actionGModelShowConnect_triggered();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -223,6 +225,7 @@ private: // graphical model persistence
 private:
 	QColor myrgba(uint64_t color); // TODO: Should NOT be here, but in UtilGUI.h, but then it generates multiple definitions error
 	static std::string dotColor(uint64_t color); // TODO: Should NOT be here, but in UtilGUI.h, but then it generates multiple definitions error
+    void _helpCopy();
 private: // interface and model main elements to join
 	Ui::MainWindow *ui;
 	Simulator* simulator;
@@ -246,8 +249,7 @@ private: // misc useful
         GraphicalModelComponent * copy;
     };
 
-
-
+    bool _firstClickShowConnection = true;
 
 private:
 

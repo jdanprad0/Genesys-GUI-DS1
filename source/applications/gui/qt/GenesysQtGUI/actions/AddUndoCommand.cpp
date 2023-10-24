@@ -138,7 +138,12 @@ void AddUndoCommand::redo() {
         // por exemplo, pode ter uma conexao selecionada que foi eliminada anteriormente pois ela fazia parte de um componente
         // entao ao refazer as conexoes do componente, ela ja foi religada
         if (!_myGraphicsScene->getGraphicalConnections()->contains(_myConnectionItem)) {
-            _myGraphicsScene->connectComponents(_myConnectionItem, nullptr, nullptr, true);
+            GraphicalModelComponent* sourceComp = _myGraphicsScene->findGraphicalModelComponent(_myConnectionItem->getSource()->component->getId());
+            GraphicalModelComponent* destComp = _myGraphicsScene->findGraphicalModelComponent(_myConnectionItem->getDestination()->component->getId());
+
+            _myGraphicsScene->clearPorts(_myConnectionItem, sourceComp, destComp);
+
+            _myGraphicsScene->connectComponents(_myConnectionItem, sourceComp, destComp, true);
         }
     }
 

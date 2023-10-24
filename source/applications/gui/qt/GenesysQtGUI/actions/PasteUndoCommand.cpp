@@ -1,10 +1,14 @@
 #include "PasteUndoCommand.h"
 
 PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalComponents, QList<GraphicalConnection *> *connections, QList<QGraphicsItemGroup *> *groups, QList<QGraphicsItem *> *drawing, ModelGraphicsScene *scene, QUndoCommand *parent)
-    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(drawing), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
+    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<QGraphicsItem *>()), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
 
     for (int i = 0; i < connections->size(); i++) {
         _myConnectionItems->append(connections->at(i));
+    }
+
+    for (int i = 0; i < drawing->size(); i++) {
+        _myDrawingItems->append(drawing->at(i));
     }
 
     for (int i = 0; i < graphicalComponents->size(); i++) {
@@ -91,12 +95,12 @@ void PasteUndoCommand::undo() {
     }
 
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
-//    for (int i = 0; i < _myDrawingItems->size(); ++i) {
-//        QGraphicsItem *item = _myDrawingItems->at(i);
+    for (int i = 0; i < _myDrawingItems->size(); ++i) {
+        QGraphicsItem *item = _myDrawingItems->at(i);
 
-//        //add graphically
-//        _myGraphicsScene->removeDrawing(item);
-//    }
+        //remove graphically
+        _myGraphicsScene->removeDrawing(item);
+    }
 
     // agora remove o que deve ser removido do modelo
     // varre todos os GraphicalModelComponent
@@ -136,7 +140,9 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        componentItem.initialPosition.setX(componentItem.initialPosition.x()); /// ----------------
+        componentItem.graphicalComponent->setX(componentItem.initialPosition.x() + 100);
+        componentItem.graphicalComponent->setY(componentItem.initialPosition.y() - 100);
+        //componentItem.graphicalComponent->setOldPosition(componentItem.initialPosition.y() - 100);
 
         _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
@@ -149,18 +155,25 @@ void PasteUndoCommand::redo() {
             GraphicalConnection *connection = componentItem.outputConnections.at(j);
             _myGraphicsScene->addItem(connection);
         }
+
+        componentItem.graphicalComponent->setSelected(true);
     }
 
     // adiciona as conexoes selecionadas individualmente
     for (int i = 0; i < _myConnectionItems->size(); ++i) {
         GraphicalConnection *connection = _myConnectionItems->at(i);
         _myGraphicsScene->addItem(connection);
+        connection->setSelected(true);
     }
 
     // varre todos os outros itens simples do tipo QGraphicsItem e adiciona da tela
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
         QGraphicsItem *item = _myDrawingItems->at(i);
+        item->setX(item->pos().x() + 100);
+        item->setY(item->pos().y() - 100);
+        _myGraphicsScene->getGraphicalDrawings()->append(item);
         _myGraphicsScene->addItem(item);
+        item->setSelected(true);
     }
 
     // agora comeca a adicionar o que se deve no modelo
@@ -171,6 +184,7 @@ void PasteUndoCommand::redo() {
         //add in model (apenas para delete)
         _myGraphicsScene->getSimulator()->getModels()->current()->insert(componentItem.graphicalComponent->getComponent());
 
+        _myGraphicsScene->getAllComponents()->append(componentItem.graphicalComponent);
         //add graphically
         _myGraphicsScene->getGraphicalModelComponents()->append(componentItem.graphicalComponent);
 
@@ -201,7 +215,17 @@ void PasteUndoCommand::redo() {
         delete componentsGroup;
     }
 
+    // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
+    for (int i = 0; i < _myDrawingItems->size(); ++i) {
+        QGraphicsItem *item = _myDrawingItems->at(i);
+
+        //add graphically
+        _myGraphicsScene->addItem(item);
+        _myGraphicsScene->getGraphicalDrawings()->append(item);
+    }
+
     _myGraphicsScene->notifyGraphicalModelChange(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::OTHER, nullptr);
+
 
     // atualiza a cena
     _myGraphicsScene->update();
