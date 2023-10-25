@@ -225,9 +225,10 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 _currentRectangle = new QGraphicsRectItem(_drawingStartPoint.x(), _drawingStartPoint.y(), width, height);
                 addItem(_currentRectangle);
             } else {
-                QGraphicsRectItem* rectangle = new QGraphicsRectItem(_drawingStartPoint.x(), _drawingStartPoint.y(), width, height);
+                QGraphicsRectItem* rectangle = new QGraphicsRectItem(0, 0, width, height);
                 rectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 rectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
+                rectangle->setPos(_drawingStartPoint.x(), _drawingStartPoint.y());
                 getGraphicalDrawings()->append(rectangle);
                 drawingItem = rectangle;
             }
@@ -247,9 +248,10 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 _currentEllipse = new QGraphicsEllipseItem(_drawingStartPoint.x(), _drawingStartPoint.y(), width, height);
                 addItem(_currentEllipse);
             } else {
-                QGraphicsEllipseItem* ellipse = new QGraphicsEllipseItem(_drawingStartPoint.x(), _drawingStartPoint.y(), width, height);
+                QGraphicsEllipseItem* ellipse = new QGraphicsEllipseItem(0, 0, width, height);
                 ellipse->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 ellipse->setFlag(QGraphicsItem::ItemIsMovable, true);
+                ellipse->setPos(_drawingStartPoint.x(), _drawingStartPoint.y());
                 getGraphicalDrawings()->append(ellipse);
                 drawingItem = ellipse;
             }
@@ -817,17 +819,23 @@ void ModelGraphicsScene::groupComponents(bool notify) {
 }
 
 void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group) {
-    // Limpar o itemsBoundingRect do grupo
-    group->boundingRect().setRect(0, 0, 0, 0);
+    QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
 
     group->update();
+    newGroup->update();
+
+    for (int i = 0; i < graphicalComponents->size(); i++) {
+        newGroup->addToGroup(graphicalComponents->at(i));
+    }
+
+    // Adicione o novo grupo à sua cena
+    group->setX(newGroup->boundingRect().x());
+    group->setY(newGroup->boundingRect().y());
 
     for (int i = 0; i < graphicalComponents->size(); i++) {
         group->addToGroup(graphicalComponents->at(i));
     }
 
-    // Adicione o novo grupo à sua cena
-    //addItem(new_group);
     addItem(group);
 
     group->setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -835,7 +843,6 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
     for (QGraphicsItem *item : group->childItems()) {
         item->setSelected(false);
     }
-
     group->setSelected(true);
 
     group->setFlag(QGraphicsItem::ItemIsMovable, true);
@@ -844,6 +851,8 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
     getGraphicalGroups()->append(group);
 
     group->update();
+
+    delete newGroup;
 }
 
 

@@ -8,6 +8,9 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
     }
 
     for (int i = 0; i < drawing->size(); i++) {
+        drawing->at(i)->setX(drawing->at(i)->pos().x() + drawing->at(i)->boundingRect().width()/2);
+        drawing->at(i)->setY(drawing->at(i)->pos().y() - drawing->at(i)->boundingRect().height()/2);
+        _myGraphicsScene->insertOldPositionItem(drawing->at(i), drawing->at(i)->pos());
         _myDrawingItems->append(drawing->at(i));
     }
 
@@ -16,6 +19,9 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
         ComponentItem componentItem;
 
         componentItem.graphicalComponent = component;
+        componentItem.graphicalComponent->setX(componentItem.graphicalComponent->pos().x() + componentItem.graphicalComponent->boundingRect().width()/2);
+        componentItem.graphicalComponent->setY(componentItem.graphicalComponent->pos().y() - componentItem.graphicalComponent->boundingRect().height()/2);
+        componentItem.graphicalComponent->setOldPosition(componentItem.graphicalComponent->pos());
         componentItem.initialPosition = component->pos();
 
         if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
@@ -140,11 +146,6 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        // se for mudar posicao do componente muda aqui
-        componentItem.graphicalComponent->setX(componentItem.graphicalComponent->pos().x() + componentItem.graphicalComponent->boundingRect().width()/2);
-        componentItem.graphicalComponent->setY(componentItem.graphicalComponent->pos().y() - componentItem.graphicalComponent->boundingRect().height()/2);
-        componentItem.graphicalComponent->setOldPosition(componentItem.graphicalComponent->pos());
-
         _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
         for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
@@ -170,10 +171,7 @@ void PasteUndoCommand::redo() {
     // varre todos os outros itens simples do tipo QGraphicsItem e adiciona da tela
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
         QGraphicsItem *item = _myDrawingItems->at(i);
-        item->setX(item->pos().x() + item->boundingRect().width()/2);
-        item->setY(item->pos().y() - item->boundingRect().height()/2);
         _myGraphicsScene->getGraphicalDrawings()->append(item);
-        _myGraphicsScene->insertOldPositionItem(item, item->pos());
         _myGraphicsScene->addItem(item);
         item->setSelected(true);
     }
