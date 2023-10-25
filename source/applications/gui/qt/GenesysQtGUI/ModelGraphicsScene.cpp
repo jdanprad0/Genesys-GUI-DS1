@@ -1159,25 +1159,20 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
             oldPositions.append(component->getOldPosition());
             newPositions.append(component->scenePos());
         } else if (component == nullptr){
-            GraphicalComponentPort *port = dynamic_cast<GraphicalComponentPort *> (item);
-            GraphicalConnection *conn = dynamic_cast<GraphicalConnection *> (item);
+            QRectF rectScenePost = item->sceneBoundingRect();
 
-            if ((!conn) && (!port)) {
-                QRectF rectScenePost = item->sceneBoundingRect();
+            qreal rectX = rectScenePost.bottomLeft().x(); // position X
+            qreal rectY = rectScenePost.topRight().y(); // position Y
 
-                qreal rectX = rectScenePost.bottomLeft().x(); // position X
-                qreal rectY = rectScenePost.topRight().y(); // position Y
+            myQPointF.setX(rectX);
+            myQPointF.setY(rectY);
 
-                myQPointF.setX(rectX);
-                myQPointF.setY(rectY);
+            QPointF oldPos = _oldPositionsItems[item];
 
-                QPointF oldPos = _oldPositionsItems[item];
-
-                if (oldPos != myQPointF) {
-                    items.append(item);
-                    oldPositions.append(_oldPositionsItems[item]);
-                    newPositions.append(item->pos());
-                }
+            if (oldPos != myQPointF) {
+                items.append(item);
+                oldPositions.append(_oldPositionsItems[item]);
+                newPositions.append(item->pos());
             }
         }
     }

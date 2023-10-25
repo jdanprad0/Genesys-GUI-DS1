@@ -179,11 +179,11 @@ private:
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
     QMap<QGraphicsItem *, QPointF> _oldPositionsItems;
 private:
-    DrawingMode _drawingMode;
-	QGraphicsRectItem* _currentRectangle;
-    QGraphicsLineItem* _currentLine;
-    QGraphicsPolygonItem* _currentPolygon;
-    QGraphicsEllipseItem* _currentEllipse;
+    DrawingMode _drawingMode = NONE;
+    QGraphicsRectItem* _currentRectangle = nullptr;
+    QGraphicsLineItem* _currentLine = nullptr;
+    QGraphicsPolygonItem* _currentPolygon = nullptr;
+    QGraphicsEllipseItem* _currentEllipse = nullptr;
     QPolygonF _currentPolygonPoints;
     QPointF _drawingStartPoint;
     QAction* _currentAction = nullptr;
