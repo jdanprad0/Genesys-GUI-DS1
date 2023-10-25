@@ -194,7 +194,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 line->setFlag(QGraphicsItem::ItemIsMovable, true);
                 getGraphicalDrawings()->append(line);
                 drawingItem = line;
-                //addItem(line);
             }
         }
 
@@ -229,10 +228,8 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 QGraphicsRectItem* rectangle = new QGraphicsRectItem(_drawingStartPoint.x(), _drawingStartPoint.y(), width, height);
                 rectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 rectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
-
                 getGraphicalDrawings()->append(rectangle);
                 drawingItem = rectangle;
-                //addItem(rectangle);
             }
         }
     } else if (_drawingMode == ELLIPSE) {
@@ -255,7 +252,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 ellipse->setFlag(QGraphicsItem::ItemIsMovable, true);
                 getGraphicalDrawings()->append(ellipse);
                 drawingItem = ellipse;
-                //addItem(ellipse);
             }
         }
     } else if (_drawingMode == POLYGON) {
@@ -265,7 +261,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
         _currentPolygonPoints << endPoint;
         _currentPolygon = new QGraphicsPolygonItem(QPolygonF(_currentPolygonPoints));
         _currentPolygon->setVisible(true);
-
         addItem(_currentPolygon);
     } else if (_drawingMode == POLYGON_POINTS) {
         removeItem(_currentPolygon);
@@ -298,7 +293,9 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
             notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
         }
 
-        _currentAction->setChecked(false);
+        if (_currentAction != nullptr)
+            _currentAction->setChecked(false);
+
         QUndoCommand *addUndoCommand = new AddUndoCommand(drawingItem , this);
         _undoStack->push(addUndoCommand);
 
@@ -713,6 +710,10 @@ void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<G
     _listComponentsGroup.insert(group, componentsGroup);
 }
 
+void ModelGraphicsScene::insertOldPositionItem(QGraphicsItem *item, QPointF position) {
+    _oldPositionsItems.insert(item, position);
+}
+
 void ModelGraphicsScene::snapItemsToGrid()
 {
     if (_snapToGrid) {
@@ -1048,12 +1049,20 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mousePressEvent(mouseEvent);
+
     if (mouseEvent->button() == Qt::LeftButton) {
 
         QGraphicsItem* item = this->itemAt(mouseEvent->scenePos(), QTransform());
 
         if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *> (item)) {
             component->setOldPosition(component->scenePos());
+        } else {
+            GraphicalComponentPort *port = dynamic_cast<GraphicalComponentPort *> (item);
+            GraphicalConnection *conn = dynamic_cast<GraphicalConnection *> (item);
+
+            if ((!conn) && (!port) && item) {
+                insertOldPositionItem(item, item->pos());
+            }
         }
 
         if (_connectingStep > 0) {
@@ -1138,26 +1147,52 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 
     snapItemsToGrid();
 
-    QList<GraphicalModelComponent*> components;
+    QList<QGraphicsItem *> items;
     QList<QPointF> oldPositions;
     QList<QPointF> newPositions;
+    QPointF myQPointF;
 
     foreach (QGraphicsItem* item, this->selectedItems()) {
         GraphicalModelComponent* component = dynamic_cast<GraphicalModelComponent*>(item);
         if (component && component->getOldPosition() != component->scenePos()) {
-            components.append(component);
+            items.append(component);
             oldPositions.append(component->getOldPosition());
             newPositions.append(component->scenePos());
+        } else if (component == nullptr){
+            GraphicalComponentPort *port = dynamic_cast<GraphicalComponentPort *> (item);
+            GraphicalConnection *conn = dynamic_cast<GraphicalConnection *> (item);
+
+            if ((!conn) && (!port)) {
+                QRectF rectScenePost = item->sceneBoundingRect();
+
+                qreal rectX = rectScenePost.bottomLeft().x(); // position X
+                qreal rectY = rectScenePost.topRight().y(); // position Y
+
+                myQPointF.setX(rectX);
+                myQPointF.setY(rectY);
+
+                QPointF oldPos = _oldPositionsItems[item];
+
+                if (oldPos != myQPointF) {
+                    items.append(item);
+                    oldPositions.append(_oldPositionsItems[item]);
+                    newPositions.append(item->pos());
+                }
+            }
         }
     }
 
-    if (components.size() >= 1) {
-        QUndoCommand *moveUndoCommand = new MoveUndoCommand(components, this, oldPositions, newPositions);
+    if (items.size() >= 1) {
+        QUndoCommand *moveUndoCommand = new MoveUndoCommand(items, this, oldPositions, newPositions);
         _undoStack->push(moveUndoCommand);
     }
 
-    foreach (GraphicalModelComponent* item, components) {
-        item->setOldPosition(item->scenePos());
+    foreach (QGraphicsItem* item, items) {
+        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *> (item)) {
+            component->setOldPosition(item->scenePos());
+        } else {
+            insertOldPositionItem(item, item->pos());
+        }
     }
 
 

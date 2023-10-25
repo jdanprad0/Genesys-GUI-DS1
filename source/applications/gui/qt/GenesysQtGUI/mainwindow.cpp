@@ -2382,9 +2382,9 @@ void MainWindow::_helpCopy() {
         if (rectItem) {
             QGraphicsRectItem *copiedItem;
             copiedItem = new QGraphicsRectItem(rectItem->rect());
+            copiedItem->setPos(rectItem->pos());
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
-            QPointF posicao = draw->mapToScene(rectItem->scenePos());
             drawing_aux->append(copiedItem);
         }
 
@@ -2392,6 +2392,7 @@ void MainWindow::_helpCopy() {
         if (ellipseItem) {
             QGraphicsEllipseItem *copiedItem;
             copiedItem = new QGraphicsEllipseItem(ellipseItem->rect());
+            copiedItem->setPos(ellipseItem->pos());
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
@@ -2401,6 +2402,7 @@ void MainWindow::_helpCopy() {
         if (polygonItem) {
             QGraphicsPolygonItem *copiedItem;
             copiedItem = new QGraphicsPolygonItem(polygonItem->polygon());
+            copiedItem->setPos(polygonItem->pos());
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
@@ -2410,6 +2412,7 @@ void MainWindow::_helpCopy() {
         if (lineItem) {
             QGraphicsLineItem *copiedItem;
             copiedItem = new QGraphicsLineItem(lineItem->line());
+            copiedItem->setPos(lineItem->pos());
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);

@@ -138,6 +138,7 @@ public:
     QList<GraphicalModelComponent*> *getAllComponents();
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
+    void insertOldPositionItem(QGraphicsItem *item, QPointF position);
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
 	QList<QGraphicsItem*>*getGraphicalModelComponents() const;
@@ -176,6 +177,7 @@ private:
     QList<GraphicalConnection*> _allGraphicalConnections;
     QUndoStack *_undoStack = nullptr;
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
+    QMap<QGraphicsItem *, QPointF> _oldPositionsItems;
 private:
     DrawingMode _drawingMode;
 	QGraphicsRectItem* _currentRectangle;
