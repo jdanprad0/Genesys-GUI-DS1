@@ -947,7 +947,17 @@ void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
 }
 
 void ModelGraphicsScene::arranjeModels(int direction) {
-    QList<QGraphicsItem *> items = selectedItems();
+    QList<QGraphicsItem *> items;
+    QList<QPointF> newPositions;
+    QList<QPointF> oldPositions;
+
+    for (unsigned int i = 0; i < (unsigned int) selectedItems().size(); i++) {
+        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *> (selectedItems().at(i))) {
+            items.append(component);
+        } else if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (selectedItems().at(i))) {
+            items.append(group);
+        }
+    }
 
     int size = items.size();
     qreal most_direction;
@@ -990,8 +1000,16 @@ void ModelGraphicsScene::arranjeModels(int direction) {
             center = (most_right + most_left) / 2;
             for (int i =0; i < size; i++) {
                 QGraphicsItem* item = selectedItems().at(i);
-                if (!dynamic_cast<GraphicalConnection *>(item))
+                if (!dynamic_cast<GraphicalConnection *>(item)) {
+                    if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (item)) {
+                        insertOldPositionItem(item, item->pos());
+                        oldPositions.append(item->pos());
+                    } else {
+                        oldPositions.append(item->pos());
+                    }
                     item->setX(center);
+                    newPositions.append(item->pos());
+                }
             }
             break;
         case 5: //middle
@@ -1012,8 +1030,16 @@ void ModelGraphicsScene::arranjeModels(int direction) {
             middle = (most_up + most_down) / 2;
             for (int i =0; i < size; i++) {
                 QGraphicsItem* item = selectedItems().at(i);
-                if (!dynamic_cast<GraphicalConnection *>(item))
+                if (!dynamic_cast<GraphicalConnection *>(item)) {
+                    if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (item)) {
+                        insertOldPositionItem(item, item->pos());
+                        oldPositions.append(item->pos());
+                    } else {
+                        oldPositions.append(item->pos());
+                    }
                     item->setX(middle);
+                    newPositions.append(item->pos());
+                }
             }
             break;
         }
@@ -1037,17 +1063,35 @@ void ModelGraphicsScene::arranjeModels(int direction) {
             if (direction < 2) {
                 for (int i =0; i < size; i++) {
                     QGraphicsItem* item = selectedItems().at(i);
-                    if (!dynamic_cast<GraphicalConnection *>(item))
+                    if (!dynamic_cast<GraphicalConnection *>(item)) {
+                        if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (item)) {
+                            insertOldPositionItem(item, item->pos());
+                            oldPositions.append(item->pos());
+                        } else {
+                            oldPositions.append(item->pos());
+                        }
                         item->setX(most_direction);
+                        newPositions.append(item->pos());
+                    }
                 }
             } else {
                 for (int i =0; i < size; i++) {
                     QGraphicsItem* item = selectedItems().at(i);
-                    if (!dynamic_cast<GraphicalConnection *>(item))
+                    if (!dynamic_cast<GraphicalConnection *>(item)) {
+                        if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (item)) {
+                            insertOldPositionItem(item, item->pos());
+                            oldPositions.append(item->pos());
+                        } else {
+                            oldPositions.append(item->pos());
+                        }
                         item->setY(most_direction);
+                        newPositions.append(item->pos());
+                    }
                 }
             }
         }
+        QUndoCommand *moveUndoCommand = new MoveUndoCommand(items, this, oldPositions, newPositions);
+        _undoStack->push(moveUndoCommand);
     }
 }
 
