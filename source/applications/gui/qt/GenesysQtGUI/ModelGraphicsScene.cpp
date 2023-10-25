@@ -298,6 +298,7 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
             notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
         }
 
+
         _currentAction->setChecked(false);
         QUndoCommand *addUndoCommand = new AddUndoCommand(drawingItem , this);
         _undoStack->push(addUndoCommand);
