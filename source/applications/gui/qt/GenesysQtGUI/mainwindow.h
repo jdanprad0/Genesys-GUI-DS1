@@ -27,7 +27,9 @@ public:
 
 public: // to notify changes
 	bool graphicalModelHasChanged() const;
-	void setGraphicalModelHasChanged(bool graphicalModelHasChanged);
+    void setGraphicalModelHasChanged(bool graphicalModelHasChanged);
+    void unselectDrawIcons();
+    bool checkSelectedDrawIcons();
 
 private slots:
     // actions

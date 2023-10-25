@@ -37,6 +37,7 @@
 #include <QGraphicsRectItem>
 #include <QTreeWidgetItem>
 #include <QUndoStack>
+#include <QAction>
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalComponentPort.h"
 #include "TraitsGUI.h"
@@ -132,6 +133,8 @@ public:
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
     void setGraphicalComponentPort(GraphicalComponentPort * in);
+    DrawingMode getDrawingMode();
+    void setAction(QAction* action);
     QList<GraphicalModelComponent*> *getAllComponents();
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
@@ -181,6 +184,8 @@ private:
     QGraphicsEllipseItem* _currentEllipse;
     QPolygonF _currentPolygonPoints;
     QPointF _drawingStartPoint;
+    QAction* _currentAction = nullptr;
+    bool _drawing = false;
     unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source or destination, 2: click on source, 3: click on destination
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;
