@@ -192,7 +192,7 @@ void DeleteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        _myGraphicsScene->removeItem(componentItem.graphicalComponent);
+        componentItem.graphicalComponent->setOldPosition(componentItem.graphicalComponent->pos());
 
         for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
             GraphicalConnection *connection = componentItem.inputConnections.at(j);
@@ -203,6 +203,8 @@ void DeleteUndoCommand::redo() {
             GraphicalConnection *connection = componentItem.outputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
         }
+
+        _myGraphicsScene->removeItem(componentItem.graphicalComponent);
     }
 
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela

@@ -2080,11 +2080,8 @@ void::MainWindow::saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QLi
             }
         }
 
-        if (!(sourceSelected != nullptr && dstSelected != nullptr)) {
-            sourceSelected = scene->findGraphicalModelComponent(conn->getSource()->component->getId());
-            dstSelected = scene->findGraphicalModelComponent(conn->getDestination()->component->getId());
-            _ports_copies->removeOne(conn);
-
+        if (sourceSelected == nullptr || dstSelected == nullptr) {
+            connList->removeOne(conn);
         }
     }
 }
@@ -2105,33 +2102,26 @@ void MainWindow::on_actionEditCopy_triggered() {
 
         // Adiciona na lista de cópias (conexoes, componentes e poligonos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
-
-            // Tenta transforma em um componente grafico de modelo
-            GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent*>(item);
-
-            // Se conseguiu, então era um componente
-            if (gmc) {
-
+            // verifica se e um componente grafico
+            if (GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent*>(item)) {
                 // Adiciona em uma lista de cópias de componentes
                 gmc->setSelected(false);
                 _gmc_copies->append(gmc);
-
-            } else {
-
-                // Tenta transforma em um conexão gráfico do modelo
-                GraphicalConnection *port = dynamic_cast<GraphicalConnection*>(item);
-
-                // Se conseguiu, então era uma conexão
-                if (port) {
-                    port->setSelected(false);
-                    // Adiciona em uma lista de cópias de conexões
-                    _ports_copies->append(port);
-
-                    // Então é um poligono (desenho)
-                } else {
-                    port->setSelected(false);
-                    _draw_copy->append(item);
-                }
+            }
+            // verifica se e uma conexao grafica
+            else if (GraphicalConnection *conn = dynamic_cast<GraphicalConnection*>(item)) {
+                conn->setSelected(false);
+                _ports_copies->append(conn);
+            }
+            // verifica se e um grupo
+            else if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup*>(item)) {
+                group->setSelected(false);
+                _group_copy->append(group);
+            }
+            // se nao for nenhum deles e um desenho
+            else {
+                item->setSelected(false);
+                _draw_copy->append(item);
             }
         }
 
@@ -2173,7 +2163,7 @@ void MainWindow::on_actionEditCopy_triggered() {
 void MainWindow::on_actionEditPaste_triggered() {
 
     // Se tiver componente copiados
-    if (_gmc_copies->size() > 0 || _draw_copy->size() > 0) {
+    if (_gmc_copies->size() > 0 || _draw_copy->size() > 0 || _group_copy->size() > 0) {
 
         // Pega a cena
         ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->getScene());
@@ -2199,12 +2189,18 @@ void MainWindow::_helpCopy() {
     ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->getScene());
 
     QList<COPY*> * aux = new QList<COPY *>();
-    QList<GraphicalModelComponent*> * gmc_aux  = new QList<GraphicalModelComponent*>();
-    QList<GraphicalConnection*> * ports_aux = new QList<GraphicalConnection*>();
-    QList<QGraphicsItem*> * drawing_aux = new QList<QGraphicsItem*>();
+    QList<GraphicalModelComponent *> *gmc_aux  = new QList<GraphicalModelComponent*>();
+    QList<GraphicalModelComponent *> *gmc_old_group_aux  = new QList<GraphicalModelComponent*>();
+    QList<GraphicalModelComponent *> *gmc_new_group_aux  = new QList<GraphicalModelComponent*>();
+    QList<GraphicalConnection *> *ports_aux = new QList<GraphicalConnection*>();
+    QList<QGraphicsItem *> *drawing_aux = new QList<QGraphicsItem*>();
+    QList<QGraphicsItemGroup *> *group_aux = new QList<QGraphicsItemGroup*>();
 
     // Adicionando todos os componentes antes
     foreach (GraphicalModelComponent * gmc , *_gmc_copies) {
+
+        if (gmc->group())
+            continue;
 
         // Componente
         ModelComponent * previousComponent = gmc->getComponent();
@@ -2227,7 +2223,6 @@ void MainWindow::_helpCopy() {
 
         // Componente de Copia ou Recorte
         ModelComponent * component  = (ModelComponent*) plugin->newInstance(simulator->getModels()->current());
-        position.setX(position.x()+100);
 
 
         GraphicalModelComponent* newgmc = new GraphicalModelComponent(plugin, component, position, color);
@@ -2238,7 +2233,78 @@ void MainWindow::_helpCopy() {
         temp->copy = newgmc;
         aux->append(temp);
         gmc_aux->append(newgmc);
+    }
 
+    // Adicionando todos os componentes antes
+    foreach (QGraphicsItemGroup *group , *_group_copy) {
+        QList<GraphicalConnection*> * connGroup = new QList<GraphicalConnection*>();
+
+        for (unsigned int i = 0; i < (unsigned int) group->childItems().size(); i++) {
+            GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(i));
+
+            // Componente
+            ModelComponent * previousComponent = gmc->getComponent();
+
+            // Adiciona o componente no modelo
+            simulator->getModels()->current()->getComponents()->insert(previousComponent);
+
+            // Nome do plugin para a copia do componente
+            std::string pluginname = previousComponent->getClassname();
+
+            // Plugin para a copia do novo component
+            Plugin* plugin = simulator->getPlugins()->find(pluginname);
+
+            // Ajustando a posicao da copia
+            //@TODO: Modificar para por onde o mouse clicou
+            QPointF position = gmc->pos();
+
+            // Copiando a cor
+            QColor color = gmc->getColor();
+
+            // Componente de Copia ou Recorte
+            ModelComponent * component  = (ModelComponent*) plugin->newInstance(simulator->getModels()->current());
+
+            GraphicalModelComponent* newgmc = new GraphicalModelComponent(plugin, component, position, color);
+            // Adiciona o componente graficamente
+            GraphicalModelComponent * oldgmc = scene->findGraphicalModelComponent(previousComponent->getId());
+
+            if (!oldgmc->getGraphicalInputPorts().empty() && !oldgmc->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
+                connGroup->removeOne(oldgmc->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+                connGroup->append(oldgmc->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+            }
+
+            for (int j = 0; j < oldgmc->getGraphicalOutputPorts().size(); ++j) {
+                GraphicalComponentPort *port = oldgmc->getGraphicalOutputPorts().at(j);
+
+                if (!port->getConnections()->empty()) {
+                    connGroup->removeOne(port->getConnections()->at(0));
+                    connGroup->append(port->getConnections()->at(0));
+                }
+            }
+
+            gmc_old_group_aux->append(oldgmc);
+            gmc_new_group_aux->append(newgmc);
+            COPY * temp = new COPY();
+            temp->old = oldgmc;
+            temp->copy = newgmc;
+            aux->append(temp);
+            gmc_aux->append(newgmc);
+        }
+
+        saveItemForCopy(gmc_old_group_aux, connGroup);
+
+
+        for (unsigned int k = 0; k < (unsigned int) connGroup->size(); k++) {
+            _ports_copies->removeOne(connGroup->at(k));
+            _ports_copies->append(connGroup->at(k));
+        }
+
+        QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
+        ui->graphicsView->getScene()->groupModelComponents(gmc_new_group_aux, newGroup);
+        ui->graphicsView->getScene()->insertComponentGroup(newGroup, *gmc_new_group_aux);
+        gmc_old_group_aux->clear();
+        gmc_new_group_aux->clear();
+        group_aux->append(newGroup);
     }
 
     // Adicionando as conexões (e seus respectivos componentes)
@@ -2281,6 +2347,7 @@ void MainWindow::_helpCopy() {
             if (c->old == gmcDestination) gmcNewDestination = c->copy;
 
         }
+
         // Cria GraphicalComponentPort para gmc source
         sourcePort = gmcNewSource->getGraphicalOutputPorts().at(portSourceConnection);
 
@@ -2300,35 +2367,41 @@ void MainWindow::_helpCopy() {
 
     //Adicionando os desenhos
     foreach(QGraphicsItem * draw, *_draw_copy) {
-
         QGraphicsRectItem* rectItem = dynamic_cast<QGraphicsRectItem*>(draw);
 
         if (rectItem) {
             QGraphicsRectItem *copiedItem;
-            copiedItem = new QGraphicsRectItem(rectItem->rect().x(), rectItem->rect().y(), rectItem->rect().width(), rectItem->rect().height());
+            copiedItem = new QGraphicsRectItem(rectItem->rect());
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
+            QPointF posicao = draw->mapToScene(rectItem->scenePos());
             drawing_aux->append(copiedItem);
         }
 
         QGraphicsEllipseItem* ellipseItem = dynamic_cast<QGraphicsEllipseItem*>(draw);
         if (ellipseItem) {
             QGraphicsEllipseItem *copiedItem;
-            copiedItem = new QGraphicsEllipseItem(ellipseItem);
+            copiedItem = new QGraphicsEllipseItem(ellipseItem->rect());
+            copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
         }
 
         QGraphicsPolygonItem* polygonItem = dynamic_cast<QGraphicsPolygonItem*>(draw);
         if (polygonItem) {
             QGraphicsPolygonItem *copiedItem;
-            copiedItem = new QGraphicsPolygonItem(polygonItem);
+            copiedItem = new QGraphicsPolygonItem(polygonItem->polygon());
+            copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
         }
 
         QGraphicsLineItem *lineItem = dynamic_cast<QGraphicsLineItem*>(draw);
         if (lineItem) {
             QGraphicsLineItem *copiedItem;
-            copiedItem = new QGraphicsLineItem(lineItem);
+            copiedItem = new QGraphicsLineItem(lineItem->line());
+            copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
         }
     }
@@ -2336,6 +2409,7 @@ void MainWindow::_helpCopy() {
     _gmc_copies = gmc_aux;
     _ports_copies = ports_aux;
     _draw_copy = drawing_aux;
+    _group_copy = group_aux;
 
 }
 

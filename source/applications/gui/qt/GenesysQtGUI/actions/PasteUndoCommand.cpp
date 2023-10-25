@@ -140,9 +140,8 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        componentItem.graphicalComponent->setX(componentItem.initialPosition.x() + 100);
-        componentItem.graphicalComponent->setY(componentItem.initialPosition.y() - 100);
-        //componentItem.graphicalComponent->setOldPosition(componentItem.initialPosition.y() - 100);
+        // se for mudar posicao do componente muda aqui
+        componentItem.graphicalComponent->setOldPosition(componentItem.graphicalComponent->pos());
 
         _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
@@ -207,10 +206,14 @@ void PasteUndoCommand::redo() {
 
         for (int j = 0; j < groupItem.myComponentItems.size(); ++j) {
             ComponentItem componentItem = groupItem.myComponentItems.at(j);
+
+            if (componentItem.graphicalComponent->group())
+                groupItem.group->removeFromGroup(componentItem.graphicalComponent);
             componentsGroup->append(componentItem.graphicalComponent);
         }
 
         _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group);
+        groupItem.group->update();
 
         delete componentsGroup;
     }

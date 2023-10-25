@@ -294,7 +294,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
             notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
         }
 
-
         QUndoCommand *addUndoCommand = new AddUndoCommand(drawingItem , this);
         _undoStack->push(addUndoCommand);
     }
@@ -322,22 +321,31 @@ void ModelGraphicsScene::clearGraphicalModelComponents() {
     GraphicalModelComponent *source;
     GraphicalModelComponent *destination;
 
-    for (GraphicalModelComponent* gmc : *componentsInModel) {
+    for (unsigned int x = 0; x < (unsigned int) componentsInModel->size(); x++){
+        GraphicalModelComponent *gmc = componentsInModel->at(x);
         removeComponentInModel(gmc);
     }
 
+    unsigned int size = (unsigned int) _allGraphicalModelComponents.size();
+
     // limpa todos os componentes no final, desfazendo as conexoes
-    for (GraphicalModelComponent* gmc : _allGraphicalModelComponents) {
+    for (unsigned int x = 0; x < size; x++){
+        GraphicalModelComponent *gmc = _allGraphicalModelComponents.at(0);
+
         if (gmc) {
-            for (GraphicalComponentPort* port : gmc->getGraphicalInputPorts()) {
-                for (GraphicalConnection* graphConn : *port->getConnections()) {
+            for (unsigned int i = 0; i < (unsigned int) gmc->getGraphicalInputPorts().size(); i++){
+                GraphicalComponentPort* port = gmc->getGraphicalInputPorts().at(i);
+                for (unsigned int j = 0; j < (unsigned int) port->getConnections()->size(); j++){
+                    GraphicalConnection* graphConn = port->getConnections()->at(j);
                     source = findGraphicalModelComponent(graphConn->getSource()->component->getId());
                     removeGraphicalConnection(graphConn, source, gmc);
                 }
             }
 
-            for (GraphicalComponentPort* port : gmc->getGraphicalOutputPorts()) {
-                for (GraphicalConnection* graphConn : *port->getConnections()) {
+            for (unsigned int i = 0; i < (unsigned int) gmc->getGraphicalOutputPorts().size(); i++){
+                GraphicalComponentPort* port = gmc->getGraphicalOutputPorts().at(i);
+                for (unsigned int j = 0; j < (unsigned int) port->getConnections()->size(); j++){
+                    GraphicalConnection* graphConn = port->getConnections()->at(j);
                     destination = findGraphicalModelComponent(graphConn->getDestination()->component->getId());
                     removeGraphicalConnection(graphConn, gmc, destination);
                 }
@@ -345,16 +353,15 @@ void ModelGraphicsScene::clearGraphicalModelComponents() {
 
             // remove da lista de componentes graficos
             _allGraphicalModelComponents.removeOne(gmc);
-
-            // libera o ponteiro alocado
-            delete gmc;
+            _graphicalModelComponents->removeOne(gmc);
         }
     }
 }
 
 // limpa todas as referencias das conexoes no final
 void ModelGraphicsScene::clearGraphicalModelConnections() {
-    for (GraphicalConnection* gmc : _allGraphicalConnections) {
+    for (unsigned int x = 0; x < (unsigned int) _allGraphicalConnections.size(); x++){
+        GraphicalConnection *gmc = _allGraphicalConnections.at(0);
         if (gmc) {
             // remove da lista de conexões graficas
             _allGraphicalConnections.removeOne(gmc);
@@ -1165,6 +1172,8 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
                 _destinationGraphicalComponentPort = port;
                 _connectingStep = 3;
             }
+        } else {
+            _connectingStep = 0;
         }
         if (_drawingMode == POLYGON || _drawingMode == POLYGON_POINTS) {
             _drawingMode = POLYGON_FINISHED;
@@ -1234,7 +1243,7 @@ void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
         }
         if (_connectingStep > 1) {
             ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::ClosedHandCursor);
-        } else {
+        } else if (_connectingStep == 1){
             ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::CrossCursor);
         }
     } else if (_drawingMode != NONE && _drawingMode != POLYGON && _drawingMode != POLYGON_POINTS){

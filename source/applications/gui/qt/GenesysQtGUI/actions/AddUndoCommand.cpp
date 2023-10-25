@@ -39,10 +39,12 @@ AddUndoCommand::AddUndoCommand(QGraphicsItem *item, ModelGraphicsScene *scene, Q
 AddUndoCommand::~AddUndoCommand() {}
 
 void AddUndoCommand::undo() {
+    // remove as conexoes individuais
+    if (_myConnectionItem != nullptr)
+        _myGraphicsScene->removeItem(_myConnectionItem);
+
     // remove o que e grafico
     if (_myComponentItem.graphicalComponent != nullptr) {
-        _myGraphicsScene->removeItem(_myComponentItem.graphicalComponent);
-
         for (int j = 0; j < _myComponentItem.inputConnections.size(); ++j) {
             GraphicalConnection *connection = _myComponentItem.inputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
@@ -52,11 +54,9 @@ void AddUndoCommand::undo() {
             GraphicalConnection *connection = _myComponentItem.outputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
         }
-    }
 
-    // remove as conexoes individuais
-    if (_myConnectionItem != nullptr)
-        _myGraphicsScene->removeItem(_myConnectionItem);
+        _myGraphicsScene->removeItem(_myComponentItem.graphicalComponent);
+    }
 
     // remove os itens simples da tela
     if (_myDrawingItem != nullptr)
