@@ -819,40 +819,61 @@ void ModelGraphicsScene::groupComponents(bool notify) {
 }
 
 void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group) {
+    // cria um grupo auxiliar
     QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
 
+    // atualiza os grupos
     group->update();
     newGroup->update();
 
+    // copia os grupos pra um novo grupo
     for (int i = 0; i < graphicalComponents->size(); i++) {
         newGroup->addToGroup(graphicalComponents->at(i));
     }
 
-    // Adicione o novo grupo à sua cena
-    group->setX(newGroup->boundingRect().x());
-    group->setY(newGroup->boundingRect().y());
+    // pega as coordenadas do retangulo do grupo
+    // isso e para contornar o caso que a posicao do grupo sempre comeca com (0, 0)
+    // porem a posicao do retangulo do grupo tem as coordenadas corretas na cena
+    qreal x = newGroup->boundingRect().x();
+    qreal y = newGroup->boundingRect().y();
 
+    // seta a posicao do grupo
+    group->setX(x);
+    group->setY(y);
+
+    // remove os itens adicionados no grupo reserva
+    for (int i = 0; i < graphicalComponents->size(); i++) {
+        newGroup->removeFromGroup(graphicalComponents->at(i));
+    }
+
+    // adiciona os itens do grupo ao grupo correto
+    // como a posicao do grupo foi setada, os valores xp e xy de boundingRect fica 0, pois o Qt faz uma "compensacao"
     for (int i = 0; i < graphicalComponents->size(); i++) {
         group->addToGroup(graphicalComponents->at(i));
     }
 
+    // adiciona o grupo na cena
     addItem(group);
 
+    // flags do grupo
     group->setFlag(QGraphicsItem::ItemIsSelectable, true);
+    group->setFlag(QGraphicsItem::ItemIsMovable, true);
 
+    // deixa todos os itens de dentro do grupo selecionado
     for (QGraphicsItem *item : group->childItems()) {
         item->setSelected(false);
     }
+    // deixa o grupo selecionado
     group->setSelected(true);
 
-    group->setFlag(QGraphicsItem::ItemIsMovable, true);
-
-    // Adicione o grupo à sua lista de grupos (se necessário)
+    // adicione o grupo a sua lista de grupos
     getGraphicalGroups()->append(group);
 
+    // atualiza o grupo
     group->update();
 
-    delete newGroup;
+    // remove as referencias do grupo auxiliar
+    destroyItemGroup(newGroup);
 }
 
 
@@ -928,7 +949,8 @@ void ModelGraphicsScene::removeGroup(QGraphicsItemGroup* group, bool notify) {
     //remover todos os componentes do grupo
     // caso seja necessario desfazer o grupo
 
-    for (int i = 0; i < itemsInGroup.size(); i++) {
+    unsigned int size = itemsInGroup.size();
+    for (unsigned int i = 0; i < size; i++) {
         GraphicalModelComponent * gmc = dynamic_cast<GraphicalModelComponent *> (itemsInGroup.at(i));
 
         group->removeFromGroup(gmc);

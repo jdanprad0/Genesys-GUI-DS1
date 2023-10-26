@@ -2238,6 +2238,7 @@ void MainWindow::_helpCopy() {
         GraphicalModelComponent* newgmc = new GraphicalModelComponent(plugin, component, position, color);
         // Adiciona o componente graficamente
         GraphicalModelComponent * oldgmc = scene->findGraphicalModelComponent(previousComponent->getId());
+
         COPY * temp = new COPY();
         temp->old = oldgmc;
         temp->copy = newgmc;
@@ -2249,8 +2250,13 @@ void MainWindow::_helpCopy() {
     foreach (QGraphicsItemGroup *group , *_group_copy) {
         QList<GraphicalConnection*> * connGroup = new QList<GraphicalConnection*>();
 
-        for (unsigned int i = 0; i < (unsigned int) group->childItems().size(); i++) {
-            GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(i));
+        unsigned int size = group->childItems().size();
+
+        for (unsigned int i = 0; i < (unsigned int) size; i++) {
+            GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(0));
+
+            // remove do grupo para tratar o componente como um componente individual
+            group->removeFromGroup(gmc);
 
             // Componente
             ModelComponent * previousComponent = gmc->getComponent();
@@ -2303,6 +2309,10 @@ void MainWindow::_helpCopy() {
 
         saveItemForCopy(gmc_old_group_aux, connGroup);
 
+        // volta os itens no grupo
+        for (unsigned int k = 0; k < size; k++) {
+            group->addToGroup(gmc_old_group_aux->at(k));
+        }
 
         for (unsigned int k = 0; k < (unsigned int) connGroup->size(); k++) {
             _ports_copies->removeOne(connGroup->at(k));
@@ -2310,8 +2320,9 @@ void MainWindow::_helpCopy() {
         }
 
         QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
-        ui->graphicsView->getScene()->groupModelComponents(gmc_new_group_aux, newGroup);
+
         ui->graphicsView->getScene()->insertComponentGroup(newGroup, *gmc_new_group_aux);
+
         gmc_old_group_aux->clear();
         gmc_new_group_aux->clear();
         group_aux->append(newGroup);
@@ -2368,9 +2379,6 @@ void MainWindow::_helpCopy() {
         GraphicalConnection * newConn = scene->addGraphicalConnection(sourcePort, destinationPort, portSourceConnection, portDestinationConnection);
 
         ui->graphicsView->getScene()->clearPorts(newConn, gmcNewSource, gmcDestination);
-
-        //gmcNewSource->getGraphicalOutputPorts().at(portSourceConnection)->removeGraphicalConnection(newConn);
-        //gmcNewDestination->getGraphicalInputPorts().at(portDestinationConnection)->removeGraphicalConnection(newConn);
 
         ports_aux->append(newConn);
     }
