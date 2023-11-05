@@ -27,7 +27,9 @@ public:
 
 public: // to notify changes
 	bool graphicalModelHasChanged() const;
-	void setGraphicalModelHasChanged(bool graphicalModelHasChanged);
+    void setGraphicalModelHasChanged(bool graphicalModelHasChanged);
+    void unselectDrawIcons();
+    bool checkSelectedDrawIcons();
 
 private slots:
     // actions
@@ -150,7 +152,9 @@ private slots:
 
     void on_actionShowSnap_triggered();
 
-    void on_horizontalSlider_ZoomGraphical_actionTriggered(int action);
+    void on_actionGModelShowConnect_triggered();
+
+    void on_actionSelect_all_triggered();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -216,6 +220,7 @@ private: // view
 	void _showMessageNotImplemented();
 	void _recursivalyGenerateGraphicalModelFromModel(ModelComponent* component, List<ModelComponent*>* visited, std::map<ModelComponent*,GraphicalModelComponent*>* map, int *x, int *y, int *ymax, int sequenceInline);
 	void _generateGraphicalModelFromModel();
+    void saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QList<GraphicalConnection*> * connList);
 	//bool _checkStartSimulation();
 private: // graphical model persistence
     bool _saveGraphicalModel(QString filename);
@@ -224,6 +229,7 @@ private: // graphical model persistence
 private:
 	QColor myrgba(uint64_t color); // TODO: Should NOT be here, but in UtilGUI.h, but then it generates multiple definitions error
 	static std::string dotColor(uint64_t color); // TODO: Should NOT be here, but in UtilGUI.h, but then it generates multiple definitions error
+    void _helpCopy();
 private: // interface and model main elements to join
 	Ui::MainWindow *ui;
 	Simulator* simulator;
@@ -240,14 +246,14 @@ private: // misc useful
     QList<GraphicalModelComponent*> * _gmc_copies  = new QList<GraphicalModelComponent*>();
     QList<GraphicalConnection*> * _ports_copies = new QList<GraphicalConnection*>();
     QList<QGraphicsItem *>  *_draw_copy = new QList<QGraphicsItem *>();
+    QList<QGraphicsItemGroup *>  *_group_copy = new QList<QGraphicsItemGroup *>();
 
     struct COPY {
         GraphicalModelComponent * old;
         GraphicalModelComponent * copy;
     };
 
-
-
+    bool _firstClickShowConnection = true;
 
 private:
 

@@ -1,5 +1,5 @@
-#ifndef DELETEUNDOCOMMAND_H
-#define DELETEUNDOCOMMAND_H
+#ifndef PASTEUNDOCOMMAND_H
+#define PASTEUNDOCOMMAND_H
 
 #include <QUndoCommand>
 #include "AddUndoCommand.h"
@@ -7,11 +7,11 @@
 #include "graphicals/GraphicalConnection.h"
 
 
-class DeleteUndoCommand : public QUndoCommand
+class PasteUndoCommand : public QUndoCommand
 {
 public:
-    explicit DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphicsScene *scene, QUndoCommand *parent = nullptr);
-    ~DeleteUndoCommand();
+    explicit PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalComponents, QList<GraphicalConnection *> *connections, QList<QGraphicsItemGroup *> *groups, QList<QGraphicsItem *> *drawing, ModelGraphicsScene *scene, QUndoCommand *parent = nullptr);
+    ~PasteUndoCommand();
 
     void undo() override;
     void redo() override;
@@ -24,4 +24,4 @@ private:
     ModelGraphicsScene *_myGraphicsScene;
 };
 
-#endif // DELETEUNDOCOMMAND_H
+#endif // PASTEUNDOCOMMAND_H

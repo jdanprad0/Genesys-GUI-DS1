@@ -8,7 +8,7 @@
 class MoveUndoCommand : public QUndoCommand
 {
 public:
-    MoveUndoCommand(QList<GraphicalModelComponent*> gmc, ModelGraphicsScene *scene, QList<QPointF> &oldPos, QList<QPointF> &newPos, QUndoCommand *parent = nullptr);
+    MoveUndoCommand(QList<QGraphicsItem *> gmc, ModelGraphicsScene *scene, QList<QPointF> &oldPos, QList<QPointF> &newPos, QUndoCommand *parent = nullptr);
     ~MoveUndoCommand();
 
     void undo() override;
@@ -17,7 +17,7 @@ public:
     //bool mergeWith(const QUndoCommand *command) override;
 
 private:
-    QList<GraphicalModelComponent*> _myGraphicalModelComponent;
+    QList<QGraphicsItem*> _myGraphicalModelComponent;
     ModelGraphicsScene *_myGraphicsScene;
     QList<QPointF> _myOldPos;
     QList<QPointF> _myNewPos;

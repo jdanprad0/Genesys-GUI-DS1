@@ -167,7 +167,7 @@ void DeleteUndoCommand::undo() {
 
         //QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
 
-
+        groupItem.group->update();
 
         _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group);
 
@@ -181,12 +181,18 @@ void DeleteUndoCommand::undo() {
 }
 
 void DeleteUndoCommand::redo() {
+    // remove as conexoes selecionadas individualmente
+    for (int i = 0; i < _myConnectionItems->size(); ++i) {
+        GraphicalConnection *connection = _myConnectionItems->at(i);
+        _myGraphicsScene->removeItem(connection);
+    }
+
     // remove tudo que e grafico
     // comeca removendo os componentes e suas conexoes
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        _myGraphicsScene->removeItem(componentItem.graphicalComponent);
+        componentItem.graphicalComponent->setOldPosition(componentItem.graphicalComponent->pos());
 
         for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
             GraphicalConnection *connection = componentItem.inputConnections.at(j);
@@ -197,12 +203,8 @@ void DeleteUndoCommand::redo() {
             GraphicalConnection *connection = componentItem.outputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
         }
-    }
 
-    // remove as conexoes selecionadas individualmente
-    for (int i = 0; i < _myConnectionItems->size(); ++i) {
-        GraphicalConnection *connection = _myConnectionItems->at(i);
-        _myGraphicsScene->removeItem(connection);
+        _myGraphicsScene->removeItem(componentItem.graphicalComponent);
     }
 
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
@@ -221,12 +223,6 @@ void DeleteUndoCommand::redo() {
         _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
     }
 
-    for (int i = 0; i < _myGroupItems->size(); ++i) {
-        QGraphicsItemGroup *group = _myGroupItems->at(i).group;
-
-        _myGraphicsScene->removeGroup(group);
-    }
-
     // varre todos os GraphicalConnection
     for (int i = 0; i < _myConnectionItems->size(); ++i) {
         GraphicalConnection *connection = _myConnectionItems->at(i);
@@ -242,6 +238,12 @@ void DeleteUndoCommand::redo() {
             // entao a remove da lista
             _myConnectionItems->removeOne(connection);
         }
+    }
+
+    for (int i = 0; i < _myGroupItems->size(); ++i) {
+        QGraphicsItemGroup *group = _myGroupItems->at(i).group;
+
+        _myGraphicsScene->removeGroup(group);
     }
 
     GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;

@@ -37,6 +37,7 @@
 #include <QGraphicsRectItem>
 #include <QTreeWidgetItem>
 #include <QUndoStack>
+#include <QAction>
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalComponentPort.h"
 #include "TraitsGUI.h"
@@ -86,6 +87,7 @@ public: // editing graphic model
     void clearConnectionsComponent(GraphicalModelComponent* gmc);
     void clearInputConnectionsComponent(GraphicalModelComponent* graphicalComponent);
     void clearOutputConnectionsComponent(GraphicalModelComponent* graphicalComponent);
+    void clearPorts(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination);
     void connectComponents(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr, GraphicalModelComponent *destination = nullptr, bool notify = false);
     bool connectSource(GraphicalConnection* connection, GraphicalModelComponent *source = nullptr);
     bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
@@ -131,6 +133,12 @@ public:
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
     void setGraphicalComponentPort(GraphicalComponentPort * in);
+    DrawingMode getDrawingMode();
+    void setAction(QAction* action);
+    QList<GraphicalModelComponent*> *getAllComponents();
+    QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
+    void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
+    void insertOldPositionItem(QGraphicsItem *item, QPointF position);
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
 	QList<QGraphicsItem*>*getGraphicalModelComponents() const;
@@ -168,19 +176,23 @@ private:
     QList<GraphicalModelComponent*> _allGraphicalModelComponents;
     QList<GraphicalConnection*> _allGraphicalConnections;
     QUndoStack *_undoStack = nullptr;
-
+    QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
+    QMap<QGraphicsItem *, QPointF> _oldPositionsItems;
 private:
-    DrawingMode _drawingMode;
-	QGraphicsRectItem* _currentRectangle;
-    QGraphicsLineItem* _currentLine;
-    QGraphicsPolygonItem* _currentPolygon;
-    QGraphicsEllipseItem* _currentEllipse;
+    DrawingMode _drawingMode = NONE;
+    QGraphicsRectItem* _currentRectangle = nullptr;
+    QGraphicsLineItem* _currentLine = nullptr;
+    QGraphicsPolygonItem* _currentPolygon = nullptr;
+    QGraphicsEllipseItem* _currentEllipse = nullptr;
     QPolygonF _currentPolygonPoints;
     QPointF _drawingStartPoint;
-	unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source, 2: waiting click on destination and after that creates the connection and backs to 0
+    QAction* _currentAction = nullptr;
+    bool _drawing = false;
+    unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source or destination, 2: click on source, 3: click on destination
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;
+    GraphicalComponentPort* _destinationGraphicalComponentPort;
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
 	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();

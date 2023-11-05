@@ -39,10 +39,12 @@ AddUndoCommand::AddUndoCommand(QGraphicsItem *item, ModelGraphicsScene *scene, Q
 AddUndoCommand::~AddUndoCommand() {}
 
 void AddUndoCommand::undo() {
+    // remove as conexoes individuais
+    if (_myConnectionItem != nullptr)
+        _myGraphicsScene->removeItem(_myConnectionItem);
+
     // remove o que e grafico
     if (_myComponentItem.graphicalComponent != nullptr) {
-        _myGraphicsScene->removeItem(_myComponentItem.graphicalComponent);
-
         for (int j = 0; j < _myComponentItem.inputConnections.size(); ++j) {
             GraphicalConnection *connection = _myComponentItem.inputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
@@ -52,11 +54,9 @@ void AddUndoCommand::undo() {
             GraphicalConnection *connection = _myComponentItem.outputConnections.at(j);
             _myGraphicsScene->removeItem(connection);
         }
-    }
 
-    // remove as conexoes individuais
-    if (_myConnectionItem != nullptr)
-        _myGraphicsScene->removeItem(_myConnectionItem);
+        _myGraphicsScene->removeItem(_myComponentItem.graphicalComponent);
+    }
 
     // remove os itens simples da tela
     if (_myDrawingItem != nullptr)
@@ -104,14 +104,15 @@ void AddUndoCommand::redo() {
         }
     }
 
-    // remove as conexoes individuais
+    // add as conexoes individuais
     if (_myConnectionItem != nullptr) {
         _myGraphicsScene->addItem(_myConnectionItem);
     }
 
     // remove os itens simples da tela
-    if (_myDrawingItem != nullptr)
+    if (_myDrawingItem != nullptr) {
         _myGraphicsScene->addItem(_myDrawingItem);
+    }
 
     // agora comeca a adicionar o que se deve no modelo
     if (_myComponentItem.graphicalComponent != nullptr) {
@@ -138,7 +139,12 @@ void AddUndoCommand::redo() {
         // por exemplo, pode ter uma conexao selecionada que foi eliminada anteriormente pois ela fazia parte de um componente
         // entao ao refazer as conexoes do componente, ela ja foi religada
         if (!_myGraphicsScene->getGraphicalConnections()->contains(_myConnectionItem)) {
-            _myGraphicsScene->connectComponents(_myConnectionItem, nullptr, nullptr, true);
+            GraphicalModelComponent* sourceComp = _myGraphicsScene->findGraphicalModelComponent(_myConnectionItem->getSource()->component->getId());
+            GraphicalModelComponent* destComp = _myGraphicsScene->findGraphicalModelComponent(_myConnectionItem->getDestination()->component->getId());
+
+            _myGraphicsScene->clearPorts(_myConnectionItem, sourceComp, destComp);
+
+            _myGraphicsScene->connectComponents(_myConnectionItem, sourceComp, destComp, true);
         }
     }
 
