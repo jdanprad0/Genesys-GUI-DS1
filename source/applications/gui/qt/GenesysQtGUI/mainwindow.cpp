@@ -29,6 +29,8 @@
 #include <QDateTime>
 #include <QTemporaryFile>
 #include <Qt>
+#include <QGraphicsPixmapItem>
+#include <QPropertyAnimation>
 // #include <qt5/QtWidgets/qgraphicsitem.h>
 #include <QtWidgets/qgraphicsitem.h>
 #include <QGraphicsScene>
@@ -161,6 +163,9 @@ MainWindow::~MainWindow() {
 	delete ui;
 }
 
+ModelGraphicsScene* MainWindow::myScene() const {
+    return ui->graphicsView->getScene();
+}
 //-----------------------------------------------------------------
 
 bool MainWindow::_saveTextModel(QFile *saveFile, QString data)
@@ -3054,3 +3059,85 @@ void MainWindow::on_actionSelect_all_triggered()
         itensToScene.at(i)->setSelected(true);
     }
 }
+
+void MainWindow::on_actionPlayGraphicalSimulation_triggered()
+{
+    // Pega o componente gráfico do evento
+    GraphicalModelComponent *eventComponent = dynamic_cast<GraphicalModelComponent *>(myScene()->getGraphicalModelComponents()->at(0));
+
+    // Pega a conexão gráfica do componente do evento
+    GraphicalConnection *eventComponentConnection = eventComponent->getGraphicalOutputPorts().at(0)->getConnections()->at(0);
+
+    // Pega os pontos na tela em que a animação deve ocorrer
+    QList<QPointF> pointsForAnimation = eventComponentConnection->getPoints();
+
+    // Define pontos inicial, intermediários e final
+    QPointF startPoint = pointsForAnimation.at(0);
+    QPointF firstIntermediatePoint = pointsForAnimation.at(1);
+    QPointF secondIntermediatePoint = pointsForAnimation.at(2);
+    QPointF endpoint = pointsForAnimation.at(3);
+
+    // Tamanho para imagem/círculo
+    const int imageSize = 50;
+
+    // Adiciona um item de elipse (círculo) à cena
+    QGraphicsEllipseItem *circle = new QGraphicsEllipseItem(0, 0, imageSize, imageSize);
+    qreal circleX = startPoint.x();
+    qreal circleY = startPoint.y() - (circle->boundingRect().height()/2);
+    QPointF circlePosition = QPointF(circleX, circleY);
+    circle->setPos(circlePosition);
+
+    // Define a cor da borda para transparente
+    QPen pen(Qt::transparent);
+    circle->setPen(pen);
+
+    // Carrega uma imagem
+    QPixmap source("/home/daniel/Documentos/Modelagem-e-Simulacao/Genesys-GUI-DS1/source/applications/gui/qt/GenesysQtGUI/imagem.png");
+    // Redimenciona a imagem
+    QPixmap resizedImage = source.scaled(imageSize, imageSize);
+    // Define a imagem como padrão de preenchimento para o círculo
+    circle->setBrush(resizedImage);
+
+    // Desenha na tela
+    myScene()->addItem(circle);
+
+    QVariantAnimation *animation = new QVariantAnimation;
+    animation->setDuration(2000); // 10 seconds
+    animation->setStartValue(0.0);
+    animation->setEndValue(1.0);
+    animation->setEasingCurve(QEasingCurve::Linear);
+
+    QObject::connect(animation, &QVariantAnimation::valueChanged, [=](const QVariant& value) {
+        qreal progress = value.toReal();
+        if (!pointsForAnimation.isEmpty()) {
+            int numSegments = pointsForAnimation.size() - 1;
+            qreal totalDistance = 0.0;
+
+            // Calcula a distância total entre os pontos
+            for (int i = 0; i < numSegments; ++i) {
+                totalDistance += QLineF(pointsForAnimation[i], pointsForAnimation[i + 1]).length();
+            }
+
+            qreal distanceCovered = progress * totalDistance;
+            qreal currentDistance = 0.0;
+
+            // Encontra o segmento onde o círculo está atualmente
+            int currentSegment = 0;
+            while (currentSegment < numSegments && currentDistance + QLineF(pointsForAnimation[currentSegment], pointsForAnimation[currentSegment + 1]).length() < distanceCovered) {
+                currentDistance += QLineF(pointsForAnimation[currentSegment], pointsForAnimation[currentSegment + 1]).length();
+                ++currentSegment;
+            }
+
+            // Calcula a posição interpolada dentro do segmento atual
+            qreal segmentProgress = (distanceCovered - currentDistance) / QLineF(pointsForAnimation[currentSegment], pointsForAnimation[currentSegment + 1]).length();
+            QPointF start = pointsForAnimation[currentSegment];
+            QPointF end = pointsForAnimation[currentSegment + 1];
+            QPointF circlePosition = start * (1 - segmentProgress) + end * segmentProgress;
+
+            circle->setPos(circlePosition);
+        }
+    });
+
+    animation->start();
+}
+

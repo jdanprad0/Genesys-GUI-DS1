@@ -114,10 +114,10 @@ void GraphicalConnection::paint(QPainter *painter, const QStyleOptionGraphicsIte
 			path.lineTo((x1 + x2) / 2, y1);
             path.lineTo((x1 + x2) / 2, y2);
             _points.clear();
-            _points.append(inipos);
-            _points.append(QPointF(inipos.x() + ((x1 + x2) / 2), y1));
-            _points.append(QPointF(inipos.x() + ((x1 + x2) / 2), y2));
-            _points.append(endpos);
+            _points.append(mapToScene(inipos));
+            _points.append(mapToScene(QPointF(inipos.x() + ((x1 + x2) / 2), y1)));
+            _points.append(mapToScene(QPointF(inipos.x() + ((x1 + x2) / 2), y2)));
+            _points.append(mapToScene(endpos));
 			break;
 		case ConnectionType::VERTICAL:
             path.lineTo(x1, (y1 + y2) / 2);

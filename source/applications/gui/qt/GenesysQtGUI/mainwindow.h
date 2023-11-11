@@ -24,6 +24,7 @@ class MainWindow : public QMainWindow {
 public:
 	MainWindow(QWidget *parent = nullptr);
 	~MainWindow();
+    ModelGraphicsScene* myScene() const;
 
 public: // to notify changes
 	bool graphicalModelHasChanged() const;
@@ -155,6 +156,8 @@ private slots:
     void on_actionGModelShowConnect_triggered();
 
     void on_actionSelect_all_triggered();
+
+    void on_actionPlayGraphicalSimulation_triggered();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
