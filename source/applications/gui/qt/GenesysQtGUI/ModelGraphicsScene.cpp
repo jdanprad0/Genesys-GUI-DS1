@@ -1229,6 +1229,28 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 
     foreach (QGraphicsItem* item, this->selectedItems()) {
         GraphicalModelComponent* component = dynamic_cast<GraphicalModelComponent*>(item);
+        GraphicalConnection* connectionTeste = dynamic_cast<GraphicalConnection*>(item);
+
+//        if (connectionTeste) {
+//            for (unsigned int i = 0; i < 2; i++) {
+//                int aux = 0;
+//                if (i == 1) aux = 2;
+
+//                qreal x1 = connectionTeste->getPoints().at(0+aux).x();
+//                qreal y1 = connectionTeste->getPoints().at(0+aux).y();
+//                qreal x2 = connectionTeste->getPoints().at(1+aux).x();
+//                qreal y2 = connectionTeste->getPoints().at(1+aux).y();
+
+//                _currentLine = new QGraphicsLineItem(x1, y1, x2, y2);
+//                _currentLine->setZValue(2.0);
+//                QPen pen = _currentLine->pen();
+//                pen.setWidth(10);
+//                _currentLine->setPen(pen);
+//                addItem(_currentLine);
+//            }
+//        }
+
+
         if (component && component->getOldPosition() != component->scenePos()) {
             items.append(component);
             oldPositions.append(component->getOldPosition());

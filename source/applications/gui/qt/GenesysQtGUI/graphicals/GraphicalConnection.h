@@ -34,6 +34,7 @@ public:
     unsigned int getPortSourceConnection() const;
     unsigned int getPortDestinationConnection() const;
 	void setConnectionType(GraphicalConnection::ConnectionType newConnectionType);
+    QList<QPointF> getPoints() const;
 
 protected: // virtual
 	virtual bool sceneEvent(QEvent *event) override;
@@ -65,5 +66,6 @@ private:
     unsigned int _portSourceConnection;
     unsigned int _portDestinationConnection;
 	QColor _color;
+    QList<QPointF> _points;
 };
 #endif // GRAPHICALCONNECTION_H

@@ -112,11 +112,16 @@ void GraphicalConnection::paint(QPainter *painter, const QStyleOptionGraphicsIte
 	switch (_connectionType) {
 		case ConnectionType::HORIZONTAL:
 			path.lineTo((x1 + x2) / 2, y1);
-			path.lineTo((x1 + x2) / 2, y2);
+            path.lineTo((x1 + x2) / 2, y2);
+            _points.clear();
+            _points.append(inipos);
+            _points.append(QPointF(inipos.x() + ((x1 + x2) / 2), y1));
+            _points.append(QPointF(inipos.x() + ((x1 + x2) / 2), y2));
+            _points.append(endpos);
 			break;
 		case ConnectionType::VERTICAL:
-			path.lineTo(x1, (y1 + y2) / 2);
-			path.lineTo(x2, (y1 + y2) / 2);
+            path.lineTo(x1, (y1 + y2) / 2);
+            path.lineTo(x2, (y1 + y2) / 2);
 			break;
 		case ConnectionType::DIRECT:
 			break;
@@ -145,6 +150,10 @@ void GraphicalConnection::paint(QPainter *painter, const QStyleOptionGraphicsIte
 	//pen.setWidth(1);
 	//painter->setPen(pen);
 	//painter->drawRect(QRectF(0,0,_width-1,_height-1));
+}
+
+QList<QPointF> GraphicalConnection::getPoints() const {
+    return _points;
 }
 
 Connection* GraphicalConnection::getSource() const {

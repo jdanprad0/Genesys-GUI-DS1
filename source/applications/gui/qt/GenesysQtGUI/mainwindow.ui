@@ -1131,6 +1131,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <addaction name="actionSimulationStop"/>
    <addaction name="actionSimulationPause"/>
    <addaction name="actionSimulationResume"/>
+   <addaction name="actionPlayGraphicalSimulation"/>
   </widget>
   <widget class="QToolBar" name="toolBarAbout">
    <property name="windowTitle">
@@ -2029,6 +2030,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="text">
     <string>Plot</string>
+   </property>
+  </action>
+  <action name="actionPlayGraphicalSimulation">
+   <property name="icon">
+    <iconset resource="GenesysQtGUI_resources.qrc">
+     <normaloff>:/icons3/resources/icons/pack3/ico/heart.ico</normaloff>:/icons3/resources/icons/pack3/ico/heart.ico</iconset>
+   </property>
+   <property name="text">
+    <string>PlayGraphicalSimulation</string>
+   </property>
+   <property name="toolTip">
+    <string>start graphical simulation</string>
+   </property>
+   <property name="shortcut">
+    <string>F12</string>
    </property>
   </action>
  </widget>
