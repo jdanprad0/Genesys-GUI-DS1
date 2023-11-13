@@ -132,11 +132,13 @@ SOURCES += \
 	../../../../tools/SolverDefaultImpl1.cpp \
 	../../../BaseGenesysTerminalApplication.cpp \
 	../../../terminal/GenesysShell/GenesysShell.cpp \
+    AnimationTransition.cpp \
 	CodeEditor.cpp \
 	ModelGraphicsScene.cpp \
 	ModelGraphicsView.cpp \
 	ObjectPropertyBrowser.cpp \
 	PropertyEditor.cpp \
+    TriggerAnimation.cpp \
     actions/AddUndoCommand.cpp \
     actions/DeleteUndoCommand.cpp \
     actions/GroupUndoCommand.cpp \
@@ -161,6 +163,7 @@ SOURCES += \
 	graphicals/GraphicalAssociation.cpp \
 	graphicals/GraphicalComponentPort.cpp \
 	graphicals/GraphicalConnection.cpp \
+    graphicals/GraphicalImageAnimation.cpp \
 	graphicals/GraphicalModelComponent.cpp \
 	graphicals/GraphicalModelDataDefinition.cpp \
 	main.cpp \
@@ -320,6 +323,7 @@ HEADERS += \
 	../../../terminal/GenesysShell/GenesysShell.h \
 	../../../terminal/GenesysShell/GenesysShell_if.h \
 	../../../terminal/TraitsTerminalApp.h \
+    AnimationTransition.h \
 	CodeEditor.h \
 	LineNumberArea.h \
 	ModelGraphicsScene.h \
@@ -335,6 +339,7 @@ HEADERS += \
     QPropertyBrowser/qttreepropertybrowser.h \
     QPropertyBrowser/qtvariantproperty.h \
     TraitsGUI.h \
+    TriggerAnimation.h \
     UtilGUI.h \
     actions/AddUndoCommand.h \
     actions/DeleteUndoCommand.h \
@@ -352,6 +357,7 @@ HEADERS += \
 	graphicals/GraphicalAssociation.h \
 	graphicals/GraphicalComponentPort.h \
 	graphicals/GraphicalConnection.h \
+    graphicals/GraphicalImageAnimation.h \
 	graphicals/GraphicalModelComponent.h \
 	graphicals/GraphicalModelDataDefinition.h \
 	mainwindow.h \
