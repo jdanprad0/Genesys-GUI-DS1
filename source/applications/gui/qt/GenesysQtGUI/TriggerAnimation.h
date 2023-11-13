@@ -19,7 +19,6 @@ public:
 
     // Getters
     QList<AnimationTransition*>* getAnimations() const;
-    bool getTimerStopped() const;
     double *getTimeExecution() const;
 
     // Setters
@@ -40,7 +39,6 @@ private:
     QElapsedTimer _clock;
     QTimer _timer;
     QList<AnimationTransition*> *_animations;
-    bool _timerStopped;
     double _timeExecution;
 };
 

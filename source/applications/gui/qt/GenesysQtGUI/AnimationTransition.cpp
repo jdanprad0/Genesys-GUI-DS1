@@ -12,7 +12,7 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalM
 
     _timeExecution = myScene->getTriggerAnimation()->getTimeExecution();
     _oldTimeExecution = (*_timeExecution);
-    _timeStart = timeStart + (*_timeExecution);
+    _timeStart = timeStart;
 
     if (_graphicalStartComponent && !_graphicalStartComponent->getGraphicalOutputPorts().empty()) {
         // Pega a conexão gráfica em que a animação de transição irá percorrer

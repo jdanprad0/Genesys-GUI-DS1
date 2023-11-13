@@ -796,11 +796,9 @@ void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
         if (!_initialClock) {
             myScene()->getTriggerAnimation()->clockInit();
             _initialClock = true;
+        } else {
+            myScene()->getTriggerAnimation()->updateTimer();
         }
-
-        if (myScene()->getTriggerAnimation()->getTimerStopped())
-            myScene()->getTriggerAnimation()->updateTimer(); // testar depois com um delay
-
 		ui->graphicsView->selectModelComponent(event->getComponent());
 	}
 }
@@ -2905,6 +2903,7 @@ void MainWindow::on_actionModelClose_triggered()
 
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
+    ui->graphicsView->getScene()->getTriggerAnimation()->getAnimations()->clear();
     ui->graphicsView->getScene()->clearGraphicalModelComponents();
     ui->graphicsView->getScene()->clearGraphicalModelConnections();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
@@ -2918,6 +2917,9 @@ void MainWindow::on_actionModelClose_triggered()
     simulator->getModels()->current()->getComponents()->getAllComponents()->clear();
     simulator->getModels()->current()->getComponents()->clear();
     simulator->getModels()->remove(simulator->getModels()->current());
+
+    // reinicia o relógio da cena
+    _initialClock = false;
 
     _actualizeActions();
     _actualizeTabPanes();

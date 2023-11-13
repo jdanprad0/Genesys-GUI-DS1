@@ -19,10 +19,6 @@ QList<AnimationTransition*>* TriggerAnimation::getAnimations() const {
     return _animations;
 }
 
-bool TriggerAnimation::getTimerStopped() const {
-    return _timerStopped;
-}
-
 double *TriggerAnimation::getTimeExecution() const {
     return const_cast<double*>(&_timeExecution);
 }
@@ -33,7 +29,7 @@ void TriggerAnimation::setTimeExecution(unsigned int timeExecution) {
 }
 
 void TriggerAnimation::clockInit() {
-    _clock.start();
+    _clock.restart();
     updateTimer();
 }
 
@@ -52,7 +48,7 @@ void TriggerAnimation::run() {
 void TriggerAnimation::updateTimer() {
     if (!_animations->isEmpty()) {
         qint64 currentTimeMs = this->getTime();
-        qint64 nextAnimationTimeStartMs = static_cast<qint64>(_animations->first()->getTimeStart() * 1000);
+        qint64 nextAnimationTimeStartMs = static_cast<qint64>(_animations->first()->getTimeStart());
 
         int timeUntilNextAnimationMs = static_cast<int>(nextAnimationTimeStartMs - currentTimeMs);
         if (timeUntilNextAnimationMs <= 0) {
@@ -60,10 +56,6 @@ void TriggerAnimation::updateTimer() {
             run();
         } else {
             _timer.start(timeUntilNextAnimationMs);
-            _timerStopped = false;
         }
-    } else {
-        _timer.stop();
-        _timerStopped = true;
     }
 }

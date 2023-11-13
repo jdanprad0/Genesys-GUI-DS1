@@ -367,7 +367,7 @@ void ModelGraphicsScene::clearGraphicalModelComponents() {
 
 // limpa todas as referencias das conexoes no final
 void ModelGraphicsScene::clearGraphicalModelConnections() {
-    for (unsigned int x = 0; x < (unsigned int) _allGraphicalConnections.size(); x++){
+    while (! _allGraphicalConnections.isEmpty()) {
         GraphicalConnection *gmc = _allGraphicalConnections.at(0);
         if (gmc) {
             // remove da lista de conexões graficas
