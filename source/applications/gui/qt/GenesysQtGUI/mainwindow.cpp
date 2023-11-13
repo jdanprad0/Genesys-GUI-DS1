@@ -779,28 +779,24 @@ void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
     Event* event = re->getCurrentEvent();
 
     if (event != nullptr) {
-        // Pega o componente gráfico do evento, ou seja, de onde parte a animação de transição
-        GraphicalModelComponent *eventStartComponent = dynamic_cast<GraphicalModelComponent *>(myScene()->findGraphicalModelComponent(event->getComponent()->getId()));
-
-        // Tempo em que o evento inicia (em segundos)
-        double currentTime = event->getTime();
-
-        // Gerar um índice aleatório
-        int indiceSorteado = QRandomGenerator::global()->bounded(_imagesAnimation->length());
-
-        // Cria a animação de transição
-        AnimationTransition *animationTransition = new AnimationTransition(myScene(), eventStartComponent, currentTime, event->getComponentinputPortNumber(), _imagesAnimation->at(indiceSorteado));
-
-        myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition);
-
-        if (!_initialClock) {
-            myScene()->getTriggerAnimation()->clockInit();
-            _initialClock = true;
-        } else {
-            myScene()->getTriggerAnimation()->updateTimer();
-        }
 		ui->graphicsView->selectModelComponent(event->getComponent());
 	}
+}
+
+void MainWindow::onMoveEntityEvent(SimulationEvent * event) {
+    SimulationEvent *event = event->getCurrentEvent();
+    GraphicalModelComponent *eventStartComponent = event->getCurrentEvent()->getComponent();
+
+    // Tempo atual
+    double currentTime = event->getTime();
+
+    // Gera um índice aleatório
+    int indiceSorteado = QRandomGenerator::global()->bounded(_imagesAnimation->length());
+
+    // Cria a animação de transição
+    AnimationTransition *animationTransition = new AnimationTransition(myScene(), eventStartComponent, currentTime, event->getComponentinputPortNumber(), _imagesAnimation->at(indiceSorteado));
+
+    animationTransition->startAnimation();
 }
 
 QColor MainWindow::myrgba(uint64_t color) {
@@ -2934,12 +2930,16 @@ void MainWindow::on_actionModelInformation_triggered()
 
 void MainWindow::on_actionModelCheck_triggered()
 {
+    //_onAfterProcessEventHandlers
 	_insertCommandInConsole("check");
 	bool res = simulator->getModels()->current()->check();
 	_actualizeActions();
 	_actualizeTabPanes();
 	if (res) {
-		QMessageBox::information(this, "Model Check", "Model successfully checked.");
+        OnEventManager* oem = model->getOnEvents();
+        oem->addOnEntityMoveHandler(this, &MainWindow::onMoveEntityEvent);
+
+        QMessageBox::information(this, "Model Check", "Model successfully checked.");
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
 	}

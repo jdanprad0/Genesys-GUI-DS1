@@ -32,6 +32,8 @@ public: // to notify changes
     void unselectDrawIcons();
     bool checkSelectedDrawIcons();
 
+    void onMoveEntityEvent(SimulationEvent * event);
+
 private slots:
     // actions
 	void on_actionEditUndo_triggered();
