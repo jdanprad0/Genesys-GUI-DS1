@@ -42,6 +42,8 @@
 // @TODO: Should NOT be hardcoded!!!
 #include "../../../../plugins/data/Variable.h"
 
+#include <QRandomGenerator>
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
 	ui->setupUi(this);
     //
@@ -158,6 +160,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	//this->on_actionModelNew_triggered();
 	//this->_loadGraphicalModel("./models/Smart_AnElectronicAssemblyAndTestSystem.gen"); //("../../../../../models/Smart_Delay.gen"); // Smart_AnElectronicAssemblyAndTestSystem.gen");
 	//ui->tabWidget_Model->setCurrentIndex(CONST.TabModelGraphicEditIndex);
+
+    _imagesAnimation->append("boat.png");
+    _imagesAnimation->append("car.png");
+    _imagesAnimation->append("default.png");
+    _imagesAnimation->append("gear.png");
+    _imagesAnimation->append("laptop.png");
+    _imagesAnimation->append("motorcycle.png");
+    _imagesAnimation->append("motorcycle-with-person.png");
+    _imagesAnimation->append("plane.png");
+    _imagesAnimation->append("tractor.png");
+    _imagesAnimation->append("woman.png");
 }
 
 MainWindow::~MainWindow() {
@@ -763,8 +776,31 @@ void MainWindow::_actualizeModelDataDefinitions(bool force) {
 }
 
 void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
-	Event* event = re->getCurrentEvent();
-	if (event != nullptr) {
+    Event* event = re->getCurrentEvent();
+
+    if (event != nullptr) {
+        // Pega o componente gráfico do evento, ou seja, de onde parte a animação de transição
+        GraphicalModelComponent *eventStartComponent = dynamic_cast<GraphicalModelComponent *>(myScene()->findGraphicalModelComponent(event->getComponent()->getId()));
+
+        // Tempo em que o evento inicia (em segundos)
+        double currentTime = event->getTime();
+
+        // Gerar um índice aleatório
+        int indiceSorteado = QRandomGenerator::global()->bounded(_imagesAnimation->length());
+
+        // Cria a animação de transição
+        AnimationTransition *animationTransition = new AnimationTransition(myScene(), eventStartComponent, currentTime, _imagesAnimation->at(indiceSorteado));
+
+        myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition);
+
+        if (!_initialClock) {
+            myScene()->getTriggerAnimation()->clockInit();
+            _initialClock = true;
+        }
+
+        if (myScene()->getTriggerAnimation()->getTimerStopped())
+            myScene()->getTriggerAnimation()->updateTimer(); // testar depois com um delay
+
 		ui->graphicsView->selectModelComponent(event->getComponent());
 	}
 }
@@ -3063,21 +3099,6 @@ void MainWindow::on_actionSelect_all_triggered()
 
 void MainWindow::on_actionPlayGraphicalSimulation_triggered()
 {
-    // Pega o componente gráfico do evento, ou seja, de onde parte a animação de transição
-    GraphicalModelComponent *eventStartComponent = dynamic_cast<GraphicalModelComponent *>(myScene()->getGraphicalModelComponents()->at(0));
 
-    // Tempo em que o evento inicia (em segundos)
-    double currentTime1 = 0;
-    double currentTime2 = 0.5;
-
-    // Cria a animação de transição
-    AnimationTransition *animationTransition1 = new AnimationTransition(myScene(), eventStartComponent, currentTime1, "woman.png");
-    AnimationTransition *animationTransition2 = new AnimationTransition(myScene(), eventStartComponent, currentTime2, "motorcycle-with-person.png");
-
-    myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition1);
-    myScene()->getTriggerAnimation()->clockInit();
-    myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition2);
-    if (myScene()->getTriggerAnimation()->getTimerStopped())
-        myScene()->getTriggerAnimation()->updateTimer(); // testar depois com um delay
 }
 

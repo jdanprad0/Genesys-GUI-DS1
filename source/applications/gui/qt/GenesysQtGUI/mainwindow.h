@@ -283,6 +283,10 @@ private:
 	} CONST;
 
     QUndoView *undoView = nullptr;
+    bool _initialClock = false;
+
+    // APENAS PARA TESTE
+    QList<QString> *_imagesAnimation = new QList<QString>;
 	//CodeEditor* textCodeEdit_Model;
 };
 #endif // MAINWINDOW_H

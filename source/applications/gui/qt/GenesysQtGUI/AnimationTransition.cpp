@@ -13,7 +13,7 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalM
     _oldTimeExecution = (*_timeExecution);
     _timeStart = timeStart + (*_timeExecution);
 
-    if (_graphicalStartComponent) {
+    if (_graphicalStartComponent && !_graphicalStartComponent->getGraphicalOutputPorts().empty()) {
         // Pega a conexão gráfica em que a animação de transição irá percorrer
         GraphicalConnection* connection = _graphicalStartComponent->getGraphicalOutputPorts().at(0)->getConnections()->at(0);
 
