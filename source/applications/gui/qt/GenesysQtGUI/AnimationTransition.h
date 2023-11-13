@@ -16,7 +16,7 @@ class AnimationTransition : public QVariantAnimation
 {
 public:
     // Construtor
-    AnimationTransition(ModelGraphicsScene* myScene, GraphicalModelComponent* graphicalStartComponent, const double timeStart, const QString imageName = "default.png");
+    AnimationTransition(ModelGraphicsScene* myScene, GraphicalModelComponent* graphicalStartComponent, const double timeStart, const unsigned int portNumber, const QString imageName = "default.png");
     // Destrutor
     ~AnimationTransition();
 
@@ -27,6 +27,7 @@ public:
     double getTimeStart() const;
     QList<QPointF> getPointsForAnimation() const;
     GraphicalImageAnimation* getImageAnimation() const;
+    unsigned int getPortNumber() const;
 
     // Setters
     void setImageAnimation(GraphicalImageAnimation* imageAnimation);
@@ -59,6 +60,7 @@ private:
     double _timeStart;
     QList<QPointF> _pointsForAnimation;
     GraphicalImageAnimation* _imageAnimation;
+    unsigned int _portNumber;
     double *_timeExecution;
     double _oldTimeExecution;
     qreal _currentProgress;

@@ -3,11 +3,12 @@
 
 #include <QDebug>
 
-AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalModelComponent* graphicalStartComponent, double timeStart, const QString imageName) :
+AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalModelComponent* graphicalStartComponent, double timeStart, const unsigned int portNumber, const QString imageName) :
     _myScene(myScene),
     _graphicalStartComponent(graphicalStartComponent),
     _graphicalEndComponent(nullptr),
-    _imageAnimation(nullptr) {
+    _imageAnimation(nullptr),
+    _portNumber(portNumber) {
 
     _timeExecution = myScene->getTriggerAnimation()->getTimeExecution();
     _oldTimeExecution = (*_timeExecution);
@@ -15,7 +16,7 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalM
 
     if (_graphicalStartComponent && !_graphicalStartComponent->getGraphicalOutputPorts().empty()) {
         // Pega a conexão gráfica em que a animação de transição irá percorrer
-        GraphicalConnection* connection = _graphicalStartComponent->getGraphicalOutputPorts().at(0)->getConnections()->at(0);
+        GraphicalConnection* connection = _graphicalStartComponent->getGraphicalOutputPorts().at(portNumber)->getConnections()->at(0);
 
         // Pega o componente de destino do evento/animação de transição
         ModelComponent *destinationComponent = connection->getDestination()->component;
@@ -73,6 +74,10 @@ QList<QPointF> AnimationTransition::getPointsForAnimation() const {
 
 GraphicalImageAnimation* AnimationTransition::getImageAnimation() const {
     return _imageAnimation;
+}
+
+unsigned int AnimationTransition::getPortNumber() const {
+    return _portNumber;
 }
 
 // Setters

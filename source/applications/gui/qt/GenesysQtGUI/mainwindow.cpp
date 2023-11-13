@@ -789,7 +789,7 @@ void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
         int indiceSorteado = QRandomGenerator::global()->bounded(_imagesAnimation->length());
 
         // Cria a animação de transição
-        AnimationTransition *animationTransition = new AnimationTransition(myScene(), eventStartComponent, currentTime, _imagesAnimation->at(indiceSorteado));
+        AnimationTransition *animationTransition = new AnimationTransition(myScene(), eventStartComponent, currentTime, event->getComponentinputPortNumber(), _imagesAnimation->at(indiceSorteado));
 
         myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition);
 
