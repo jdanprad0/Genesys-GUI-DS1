@@ -3075,8 +3075,9 @@ void MainWindow::on_actionPlayGraphicalSimulation_triggered()
     AnimationTransition *animationTransition2 = new AnimationTransition(myScene(), eventStartComponent, currentTime2, "motorcycle-with-person.png");
 
     myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition1);
-    myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition2);
-
     myScene()->getTriggerAnimation()->clockInit();
+    myScene()->getTriggerAnimation()->getAnimations()->append(animationTransition2);
+    if (myScene()->getTriggerAnimation()->getTimerStopped())
+        myScene()->getTriggerAnimation()->updateTimer(); // testar depois com um delay
 }
 

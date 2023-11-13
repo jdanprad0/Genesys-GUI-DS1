@@ -32,7 +32,7 @@ public:
     // Inicia a animação daquele tempo exato
     void run();
 
-private slots:
+public slots:
     // Atualiza o timer
     void updateTimer();
 
