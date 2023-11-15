@@ -1131,7 +1131,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <addaction name="actionSimulationStop"/>
    <addaction name="actionSimulationPause"/>
    <addaction name="actionSimulationResume"/>
-   <addaction name="actionPlayGraphicalSimulation"/>
+   <addaction name="actionActivateGraphicalSimulation"/>
   </widget>
   <widget class="QToolBar" name="toolBarAbout">
    <property name="windowTitle">
@@ -2032,19 +2032,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>Plot</string>
    </property>
   </action>
-  <action name="actionPlayGraphicalSimulation">
+  <action name="actionActivateGraphicalSimulation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
-     <normaloff>:/icons3/resources/icons/pack3/ico/heart.ico</normaloff>:/icons3/resources/icons/pack3/ico/heart.ico</iconset>
+     <normaloff>:/icons3/resources/icons/pack3/ico/eye.ico</normaloff>:/icons3/resources/icons/pack3/ico/eye.ico</iconset>
    </property>
    <property name="text">
-    <string>PlayGraphicalSimulation</string>
+    <string>ActivateGraphicalSimulation</string>
    </property>
    <property name="toolTip">
-    <string>start graphical simulation</string>
-   </property>
-   <property name="shortcut">
-    <string>F12</string>
+    <string>Activate graphical simulation</string>
    </property>
   </action>
  </widget>

@@ -55,7 +55,17 @@ ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal heig
     _grid.pen.setWidth(TraitsGUI<GScene>::gridPenWidth);
     _grid.pen.setStyle(Qt::DotLine);
 
-    _triggerAnimation = new TriggerAnimation(2);
+    // Imagens pré-salvas para animação
+    _imagesAnimation->append("boat.png");
+    _imagesAnimation->append("car.png");
+    _imagesAnimation->append("default.png");
+    _imagesAnimation->append("gear.png");
+    _imagesAnimation->append("laptop.png");
+    _imagesAnimation->append("motorcycle.png");
+    _imagesAnimation->append("motorcycle-with-person.png");
+    _imagesAnimation->append("plane.png");
+    _imagesAnimation->append("tractor.png");
+    _imagesAnimation->append("woman.png");
 }
 
 ModelGraphicsScene::ModelGraphicsScene(const ModelGraphicsScene& orig) { // : QGraphicsScene(orig) {
@@ -706,8 +716,36 @@ bool ModelGraphicsScene::getSnapToGrid() {
     return _snapToGrid;
 }
 
+QList<AnimationTransition *>* ModelGraphicsScene::getAnimationsTransition() {
+    return _animationsTransition;
+}
+
+QList<QString>* ModelGraphicsScene::getImagesAnimation() {
+    return _imagesAnimation;
+}
+
 QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> ModelGraphicsScene::getListComponentsGroup() {
     return _listComponentsGroup;
+}
+
+void ModelGraphicsScene::clearAnimations() {
+    this->clearImagesAnimation();
+    this->clearAnimationsTransition();
+}
+
+void ModelGraphicsScene::clearAnimationsTransition() {
+    // Limpa lista de animações
+    for (unsigned int i = 0; i < (unsigned int) _animationsTransition->size(); i++) {
+        delete _animationsTransition->at(i);
+    }
+    _animationsTransition->clear();
+    delete _animationsTransition;
+}
+
+void ModelGraphicsScene::clearImagesAnimation() {
+    // Limpa lista de imagens para animações
+    _imagesAnimation->clear();
+    delete _imagesAnimation;
 }
 
 void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup) {
@@ -1525,10 +1563,6 @@ void ModelGraphicsScene::setGraphicalComponentPort(GraphicalComponentPort * in) 
 
 QList<GraphicalModelComponent*> *ModelGraphicsScene::getAllComponents() {
     return &_allGraphicalModelComponents;
-}
-
-TriggerAnimation* ModelGraphicsScene::getTriggerAnimation() {
-    return _triggerAnimation;
 }
 
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){

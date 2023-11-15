@@ -27,6 +27,7 @@
 #include <QFileDialog>
 #include <QGraphicsScene>
 #include <QDateTime>
+#include <QEventLoop>
 #include <QTemporaryFile>
 #include <Qt>
 #include <QGraphicsPixmapItem>
@@ -160,17 +161,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	//this->on_actionModelNew_triggered();
 	//this->_loadGraphicalModel("./models/Smart_AnElectronicAssemblyAndTestSystem.gen"); //("../../../../../models/Smart_Delay.gen"); // Smart_AnElectronicAssemblyAndTestSystem.gen");
 	//ui->tabWidget_Model->setCurrentIndex(CONST.TabModelGraphicEditIndex);
-
-    _imagesAnimation->append("boat.png");
-    _imagesAnimation->append("car.png");
-    _imagesAnimation->append("default.png");
-    _imagesAnimation->append("gear.png");
-    _imagesAnimation->append("laptop.png");
-    _imagesAnimation->append("motorcycle.png");
-    _imagesAnimation->append("motorcycle-with-person.png");
-    _imagesAnimation->append("plane.png");
-    _imagesAnimation->append("tractor.png");
-    _imagesAnimation->append("woman.png");
 }
 
 MainWindow::~MainWindow() {
@@ -550,7 +540,8 @@ void MainWindow::_actualizeActions() {
 	ui->actionSimulationStep->setEnabled(opened && !running);
 	ui->actionSimulationStop->setEnabled(opened && (running || paused));
 	ui->actionSimulationPause->setEnabled(opened && running);
-	ui->actionSimulationResume->setEnabled(opened && paused);
+    ui->actionSimulationResume->setEnabled(opened && paused);
+    ui->actionActivateGraphicalSimulation->setEnabled(opened);
 	// debug
 	ui->tableWidget_Breakpoints->setEnabled(opened);
 	ui->tableWidget_Entities->setEnabled(opened);
@@ -783,20 +774,23 @@ void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
 	}
 }
 
-void MainWindow::onMoveEntityEvent(SimulationEvent * event) {
-    SimulationEvent *event = event->getCurrentEvent();
-    GraphicalModelComponent *eventStartComponent = event->getCurrentEvent()->getComponent();
-
-    // Tempo atual
-    double currentTime = event->getTime();
-
-    // Gera um índice aleatório
-    int indiceSorteado = QRandomGenerator::global()->bounded(_imagesAnimation->length());
-
+void MainWindow::_onMoveEntityEvent(SimulationEvent *re) {
     // Cria a animação de transição
-    AnimationTransition *animationTransition = new AnimationTransition(myScene(), eventStartComponent, currentTime, event->getComponentinputPortNumber(), _imagesAnimation->at(indiceSorteado));
 
-    animationTransition->startAnimation();
+    if (ui->actionActivateGraphicalSimulation->isChecked() && re) {
+        AnimationTransition *animationTransition = new AnimationTransition(myScene(), re->getCurrentEvent()->getComponent(), re->getDestinationComponent(), "car.png");
+        myScene()->getAnimationsTransition()->append(animationTransition);
+
+        // Inicia a animação
+        animationTransition->startAnimation();
+
+        // Cria um loop de eventos para aguardar a conclusão da animação
+        QEventLoop loop;
+        connect(animationTransition, &AnimationTransition::finished, &loop, &QEventLoop::quit);
+
+        // Aguarda a conclusão da animação sem bloquear o restante do código
+        loop.exec();
+    }
 }
 
 QColor MainWindow::myrgba(uint64_t color) {
@@ -1521,6 +1515,7 @@ void MainWindow::_initModelGraphicsView() {
 	connect(ui->graphicsView->scene(), &QGraphicsScene::focusItemChanged, this, &MainWindow::sceneFocusItemChanged);
 	connect(ui->graphicsView->scene(), &QGraphicsScene::selectionChanged, this, &MainWindow::sceneSelectionChanged);
 
+    // Cria uma stack undo/redo
     ui->graphicsView->getScene()->setUndoStack(new QUndoStack(this));
 }
 
@@ -1533,6 +1528,7 @@ void MainWindow::_setOnEventHandlers() {
 	simulator->getModels()->current()->getOnEvents()->addOnProcessEventHandler(this, &MainWindow::_onProcessEventHandler);
 	simulator->getModels()->current()->getOnEvents()->addOnEntityCreateHandler(this, &MainWindow::_onEntityCreateHandler);
 	simulator->getModels()->current()->getOnEvents()->addOnEntityRemoveHandler(this, &MainWindow::_onEntityRemoveHandler);
+    simulator->getModels()->current()->getOnEvents()->addOnEntityMoveHandler(this, &MainWindow::_onMoveEntityEvent);
 	//@Todo: Check for new events that were created later
 }
 
@@ -1954,9 +1950,9 @@ void MainWindow::on_actionSimulationStop_triggered() {
 }
 
 void MainWindow::on_actionSimulationStart_triggered() {
-	_insertCommandInConsole("start");
-	if (_setSimulationModelBasedOnText())
-		simulator->getModels()->current()->getSimulation()->start();
+    _insertCommandInConsole("start");
+    if (_setSimulationModelBasedOnText())
+        simulator->getModels()->current()->getSimulation()->start();
 }
 
 void MainWindow::on_actionSimulationStep_triggered() {
@@ -1968,7 +1964,6 @@ void MainWindow::on_actionSimulationStep_triggered() {
 
 void MainWindow::on_actionSimulationPause_triggered()
 {
-
     _insertCommandInConsole("pause");
     simulator->getModels()->current()->getSimulation()->pause();
 }
@@ -2899,10 +2894,10 @@ void MainWindow::on_actionModelClose_triggered()
 
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
-    ui->graphicsView->getScene()->getTriggerAnimation()->getAnimations()->clear();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
     ui->graphicsView->getScene()->getGraphicalConnections()->clear();
     ui->graphicsView->getScene()->getAllComponents()->clear();
+    ui->graphicsView->getScene()->clearAnimations();
     ui->graphicsView->getScene()->clear();
     ui->graphicsView->clear();
 
@@ -2912,10 +2907,10 @@ void MainWindow::on_actionModelClose_triggered()
     // limpando tudo a que se refere ao modelo
     simulator->getModels()->current()->getComponents()->getAllComponents()->clear();
     simulator->getModels()->current()->getComponents()->clear();
+    simulator->getModels()->current()->getSimulation()->stop();  // Para qualquer simulação
+    delete simulator->getModels()->current()->getSimulation(); // Deleta o objeto de simulação
+    ui->progressBarSimulation->setValue(0); // Seta o progresso da simulação para zero
     simulator->getModels()->remove(simulator->getModels()->current());
-
-    // reinicia o relógio da cena
-    _initialClock = false;
 
     _actualizeActions();
     _actualizeTabPanes();
@@ -2935,10 +2930,7 @@ void MainWindow::on_actionModelCheck_triggered()
 	bool res = simulator->getModels()->current()->check();
 	_actualizeActions();
 	_actualizeTabPanes();
-	if (res) {
-        OnEventManager* oem = model->getOnEvents();
-        oem->addOnEntityMoveHandler(this, &MainWindow::onMoveEntityEvent);
-
+    if (res) {
         QMessageBox::information(this, "Model Check", "Model successfully checked.");
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
@@ -3091,16 +3083,17 @@ void MainWindow::on_actionGModelShowConnect_triggered()
     }
 }
 
-void MainWindow::on_actionSelect_all_triggered()
-{
-    QList<QGraphicsItem *> itensToScene = ui->graphicsView->getScene()->items();
-    for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
-        itensToScene.at(i)->setSelected(true);
-    }
-}
+//void MainWindow::on_actionSelect_all_triggered()
+//{
+//    QList<QGraphicsItem *> itensToScene = ui->graphicsView->getScene()->items();
+//    for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
+//        itensToScene.at(i)->setSelected(true);
+//    }
+//}
 
-void MainWindow::on_actionPlayGraphicalSimulation_triggered()
-{
 
-}
+//void MainWindow::on_actionteste_triggered()
+//{
+//    _graphicalSimulation = (!_graphicalSimulation);
+//}
 

@@ -44,7 +44,7 @@
 #include "../../../../kernel/simulator/ModelComponent.h"
 #include "../../../../kernel/simulator/Simulator.h"
 #include "../../../../kernel/simulator/Plugin.h"
-#include "TriggerAnimation.h"
+#include "AnimationTransition.h"
 
 class GraphicalModelEvent {
 public:
@@ -140,7 +140,11 @@ public:
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
     void insertOldPositionItem(QGraphicsItem *item, QPointF position);
-    TriggerAnimation* getTriggerAnimation();
+    QList<AnimationTransition *> *getAnimationsTransition();
+    void clearAnimations();
+    void clearImagesAnimation();
+    void clearAnimationsTransition();
+    QList<QString> *getImagesAnimation();
 
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
@@ -150,6 +154,7 @@ public:
 	QList<QGraphicsItem*>*getGraphicalAnimations() const;
 	QList<QGraphicsItem*>*getGraphicalEntities() const;
     QList<QGraphicsItemGroup*>*getGraphicalGroups() const;
+    QList<AnimationTransition *> getAnimationsTransition() const;
 
 protected: // virtual functions
 	virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *contextMenuEvent);
@@ -196,7 +201,6 @@ private:
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;
     GraphicalComponentPort* _destinationGraphicalComponentPort;
-    TriggerAnimation *_triggerAnimation;
 
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
@@ -208,6 +212,8 @@ private:
 	QList<QGraphicsItem*>* _graphicalAnimations = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalEntities = new QList<QGraphicsItem*>();
     QList<QGraphicsItemGroup*>* _graphicalGroups = new QList<QGraphicsItemGroup*>();
+    QList<AnimationTransition *> *_animationsTransition = new QList<AnimationTransition*>();
+    QList<QString> *_imagesAnimation = new QList<QString>;
 };
 
 #endif /* MODELGRAPHICSSCENE_H */

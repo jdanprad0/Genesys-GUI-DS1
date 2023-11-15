@@ -3,12 +3,16 @@
 
 #include <QList>
 #include <QPointF>
-#include <QTime>
+#include <QTimer>
 #include <QVariantAnimation>
+#include <QElapsedTimer>
 
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalConnection.h"
 #include "graphicals/GraphicalImageAnimation.h"
+
+// Em segundos
+#define TEMPO_EXECUCAO_ANIMACAO 2
 
 class ModelGraphicsScene;
 
@@ -16,7 +20,7 @@ class AnimationTransition : public QVariantAnimation
 {
 public:
     // Construtor
-    AnimationTransition(ModelGraphicsScene* myScene, GraphicalModelComponent* graphicalStartComponent, const double timeStart, const unsigned int portNumber, const QString imageName = "default.png");
+    AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, const QString imageName = "default.png");
     // Destrutor
     ~AnimationTransition();
 
@@ -24,16 +28,22 @@ public:
     GraphicalModelComponent* getGraphicalStartComponent() const;
     GraphicalModelComponent* getGraphicalEndComponent() const;
     GraphicalConnection* getGraphicalConnection() const;
-    double getTimeStart() const;
+    static int getTimeExecution();
     QList<QPointF> getPointsForAnimation() const;
     GraphicalImageAnimation* getImageAnimation() const;
     unsigned int getPortNumber() const;
+    qint64 getTime() const; // Pega o momento atual do relógio
 
     // Setters
     void setImageAnimation(GraphicalImageAnimation* imageAnimation);
+    static void setTimeExecution(int timeExecution);
 
+    // Inicia o relógio
+    void clockInit();
     // Inicia a animação
     void startAnimation();
+    // Finaliza a animação
+    void stopAnimation();
     // Reinicia a animação
     void restartAnimation();
     // Configuração informações para a animação
@@ -57,12 +67,13 @@ private:
     GraphicalModelComponent* _graphicalStartComponent;
     GraphicalModelComponent* _graphicalEndComponent;
     GraphicalConnection* _graphicalConnection;
-    double _timeStart;
+    static int *_timeExecution;
+    static int _oldTimeExecution;
     QList<QPointF> _pointsForAnimation;
     GraphicalImageAnimation* _imageAnimation;
     unsigned int _portNumber;
-    double *_timeExecution;
-    double _oldTimeExecution;
+    QElapsedTimer _clock;
+    QTimer _timer;
     qreal _currentProgress;
 };
 

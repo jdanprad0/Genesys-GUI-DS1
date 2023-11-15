@@ -138,7 +138,6 @@ SOURCES += \
 	ModelGraphicsView.cpp \
 	ObjectPropertyBrowser.cpp \
 	PropertyEditor.cpp \
-    TriggerAnimation.cpp \
     actions/AddUndoCommand.cpp \
     actions/DeleteUndoCommand.cpp \
     actions/GroupUndoCommand.cpp \
@@ -339,7 +338,6 @@ HEADERS += \
     QPropertyBrowser/qttreepropertybrowser.h \
     QPropertyBrowser/qtvariantproperty.h \
     TraitsGUI.h \
-    TriggerAnimation.h \
     UtilGUI.h \
     actions/AddUndoCommand.h \
     actions/DeleteUndoCommand.h \

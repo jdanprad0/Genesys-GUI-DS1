@@ -55,6 +55,7 @@ void GraphicalImageAnimation::setHeight(unsigned int height) {
     updateImage();
 }
 
+// Outros
 void GraphicalImageAnimation::updateImage() {
     // Forma o caminho completo para a imagem
     _imagePath = _defaultPath + _imageName;

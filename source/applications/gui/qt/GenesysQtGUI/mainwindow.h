@@ -32,8 +32,6 @@ public: // to notify changes
     void unselectDrawIcons();
     bool checkSelectedDrawIcons();
 
-    void onMoveEntityEvent(SimulationEvent * event);
-
 private slots:
     // actions
 	void on_actionEditUndo_triggered();
@@ -152,14 +150,8 @@ private slots:
     void on_actionArranjeBototm_triggered();
     void on_actionArranjeCenter_triggered();
     void on_actionArranjeMiddle_triggered();
-
     void on_actionShowSnap_triggered();
-
     void on_actionGModelShowConnect_triggered();
-
-    void on_actionSelect_all_triggered();
-
-    void on_actionPlayGraphicalSimulation_triggered();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -181,6 +173,7 @@ private: // simulator event handlers
 	void _onProcessEventHandler(SimulationEvent* re);
 	void _onEntityCreateHandler(SimulationEvent* re);
 	void _onEntityRemoveHandler(SimulationEvent* re);
+    void _onMoveEntityEvent(SimulationEvent * re);
 private: // model Graphics View handlers
     void _onSceneMouseEvent(QGraphicsSceneMouseEvent* mouseEvent);
     void _onSceneWheelInEvent();
@@ -285,10 +278,7 @@ private:
 	} CONST;
 
     QUndoView *undoView = nullptr;
-    bool _initialClock = false;
-
-    // APENAS PARA TESTE
-    QList<QString> *_imagesAnimation = new QList<QString>;
+    bool _graphicalSimulation = false;
 	//CodeEditor* textCodeEdit_Model;
 };
 #endif // MAINWINDOW_H

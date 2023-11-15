@@ -1,22 +1,31 @@
 #include "AnimationTransition.h"
 #include "ModelGraphicsScene.h"
 
-#include <QDebug>
+// Inicializando variáveis estáticas
+int* AnimationTransition::_timeExecution = new int(TEMPO_EXECUCAO_ANIMACAO); // Define um valor inicial para o timeExecution
+int AnimationTransition::_oldTimeExecution = TEMPO_EXECUCAO_ANIMACAO;
 
-AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalModelComponent* graphicalStartComponent, double timeStart, const unsigned int portNumber, const QString imageName) :
+AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, const QString imageName) :
     _myScene(myScene),
-    _graphicalStartComponent(graphicalStartComponent),
     _graphicalEndComponent(nullptr),
-    _imageAnimation(nullptr),
-    _portNumber(portNumber) {
+    _imageAnimation(nullptr) {
 
-    _timeExecution = myScene->getTriggerAnimation()->getTimeExecution();
-    _oldTimeExecution = (*_timeExecution);
-    _timeStart = timeStart;
+    // Pega o componente gráfico de início e fim da animação
+    _graphicalStartComponent = _myScene->findGraphicalModelComponent(graphicalStartComponent->getId());
+    _graphicalEndComponent = _myScene->findGraphicalModelComponent(graphicalEndComponent->getId());
 
     if (_graphicalStartComponent && !_graphicalStartComponent->getGraphicalOutputPorts().empty()) {
+        QList<GraphicalComponentPort *> startComponentOutputPorts = _graphicalStartComponent->getGraphicalOutputPorts();
+        GraphicalConnection* connection = nullptr;
+
         // Pega a conexão gráfica em que a animação de transição irá percorrer
-        GraphicalConnection* connection = _graphicalStartComponent->getGraphicalOutputPorts().at(portNumber)->getConnections()->at(0);
+        for (unsigned int i = 0; i < (unsigned int) startComponentOutputPorts.size(); i++) {
+            if (startComponentOutputPorts.at(i)->getConnections()->at(0)->getDestination()->component->getId() == _graphicalEndComponent->getComponent()->getId()) {
+                connection = startComponentOutputPorts.at(i)->getConnections()->at(0);
+                _portNumber = i;
+                break;
+            }
+        }
 
         // Pega o componente de destino do evento/animação de transição
         ModelComponent *destinationComponent = connection->getDestination()->component;
@@ -49,7 +58,10 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, GraphicalM
     }
 }
 
-AnimationTransition::~AnimationTransition(){}
+AnimationTransition::~AnimationTransition(){
+    delete _timeExecution;
+    this->stopAnimation();
+}
 
 // Getters
 GraphicalModelComponent* AnimationTransition::getGraphicalStartComponent() const {
@@ -64,8 +76,8 @@ GraphicalConnection* AnimationTransition::getGraphicalConnection() const {
     return _graphicalConnection;
 }
 
-double AnimationTransition::getTimeStart() const {
-    return _timeStart;
+int AnimationTransition::getTimeExecution() {
+    return *_timeExecution;
 }
 
 QList<QPointF> AnimationTransition::getPointsForAnimation() const {
@@ -80,17 +92,41 @@ unsigned int AnimationTransition::getPortNumber() const {
     return _portNumber;
 }
 
+qint64 AnimationTransition::getTime() const {
+    return _clock.elapsed();
+}
+
 // Setters
 void AnimationTransition::setImageAnimation(GraphicalImageAnimation* imageAnimation) {
     _imageAnimation = imageAnimation;
+}
+
+void AnimationTransition::setTimeExecution(int timeExecution) {
+    *_timeExecution = timeExecution;
+}
+
+// Outros
+void AnimationTransition::clockInit() {
+    _clock.restart();
 }
 
 void AnimationTransition::startAnimation() {
     // Adiciona a imagem na cena
     _myScene->addItem(_imageAnimation);
 
+    // Inicia o relógio
+    clockInit();
+
     // Inicia a animação
     start();
+}
+
+void AnimationTransition::stopAnimation() {
+    // Remove a imagem na cena
+    _myScene->removeItem(_imageAnimation);
+
+    // Para a animação
+    stop();
 }
 
 void AnimationTransition::restartAnimation() {
@@ -103,7 +139,7 @@ void AnimationTransition::restartAnimation() {
 
 void AnimationTransition::configureAnimation() {
     // Configura informações da animação
-    setDuration((*_timeExecution) * 1000); // Define a duração da animação (em ms, porém _timeExecution é dado em s)
+    setDuration(this->getTimeExecution() * 1000); // Define a duração da animação (em ms, porém _timeExecution é dado em s)
     setStartValue(0.0); // Valor para ponto de partida do progresso da animação
     setEndValue(1.0); // Valor atingido ao término da animação
     setEasingCurve(QEasingCurve::Linear); // Curva de atenuação entre os pontos no progresso da animação
@@ -113,9 +149,9 @@ void AnimationTransition::configureAnimation() {
 }
 
 void AnimationTransition::updateDurationIfNeeded() {
-    if (_oldTimeExecution != (*_timeExecution)) {
-        _oldTimeExecution = (*_timeExecution);
-        setDuration((*_timeExecution) * 1000);
+    if (_oldTimeExecution != this->getTimeExecution()) {
+        _oldTimeExecution = this->getTimeExecution();
+        setDuration(this->getTimeExecution() * 1000);
 
         // reinicia a animação
         restartAnimation();
