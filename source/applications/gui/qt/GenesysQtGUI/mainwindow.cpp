@@ -2904,9 +2904,9 @@ void MainWindow::on_actionModelClose_triggered()
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
     ui->graphicsView->getScene()->getTriggerAnimation()->getAnimations()->clear();
-    ui->graphicsView->getScene()->clearGraphicalModelComponents();
-    ui->graphicsView->getScene()->clearGraphicalModelConnections();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
+    ui->graphicsView->getScene()->getGraphicalConnections()->clear();
+    ui->graphicsView->getScene()->getAllComponents()->clear();
     ui->graphicsView->getScene()->clear();
     ui->graphicsView->clear();
 
