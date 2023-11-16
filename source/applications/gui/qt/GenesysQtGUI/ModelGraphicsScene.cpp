@@ -695,6 +695,12 @@ void ModelGraphicsScene::showGrid()
     _grid.visible = !_grid.visible;
 }
 
+void ModelGraphicsScene::showDiagrams()
+{
+    QList<QGraphicsItem*>* test = getGraphicalModelDataDefinitions();
+    int size = test->size();
+}
+
 void ModelGraphicsScene::setSnapToGrid(bool activated)
 {
     _snapToGrid = activated;

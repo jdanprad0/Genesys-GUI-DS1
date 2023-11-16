@@ -799,6 +799,7 @@
      <addaction name="actionShowRule"/>
      <addaction name="actionShowSnap"/>
      <addaction name="actionShowGuides"/>
+     <addaction name="actionDiagrams"/>
      <addaction name="separator"/>
      <addaction name="actionShowInternalElements"/>
      <addaction name="actionShowAttachedElements"/>
@@ -1114,6 +1115,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <addaction name="separator"/>
    <addaction name="actionViewGroup"/>
    <addaction name="actionViewUngroup"/>
+   <addaction name="separator"/>
   </widget>
   <widget class="QToolBar" name="toolBarSimulation">
    <property name="windowTitle">
@@ -2029,6 +2031,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="text">
     <string>Plot</string>
+   </property>
+  </action>
+  <action name="actionDiagrams">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="window-new"/>
+   </property>
+   <property name="text">
+    <string>Diagrams</string>
    </property>
   </action>
  </widget>

@@ -119,6 +119,7 @@ public:
     GRID *grid();
     void showGrid();
     void snapItemsToGrid();
+    void showDiagrams();
     QUndoStack* getUndoStack();
     Simulator* getSimulator();
     void setUndoStack(QUndoStack* undo);

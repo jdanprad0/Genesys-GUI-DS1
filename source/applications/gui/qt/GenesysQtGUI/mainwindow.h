@@ -156,6 +156,8 @@ private slots:
 
     void on_actionSelect_all_triggered();
 
+    void on_actionDiagrams_triggered();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 

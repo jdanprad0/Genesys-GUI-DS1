@@ -2896,6 +2896,12 @@ void MainWindow::on_actionModelCheck_triggered()
 	_actualizeTabPanes();
 	if (res) {
 		QMessageBox::information(this, "Model Check", "Model successfully checked.");
+
+        if (ui->actionDiagrams->isChecked()) {
+            ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
+            scene->showDiagrams();
+        }
+
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
 	}
@@ -3053,4 +3059,8 @@ void MainWindow::on_actionSelect_all_triggered()
     for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
         itensToScene.at(i)->setSelected(true);
     }
+}
+
+void MainWindow::on_actionDiagrams_triggered()
+{
 }
