@@ -43,5 +43,10 @@
 /source/applications/gui/qt/GenesysQtGUI/GenesysQtGUI.pro.user
 /source/applications/gui/qt/GenesysQtGUI/GenesysQtGUI.pro.user.*
 
+#Traits App
+source/applications/TraitsApp.h
+
+#Modelos
+
 # pasta vscode
 .vscode
