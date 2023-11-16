@@ -4,6 +4,7 @@
 
 #include "../../../GenesysApplication_if.h"
 #include "../../../TraitsApp.h"
+#include "../../../terminal/TraitsTerminalApp.h"
 #include "TraitsGUI.h"
 
 int mainGraphicQtApp(int argc, char *argv[]) {
@@ -22,7 +23,7 @@ int mainGraphicQtApp(int argc, char *argv[]) {
 }
 
 int mainTerminalApp(int argc, char *argv[]) {
-    GenesysApplication_if *app = new TraitsApp<GenesysApplication_if>::Application();
+	GenesysApplication_if *app = new TraitsTerminalApp<GenesysApplication_if>::Application();
 	return app->main(argc, argv);
 }
 
@@ -33,4 +34,3 @@ int main(int argc, char *argv[]) {
 		return mainTerminalApp(argc, argv);
 	}
 }
-
