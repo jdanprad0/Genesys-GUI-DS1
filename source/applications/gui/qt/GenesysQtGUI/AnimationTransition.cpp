@@ -28,7 +28,11 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, ModelCompo
         }
 
         // Pega o componente de destino do evento/animação de transição
-        ModelComponent *destinationComponent = connection->getDestination()->component;
+        ModelComponent *destinationComponent;
+        if (connection == nullptr)
+            return;
+
+        destinationComponent = connection->getDestination()->component;
         _graphicalEndComponent = _myScene->findGraphicalModelComponent(destinationComponent->getId());
 
         // Pega os pontos na tela em que a animação deve ocorrer
@@ -59,7 +63,6 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, ModelCompo
 }
 
 AnimationTransition::~AnimationTransition(){
-    delete _timeExecution;
     this->stopAnimation();
 }
 
@@ -92,10 +95,6 @@ unsigned int AnimationTransition::getPortNumber() const {
     return _portNumber;
 }
 
-qint64 AnimationTransition::getTime() const {
-    return _clock.elapsed();
-}
-
 // Setters
 void AnimationTransition::setImageAnimation(GraphicalImageAnimation* imageAnimation) {
     _imageAnimation = imageAnimation;
@@ -106,16 +105,9 @@ void AnimationTransition::setTimeExecution(int timeExecution) {
 }
 
 // Outros
-void AnimationTransition::clockInit() {
-    _clock.restart();
-}
-
 void AnimationTransition::startAnimation() {
     // Adiciona a imagem na cena
     _myScene->addItem(_imageAnimation);
-
-    // Inicia o relógio
-    clockInit();
 
     // Inicia a animação
     start();

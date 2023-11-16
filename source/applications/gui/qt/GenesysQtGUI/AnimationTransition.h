@@ -12,7 +12,7 @@
 #include "graphicals/GraphicalImageAnimation.h"
 
 // Em segundos
-#define TEMPO_EXECUCAO_ANIMACAO 2
+#define TEMPO_EXECUCAO_ANIMACAO 1
 
 class ModelGraphicsScene;
 
@@ -32,14 +32,11 @@ public:
     QList<QPointF> getPointsForAnimation() const;
     GraphicalImageAnimation* getImageAnimation() const;
     unsigned int getPortNumber() const;
-    qint64 getTime() const; // Pega o momento atual do relógio
 
     // Setters
     void setImageAnimation(GraphicalImageAnimation* imageAnimation);
     static void setTimeExecution(int timeExecution);
 
-    // Inicia o relógio
-    void clockInit();
     // Inicia a animação
     void startAnimation();
     // Finaliza a animação
@@ -72,8 +69,6 @@ private:
     QList<QPointF> _pointsForAnimation;
     GraphicalImageAnimation* _imageAnimation;
     unsigned int _portNumber;
-    QElapsedTimer _clock;
-    QTimer _timer;
     qreal _currentProgress;
 };
 

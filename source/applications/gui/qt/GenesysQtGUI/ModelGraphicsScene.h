@@ -140,9 +140,9 @@ public:
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
     void insertOldPositionItem(QGraphicsItem *item, QPointF position);
+    QPointF getOldPositionItem(QGraphicsItem *item) const;
     QList<AnimationTransition *> *getAnimationsTransition();
     void clearAnimations();
-    void clearImagesAnimation();
     void clearAnimationsTransition();
     QList<QString> *getImagesAnimation();
 

@@ -29,7 +29,7 @@ public:
 
 private:
     // Caminho padrão das imagens
-    QString _defaultPath = "/home/daniel/Documentos/Modelagem-e-Simulacao/Genesys-GUI-DS1/source/applications/gui/images/";
+    QString _defaultPath = "../../images/";
 
     // Atributos
     QString _imagePath;

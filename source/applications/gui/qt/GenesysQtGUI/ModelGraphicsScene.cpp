@@ -435,17 +435,17 @@ void ModelGraphicsScene::clearInputConnectionsComponent(GraphicalModelComponent*
     for (GraphicalComponentPort* port : graphicalComponent->getGraphicalInputPorts()) {
         if (port->getConnections()->size() > 0) {
             // pega a conexao dessa porta
-            graphConn = port->getConnections()->at(0);
+            for (GraphicalConnection* graphConn : *port->getConnections()) {
+                // se ha conexao nessa porta
+                if (graphConn != nullptr) {
+                    // pega a origem da conexao
+                    source = ModelGraphicsScene::findGraphicalModelComponent(graphConn->getSource()->component->getId());
 
-            // se ha conexao nessa porta
-            if (graphConn != nullptr) {
-                // pega a origem da conexao
-                source = ModelGraphicsScene::findGraphicalModelComponent(graphConn->getSource()->component->getId());
-
-                // se o componente de origem esta no modelo
-                if (source != nullptr) {
-                    // remove a conexao entre eles
-                    ModelGraphicsScene::removeGraphicalConnection(graphConn, source, graphicalComponent);
+                    // se o componente de origem esta no modelo
+                    if (source != nullptr) {
+                        // remove a conexao entre eles
+                        ModelGraphicsScene::removeGraphicalConnection(graphConn, source, graphicalComponent);
+                    }
                 }
             }
         }
@@ -590,7 +590,7 @@ bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, Gra
         // varre todas as portas de entrada do componente de destino, ate encontrar a porta correta
         for (GraphicalComponentPort* port : dst->getGraphicalInputPorts()) {
             // se encontrar a porta correta
-            if (port->portNum() == connection->getDestination()->channel.portNumber && port->getConnections()->isEmpty()) {
+            if (port->portNum() == connection->getDestination()->channel.portNumber) {
                 // adiciona o componente grafico nessa porta
                 port->addGraphicalConnection(connection);
                 // nao e necessario adicionar a conexao no modelo do componente de destino, pois apenas os componentes de origem a possui
@@ -729,23 +729,17 @@ QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> ModelGraphicsScene:
 }
 
 void ModelGraphicsScene::clearAnimations() {
-    this->clearImagesAnimation();
     this->clearAnimationsTransition();
 }
 
 void ModelGraphicsScene::clearAnimationsTransition() {
     // Limpa lista de animações
-    for (unsigned int i = 0; i < (unsigned int) _animationsTransition->size(); i++) {
-        delete _animationsTransition->at(i);
+    if (_animationsTransition) {
+        for (unsigned int i = 0; i < (unsigned int) _animationsTransition->size(); i++) {
+            delete _animationsTransition->at(i);
+        }
+        _animationsTransition->clear();
     }
-    _animationsTransition->clear();
-    delete _animationsTransition;
-}
-
-void ModelGraphicsScene::clearImagesAnimation() {
-    // Limpa lista de imagens para animações
-    _imagesAnimation->clear();
-    delete _imagesAnimation;
 }
 
 void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup) {
@@ -754,6 +748,10 @@ void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<G
 
 void ModelGraphicsScene::insertOldPositionItem(QGraphicsItem *item, QPointF position) {
     _oldPositionsItems.insert(item, position);
+}
+
+QPointF ModelGraphicsScene::getOldPositionItem(QGraphicsItem *item) const {
+   return _oldPositionsItems[item];
 }
 
 void ModelGraphicsScene::snapItemsToGrid()
@@ -914,6 +912,8 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
 
     // remove as referencias do grupo auxiliar
     destroyItemGroup(newGroup);
+
+    insertOldPositionItem(group, group->pos());
 }
 
 
@@ -1192,12 +1192,12 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                             _sourceGraphicalComponentPort = port;
                             _connectingStep = 2;
                             return;
-                        } else if (port->isInputPort() && port->getConnections()->empty()) {
+                        } else if (port->isInputPort()) {
                             _destinationGraphicalComponentPort = port;
                             _connectingStep = 3;
                             return;
                         }
-                    } else if (_connectingStep == 2 && port->isInputPort() && _sourceGraphicalComponentPort != nullptr && port->getConnections()->empty() && port->graphicalComponent() != _sourceGraphicalComponentPort->graphicalComponent()) {
+                    } else if (_connectingStep == 2 && port->isInputPort() && _sourceGraphicalComponentPort != nullptr) {
                         _destinationGraphicalComponentPort = port;
                         // create connection
                         // in the model
@@ -1214,7 +1214,7 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 
                         _connectingStep = 0;
                         return;
-                    } else if (_connectingStep == 3 && !port->isInputPort() && _destinationGraphicalComponentPort != nullptr && port->getConnections()->empty() && port->graphicalComponent() != _destinationGraphicalComponentPort->graphicalComponent()) {
+                    } else if (_connectingStep == 3 && !port->isInputPort() && _destinationGraphicalComponentPort != nullptr && port->getConnections()->empty()) {
                         // create connection
                         // in the model
                         GraphicalConnection* graphicconnection = new GraphicalConnection(port, _destinationGraphicalComponentPort);
@@ -1269,7 +1269,9 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 
     foreach (QGraphicsItem* item, this->selectedItems()) {
         GraphicalModelComponent* component = dynamic_cast<GraphicalModelComponent*>(item);
-        GraphicalConnection* connectionTeste = dynamic_cast<GraphicalConnection*>(item);
+        QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (item);
+        GraphicalComponentPort *port = dynamic_cast<GraphicalComponentPort *> (item);
+        GraphicalConnection* connection = dynamic_cast<GraphicalConnection*>(item);
 
 //        if (connectionTeste) {
 //            for (unsigned int i = 0; i < 2; i++) {
@@ -1295,7 +1297,11 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
             items.append(component);
             oldPositions.append(component->getOldPosition());
             newPositions.append(component->scenePos());
-        } else if (component == nullptr){
+        } else if (group) {
+            items.append(item);
+            oldPositions.append(_oldPositionsItems[group]);
+            newPositions.append(item->pos());
+        } else if (component == nullptr && group == nullptr && port == nullptr && connection == nullptr){
             QRectF rectScenePost = item->sceneBoundingRect();
 
             qreal rectX = rectScenePost.bottomLeft().x(); // position X
@@ -1353,7 +1359,7 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
             if (!port->isInputPort() && this->_connectingStep == 1 && port->getConnections()->empty()) {
                 _sourceGraphicalComponentPort = port;
                 _connectingStep = 2;
-            } else if (port->isInputPort() && this->_connectingStep == 1 && port->getConnections()->empty()) {
+            } else if (port->isInputPort() && this->_connectingStep == 1) {
                 _destinationGraphicalComponentPort = port;
                 _connectingStep = 3;
             }
@@ -1417,9 +1423,9 @@ void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                 }
                 if (_connectingStep == 1 && port->getConnections()->empty()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
-                } else if (_connectingStep == 2 && port->isInputPort() && port->getConnections()->empty() && port->graphicalComponent() != _sourceGraphicalComponentPort->graphicalComponent()) {
+                } else if (_connectingStep == 2 && port->isInputPort()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
-                } else if (_connectingStep == 3 && !port->isInputPort() && port->getConnections()->empty() && port->graphicalComponent() != _destinationGraphicalComponentPort->graphicalComponent()) {
+                } else if (_connectingStep == 3 && !port->isInputPort() && port->getConnections()->empty()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
                 }
                 return;

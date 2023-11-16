@@ -16,7 +16,14 @@ struct ComponentItem {
 struct GroupItem {
     QGraphicsItemGroup *group;
     QList<ComponentItem> myComponentItems;
+    QPointF initialPosition;
 };
+
+struct DrawingItem {
+    QGraphicsItem *myDrawingItem;
+    QPointF initialPosition;
+};
+
 
 class AddUndoCommand: public QUndoCommand {
 public:

@@ -17,8 +17,8 @@ GraphicalConnection::GraphicalConnection(GraphicalComponentPort* sourceGraphical
     _portSourceConnection = portSourceConnection;
     _portDestinationConnection = portDestinationConnection;
     _color = color;
-	setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsFocusable);
-	setAcceptHoverEvents(true);
+    setFlags(QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsFocusable);
+    setAcceptHoverEvents(true);
 	setAcceptTouchEvents(true);
 	setActive(true);
 	setSelected(false);

@@ -1,7 +1,7 @@
 #include "DeleteUndoCommand.h"
 
 DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphicsScene *scene, QUndoCommand *parent)
-    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<QGraphicsItem *>()), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
+    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<DrawingItem>()), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
 
     // filtra cada tipo de item possivel em sua respectiva lista
     for (QGraphicsItem *item : items) {
@@ -11,8 +11,12 @@ DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphics
             componentItem.graphicalComponent = component;
             componentItem.initialPosition = component->pos();
 
-            if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
-                componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+
+            if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
+                for (int j = 0; j < component->getGraphicalInputPorts().at(0)->getConnections()->size(); ++j) {
+                    componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(j));
+                }
+            }
 
             for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
                 GraphicalComponentPort *port = component->getGraphicalOutputPorts().at(j);
@@ -28,6 +32,7 @@ DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphics
             GroupItem groupItem;
 
             groupItem.group = group;
+            groupItem.initialPosition = group->pos();
 
             for (int i = 0; i < group->childItems().size(); i++) {
                 GraphicalModelComponent * component = dynamic_cast<GraphicalModelComponent *>(groupItem.group->childItems().at(i));
@@ -37,8 +42,11 @@ DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphics
                 componentItem.graphicalComponent = component;
                 componentItem.initialPosition = component->pos();
 
-                if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
-                    componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+                if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
+                    for (int j = 0; j < component->getGraphicalInputPorts().at(0)->getConnections()->size(); ++j) {
+                        componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(j));
+                    }
+                }
 
                 for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
                     GraphicalComponentPort *port = component->getGraphicalOutputPorts().at(j);
@@ -52,7 +60,12 @@ DeleteUndoCommand::DeleteUndoCommand(QList<QGraphicsItem *> items, ModelGraphics
 
             _myGroupItems->append(groupItem);
         } else {
-            _myDrawingItems->append(item);
+            DrawingItem drawingItem;
+
+            drawingItem.myDrawingItem = item;
+            drawingItem.initialPosition = item->pos();
+
+            _myDrawingItems->append(drawingItem);
         }
     }
 
@@ -73,6 +86,7 @@ void DeleteUndoCommand::undo() {
         ComponentItem componentItem = _myComponentItems->at(i);
 
         _myGraphicsScene->addItem(componentItem.graphicalComponent);
+        componentItem.graphicalComponent->setPos(componentItem.initialPosition);
 
         for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
             GraphicalConnection *connection = componentItem.inputConnections.at(j);
@@ -93,8 +107,9 @@ void DeleteUndoCommand::undo() {
 
     // varre todos os outros itens simples do tipo QGraphicsItem e adiciona da tela
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
-        QGraphicsItem *item = _myDrawingItems->at(i);
-        _myGraphicsScene->addItem(item);
+        DrawingItem drawingItem = _myDrawingItems->at(i);
+        drawingItem.myDrawingItem->setPos(drawingItem.initialPosition);
+        _myGraphicsScene->addItem(drawingItem.myDrawingItem);
     }
 
     // volta os itens do grupo e o grupo na tela
@@ -103,6 +118,7 @@ void DeleteUndoCommand::undo() {
 
         for (int j = 0; j < groupItem.myComponentItems.size(); ++j) {
             ComponentItem componentItem = groupItem.myComponentItems.at(j);
+            componentItem.graphicalComponent->setPos(componentItem.initialPosition);
 
             _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
@@ -165,11 +181,11 @@ void DeleteUndoCommand::undo() {
             componentsGroup->append(componentItem.graphicalComponent);
         }
 
-        //QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
-
         groupItem.group->update();
 
         _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group);
+
+        groupItem.group->setPos(groupItem.initialPosition);
 
         delete componentsGroup;
     }
@@ -209,10 +225,10 @@ void DeleteUndoCommand::redo() {
 
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
-        QGraphicsItem *item = _myDrawingItems->at(i);
+        DrawingItem drawingItem = _myDrawingItems->at(i);
 
         //add graphically
-        _myGraphicsScene->removeDrawing(item);
+        _myGraphicsScene->removeDrawing(drawingItem.myDrawingItem);
     }
 
     // agora remove o que deve ser removido do modelo

@@ -1,7 +1,7 @@
 #include "PasteUndoCommand.h"
 
 PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalComponents, QList<GraphicalConnection *> *connections, QList<QGraphicsItemGroup *> *groups, QList<QGraphicsItem *> *drawing, ModelGraphicsScene *scene, QUndoCommand *parent)
-    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<QGraphicsItem *>()), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
+    : QUndoCommand(parent), _myComponentItems(new QList<ComponentItem>()), _myConnectionItems(new QList<GraphicalConnection *>()), _myDrawingItems(new QList<DrawingItem>()), _myGroupItems(new QList<GroupItem>()), _myGraphicsScene(scene) {
 
     for (int i = 0; i < connections->size(); i++) {
         _myConnectionItems->append(connections->at(i));
@@ -11,7 +11,11 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
         drawing->at(i)->setX(drawing->at(i)->pos().x() + drawing->at(i)->boundingRect().width()/2);
         drawing->at(i)->setY(drawing->at(i)->pos().y() - drawing->at(i)->boundingRect().height()/2);
         _myGraphicsScene->insertOldPositionItem(drawing->at(i), drawing->at(i)->pos());
-        _myDrawingItems->append(drawing->at(i));
+
+        DrawingItem drawingItem;
+        drawingItem.myDrawingItem = drawing->at(i);
+        drawingItem.initialPosition = drawingItem.myDrawingItem->pos();
+        _myDrawingItems->append(drawingItem);
     }
 
     for (int i = 0; i < graphicalComponents->size(); i++) {
@@ -24,8 +28,11 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
         componentItem.graphicalComponent->setOldPosition(componentItem.graphicalComponent->pos());
         componentItem.initialPosition = component->pos();
 
-        if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
-            componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+        if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
+            for (int j = 0; j < component->getGraphicalInputPorts().at(0)->getConnections()->size(); ++j) {
+                componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(j));
+            }
+        }
 
         for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
             GraphicalComponentPort *port = component->getGraphicalOutputPorts().at(j);
@@ -53,8 +60,11 @@ PasteUndoCommand::PasteUndoCommand(QList<GraphicalModelComponent *> *graphicalCo
                 componentItem.graphicalComponent = component;
                 componentItem.initialPosition = component->pos();
 
-                if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
-                    componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+                if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
+                    for (int j = 0; j < component->getGraphicalInputPorts().at(0)->getConnections()->size(); ++j) {
+                        componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(j));
+                    }
+                }
 
                 for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
                     GraphicalComponentPort *port = component->getGraphicalOutputPorts().at(j);
@@ -101,11 +111,11 @@ void PasteUndoCommand::undo() {
     }
 
     // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
-    for (int i = 0; i < _myDrawingItems->size(); ++i) {
-        QGraphicsItem *item = _myDrawingItems->at(i);
+    for (int i = 0; i < _myDrawingItems->size(); ++i) {      
+        DrawingItem drawingItem = _myDrawingItems->at(i);
 
         //remove graphically
-        _myGraphicsScene->removeDrawing(item);
+        _myGraphicsScene->removeDrawing(drawingItem.myDrawingItem);
     }
 
     // agora remove o que deve ser removido do modelo
@@ -146,6 +156,7 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
+        componentItem.graphicalComponent->setPos(componentItem.initialPosition);
         _myGraphicsScene->addItem(componentItem.graphicalComponent);
 
         for (int j = 0; j < _myComponentItems->at(i).inputConnections.size(); ++j) {
@@ -170,10 +181,11 @@ void PasteUndoCommand::redo() {
 
     // varre todos os outros itens simples do tipo QGraphicsItem e adiciona da tela
     for (int i = 0; i < _myDrawingItems->size(); ++i) {
-        QGraphicsItem *item = _myDrawingItems->at(i);
-        _myGraphicsScene->getGraphicalDrawings()->append(item);
-        _myGraphicsScene->addItem(item);
-        item->setSelected(true);
+        DrawingItem drawingItem = _myDrawingItems->at(i);
+        _myGraphicsScene->getGraphicalDrawings()->append(drawingItem.myDrawingItem);
+        drawingItem.myDrawingItem->setPos(drawingItem.initialPosition);
+        _myGraphicsScene->addItem(drawingItem.myDrawingItem);
+        drawingItem.myDrawingItem->setSelected(true);
     }
 
     // agora comeca a adicionar o que se deve no modelo
@@ -217,15 +229,6 @@ void PasteUndoCommand::redo() {
         groupItem.group->update();
 
         delete componentsGroup;
-    }
-
-    // varre todos os outros itens simples do tipo QGraphicsItem e remove da tela
-    for (int i = 0; i < _myDrawingItems->size(); ++i) {
-        QGraphicsItem *item = _myDrawingItems->at(i);
-
-        //add graphically
-        _myGraphicsScene->addItem(item);
-        _myGraphicsScene->getGraphicalDrawings()->append(item);
     }
 
     _myGraphicsScene->notifyGraphicalModelChange(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::OTHER, nullptr);

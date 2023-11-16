@@ -15,9 +15,12 @@ AddUndoCommand::AddUndoCommand(QGraphicsItem *item, ModelGraphicsScene *scene, Q
         componentItem.graphicalComponent = component;
         componentItem.initialPosition = component->pos();
 
-        if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty())
-            componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
-
+        if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
+            for (int j = 0; j < component->getGraphicalInputPorts().at(0)->getConnections()->size(); ++j) {
+                componentItem.inputConnections.append(component->getGraphicalInputPorts().at(0)->getConnections()->at(j));
+            }
+        }
+        
         for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
             GraphicalComponentPort *port = component->getGraphicalOutputPorts().at(j);
 

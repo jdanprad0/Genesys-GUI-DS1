@@ -40,6 +40,7 @@
 #include <actions/PasteUndoCommand.h>
 #include <actions/DeleteUndoCommand.h>
 #include "AnimationTransition.h"
+#include <cstdlib>
 // @TODO: Should NOT be hardcoded!!!
 #include "../../../../plugins/data/Variable.h"
 
@@ -257,10 +258,21 @@ bool MainWindow::_saveGraphicalModel(QString filename)
 Model *MainWindow::_loadGraphicalModel(std::string filename) {
     QFile file(QString::fromStdString(filename));
 
+    Model *model = nullptr;
+
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::information(this, tr("Unable to access file to save"),
                                 file.errorString());
         return nullptr;
+    }
+
+    QFileInfo fileInfo(file.fileName());
+    QString extension = fileInfo.suffix();
+
+    if (extension != "gui") {
+        model = simulator->getModels()->loadModel(file.fileName().toStdString());
+        if (model != nullptr) _generateGraphicalModelFromModel();
+        return model;
     }
 
     QString content = file.readAll();
@@ -285,13 +297,12 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
 
     file.close();
 
-    QTemporaryFile tempFile;
-
     QDateTime currentDateTime = QDateTime::currentDateTime();
     QString newFilename = QString("/tempFile-%1.gen").arg(currentDateTime.toString("yyyy-MM-dd-hh-mm-ss"));
 
-    tempFile.setFileTemplate(QDir::tempPath() + newFilename);
-    tempFile.open();
+    QString filePath = QDir::tempPath() + newFilename;
+    QFile tempFile(filePath);
+    tempFile.open(QIODevice::ReadWrite | QIODevice::Text);
 
     QTextStream outStream(&tempFile);
     for (const QString& line : simulLang) {
@@ -300,13 +311,16 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
 
     outStream.flush();
 
+    std::string nameTempFile = tempFile.fileName().toStdString();
+    model = simulator->getModels()->loadModel(nameTempFile);
+
     tempFile.close();
 
-    Model *model = simulator->getModels()->loadModel(tempFile.fileName().toStdString());
-
     QFile::remove(tempFile.fileName());
-    std::list<ModelComponent*> c = * model->getComponents()->getAllComponents();
+
     if (model != nullptr) {
+        std::list<ModelComponent*> c = * model->getComponents()->getAllComponents();
+
 		_clearModelEditors();
 
         bool firstLine = true;
@@ -409,17 +423,6 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
 
 		ui->textEdit_Console->append("\n");
 		_modelfilename = QString::fromStdString(filename);
-		_initUiForNewModel(model);
-        // /TODO: LOAD THE GRAPHICAL PART O A MODEL
-        //if (true)
-        //{ // there is no graphical part in the file
-        //    this->_generateGraphicalModelFromModel();
-        //}
-        // Iterando pelos elementos da QStringList começando do índice 2
-        //unsigned int x = simulator->getModels()->current()->getComponents()->getNumberOfComponents();
-        //unsigned int y = model->getComponents()->getNumberOfComponents();
-        //std::cout << y << std::endl;
-        //std::cout << x << std::endl;
     }
     return model;
 }
@@ -520,22 +523,23 @@ void MainWindow::_actualizeActions() {
 	ui->graphicsView->setEnabled(opened);
 	ui->tabWidgetCentral->setEnabled(opened);
 	// model
-	ui->actionModelSave->setEnabled(opened);
-	ui->actionModelClose->setEnabled(opened);
+    ui->actionModelSave->setEnabled(opened && !running);
+    ui->actionModelOpen->setEnabled(!running);
+    ui->actionModelClose->setEnabled(opened && !running);
 	ui->actionModelInformation->setEnabled(opened);
-	ui->actionModelCheck->setEnabled(opened);
+    ui->actionModelCheck->setEnabled(opened && !running);
 	//edit
-	ui->toolBarEdit->setEnabled(opened);
-	ui->menuEdit->setEnabled(opened);
+    ui->toolBarEdit->setEnabled(opened);
+    ui->menuEdit->setEnabled(opened);
 	// view
-	ui->menuView->setEnabled(opened);
-	ui->toolBarView->setEnabled(opened);
-	ui->toolBarAnimate->setEnabled(opened);
-	ui->toolBarGraphicalModel->setEnabled(opened);
-	ui->toolBarDraw->setEnabled(opened);
+    ui->menuView->setEnabled(opened);
+    ui->toolBarView->setEnabled(opened);
+    ui->toolBarAnimate->setEnabled(opened);
+    ui->toolBarGraphicalModel->setEnabled(opened);
+    ui->toolBarDraw->setEnabled(opened);
 	// simulation
-	ui->menuSimulation->setEnabled(opened);
-	ui->actionSimulationConfigure->setEnabled(opened);
+    ui->menuSimulation->setEnabled(opened);
+    ui->actionSimulationConfigure->setEnabled(opened);
 	ui->actionSimulationStart->setEnabled(opened && !running);
 	ui->actionSimulationStep->setEnabled(opened && !running);
 	ui->actionSimulationStop->setEnabled(opened && (running || paused));
@@ -2054,7 +2058,9 @@ void MainWindow::on_actionEditCut_triggered() {
                     GraphicalModelComponent * component = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(i));
 
                     if (!component->getGraphicalInputPorts().empty() && !component->getGraphicalInputPorts().at(0)->getConnections()->empty()) {
-                        connGroup->append(component->getGraphicalInputPorts().at(0)->getConnections()->at(0));
+                        for (int j = 0; j < component->getGraphicalInputPorts().at(0)->getConnections()->size(); ++j) {
+                            connGroup->append(component->getGraphicalInputPorts().at(0)->getConnections()->at(j));
+                        }
                     }
 
                     for (int j = 0; j < component->getGraphicalOutputPorts().size(); ++j) {
@@ -2724,6 +2730,7 @@ void MainWindow::on_actionViewConfigure_triggered()
 
 void MainWindow::_initUiForNewModel(Model* m) {
     _actualizeUndo();
+    ui->graphicsView->getScene()->clearAnimations();
 	ui->graphicsView->getScene()->showGrid(); //@TODO: Bad place to be
 	ui->textEdit_Simulation->clear();
 	ui->textEdit_Reports->clear();
@@ -2807,7 +2814,7 @@ void MainWindow::on_actionModelOpen_triggered()
 
     QString fileName = QFileDialog::getOpenFileName(
         this, "Open Model", "./models/",
-        tr("Genesys Graphic Model (*.gui)"), nullptr, QFileDialog::DontUseNativeDialog);
+        tr("Genesys Graphic Model (*.gui);;Genesys Model (*.gen);;XML Files (*.xml);;JSON Files (*.json);;C++ Files (*.cpp)"), nullptr, QFileDialog::DontUseNativeDialog);
 
     if (fileName == "")
     {
@@ -2815,8 +2822,11 @@ void MainWindow::on_actionModelOpen_triggered()
     }
     _insertCommandInConsole("load " + fileName.toStdString());
     // load Model (in the simulator)
-    if (this->_loadGraphicalModel(fileName.toStdString()))
-    {
+
+    Model *model = this->_loadGraphicalModel(fileName.toStdString());
+
+    if (model != nullptr) {
+        _initUiForNewModel(model);
         QMessageBox::information(this, "Open Model", "Model successfully oppened");
     }
     else
@@ -2882,7 +2892,6 @@ void MainWindow::on_actionModelClose_triggered()
 
         if (reply == QMessageBox::Yes) {
             this->on_actionModelSave_triggered();
-            return;
         }
     }
 	_insertCommandInConsole("close");
@@ -2892,12 +2901,13 @@ void MainWindow::on_actionModelClose_triggered()
     // volto o botao de grid para "não clicado"
     ui->actionShowGrid->setChecked(false);
 
+    _clearModelEditors();
+
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
     ui->graphicsView->getScene()->getGraphicalConnections()->clear();
     ui->graphicsView->getScene()->getAllComponents()->clear();
-    ui->graphicsView->getScene()->clearAnimations();
     ui->graphicsView->getScene()->clear();
     ui->graphicsView->clear();
 
@@ -2907,11 +2917,10 @@ void MainWindow::on_actionModelClose_triggered()
     // limpando tudo a que se refere ao modelo
     simulator->getModels()->current()->getComponents()->getAllComponents()->clear();
     simulator->getModels()->current()->getComponents()->clear();
-    simulator->getModels()->current()->getSimulation()->stop();  // Para qualquer simulação
-    delete simulator->getModels()->current()->getSimulation(); // Deleta o objeto de simulação
     ui->progressBarSimulation->setValue(0); // Seta o progresso da simulação para zero
     simulator->getModels()->remove(simulator->getModels()->current());
 
+    ui->actionActivateGraphicalSimulation->setChecked(false);
     _actualizeActions();
     _actualizeTabPanes();
 	//QMessageBox::information(this, "Close Model", "Model successfully closed");
@@ -2949,7 +2958,7 @@ void MainWindow::on_actionSimulatorExit_triggered()
 	}
 	res = QMessageBox::question(this, "Exit GenESyS", "Do you want to exit GenESyS?", QMessageBox::Yes | QMessageBox::No);
 	if (res == QMessageBox::Yes) {
-		QApplication::quit();
+       std::exit(EXIT_SUCCESS);
 	} else {
 		// it does not quit, but the window is closed. Check it. @TODO
 	}
