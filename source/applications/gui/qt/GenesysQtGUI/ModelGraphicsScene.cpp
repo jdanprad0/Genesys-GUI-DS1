@@ -55,6 +55,8 @@ ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal heig
     _grid.pen.setWidth(TraitsGUI<GScene>::gridPenWidth);
     _grid.pen.setStyle(Qt::DotLine);
 
+    _currentAnimationVariable = nullptr;
+
     // Imagens pré-salvas para animação
     _imagesAnimation->append("boat.png");
     _imagesAnimation->append("car.png");
@@ -730,16 +732,25 @@ QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> ModelGraphicsScene:
 
 void ModelGraphicsScene::clearAnimations() {
     this->clearAnimationsTransition();
+    this->clearAnimationsVariable();
 }
 
 void ModelGraphicsScene::clearAnimationsTransition() {
-    // Limpa lista de animações
+    // Limpa lista de animações de transição
     if (_animationsTransition) {
         for (unsigned int i = 0; i < (unsigned int) _animationsTransition->size(); i++) {
             delete _animationsTransition->at(i);
         }
         _animationsTransition->clear();
     }
+}
+
+void ModelGraphicsScene::clearAnimationsVariable() {
+    // Limpa lista de animações de variáveis
+    if (_animationsVariables) {
+        _animationsVariables->clear();
+    }
+    _currentAnimationVariable = nullptr;
 }
 
 void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup) {
@@ -1018,6 +1029,8 @@ void ModelGraphicsScene::arranjeModels(int direction) {
             items.append(component);
         } else if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup *> (selectedItems().at(i))) {
             items.append(group);
+        } else if (AnimationVariable *animationVariable = dynamic_cast<AnimationVariable *> (selectedItems().at(i))) {
+            items.append(animationVariable);
         }
     }
 
@@ -1165,6 +1178,12 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mousePressEvent(mouseEvent);
 
+    if (_drawVariableInitialized) {
+        _currentAnimationVariable->startDrawing(mouseEvent);
+        addItem(_currentAnimationVariable);
+        _drawVariableInitialized = false;
+    }
+
     if (mouseEvent->button() == Qt::LeftButton) {
 
         QGraphicsItem* item = this->itemAt(mouseEvent->scenePos(), QTransform());
@@ -1259,6 +1278,14 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 
 void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
+
+    if (_currentAnimationVariable) {
+        removeItem(_currentAnimationVariable);
+        _currentAnimationVariable->stopDrawing(mouseEvent);
+        _currentAnimationVariable->setSelected(true);
+        addItem(_currentAnimationVariable);
+        _currentAnimationVariable = nullptr;
+    }
 
     snapItemsToGrid();
 
@@ -1410,6 +1437,13 @@ QList<QGraphicsItemGroup*>*ModelGraphicsScene::getGraphicalGroups() const {
 
 void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseMoveEvent(mouseEvent);
+
+    if (_currentAnimationVariable) {
+        removeItem(_currentAnimationVariable);
+        _currentAnimationVariable->continueDrawing(mouseEvent);
+        addItem(_currentAnimationVariable);
+    }
+
     ((ModelGraphicsView *) (this->parent()))->notifySceneMouseEventHandler(mouseEvent); // to show coords
     if (_connectingStep > 0) {
         QGraphicsItem* item = this->itemAt(mouseEvent->scenePos(), QTransform());
@@ -1529,6 +1563,12 @@ void ModelGraphicsScene::keyReleaseEvent(QKeyEvent *keyEvent) {
 //--------------------------
 //
 //--------------------------
+
+void ModelGraphicsScene::drawingVariable() {
+    _drawVariableInitialized = true;
+    _currentAnimationVariable = new AnimationVariable();
+    _animationsVariables->append(_currentAnimationVariable);
+}
 
 void ModelGraphicsScene::setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged) {
     _objectBeingDragged = objectBeingDragged;

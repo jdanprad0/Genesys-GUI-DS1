@@ -132,7 +132,6 @@ SOURCES += \
 	../../../../tools/SolverDefaultImpl1.cpp \
 	../../../BaseGenesysTerminalApplication.cpp \
 	../../../terminal/GenesysShell/GenesysShell.cpp \
-    AnimationTransition.cpp \
 	CodeEditor.cpp \
 	ModelGraphicsScene.cpp \
 	ModelGraphicsView.cpp \
@@ -144,6 +143,8 @@ SOURCES += \
     actions/MoveUndoCommand.cpp \
     actions/PasteUndoCommand.cpp \
     actions/UngroupUndoCommand.cpp \
+    animations/AnimationTransition.cpp \
+    animations/AnimationVariable.cpp \
     dialogs/DialogFind.cpp \
 	dialogs/Dialogmodelinformation.cpp \
 	dialogs/dialogBreakpoint.cpp \
@@ -322,7 +323,6 @@ HEADERS += \
 	../../../terminal/GenesysShell/GenesysShell.h \
 	../../../terminal/GenesysShell/GenesysShell_if.h \
 	../../../terminal/TraitsTerminalApp.h \
-    AnimationTransition.h \
 	CodeEditor.h \
 	LineNumberArea.h \
 	ModelGraphicsScene.h \
@@ -345,6 +345,8 @@ HEADERS += \
     actions/MoveUndoCommand.h \
     actions/PasteUndoCommand.h \
     actions/UngroupUndoCommand.h \
+    animations/AnimationTransition.h \
+    animations/AnimationVariable.h \
     dialogs/DialogFind.h \
 	dialogs/Dialogmodelinformation.h \
 	dialogs/dialogBreakpoint.h \

@@ -44,7 +44,8 @@
 #include "../../../../kernel/simulator/ModelComponent.h"
 #include "../../../../kernel/simulator/Simulator.h"
 #include "../../../../kernel/simulator/Plugin.h"
-#include "AnimationTransition.h"
+#include "animations/AnimationTransition.h"
+#include "animations/AnimationVariable.h"
 
 class GraphicalModelEvent {
 public:
@@ -144,7 +145,9 @@ public:
     QList<AnimationTransition *> *getAnimationsTransition();
     void clearAnimations();
     void clearAnimationsTransition();
+    void clearAnimationsVariable();
     QList<QString> *getImagesAnimation();
+    void drawingVariable();
 
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
@@ -201,6 +204,8 @@ private:
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;
     GraphicalComponentPort* _destinationGraphicalComponentPort;
+    AnimationVariable *_currentAnimationVariable;
+    bool _drawVariableInitialized = false;
 
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
@@ -214,6 +219,7 @@ private:
     QList<QGraphicsItemGroup*>* _graphicalGroups = new QList<QGraphicsItemGroup*>();
     QList<AnimationTransition *> *_animationsTransition = new QList<AnimationTransition*>();
     QList<QString> *_imagesAnimation = new QList<QString>;
+    QList<AnimationVariable *> *_animationsVariables = new QList<AnimationVariable*>();
 };
 
 #endif /* MODELGRAPHICSSCENE_H */

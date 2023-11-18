@@ -39,7 +39,8 @@
 #include <QDebug>
 #include <actions/PasteUndoCommand.h>
 #include <actions/DeleteUndoCommand.h>
-#include "AnimationTransition.h"
+#include "animations/AnimationTransition.h"
+#include "animations/AnimationVariable.h"
 #include <cstdlib>
 // @TODO: Should NOT be hardcoded!!!
 #include "../../../../plugins/data/Variable.h"
@@ -2588,7 +2589,7 @@ bool MainWindow::checkSelectedDrawIcons() {
 }
 
 void MainWindow::on_actionAnimateVariable_triggered() {
-	_showMessageNotImplemented();
+    myScene()->drawingVariable();
 }
 
 
@@ -2730,7 +2731,6 @@ void MainWindow::on_actionViewConfigure_triggered()
 
 void MainWindow::_initUiForNewModel(Model* m) {
     _actualizeUndo();
-    ui->graphicsView->getScene()->clearAnimations();
 	ui->graphicsView->getScene()->showGrid(); //@TODO: Bad place to be
 	ui->textEdit_Simulation->clear();
 	ui->textEdit_Reports->clear();
@@ -2908,6 +2908,7 @@ void MainWindow::on_actionModelClose_triggered()
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
     ui->graphicsView->getScene()->getGraphicalConnections()->clear();
     ui->graphicsView->getScene()->getAllComponents()->clear();
+    ui->graphicsView->getScene()->clearAnimations();
     ui->graphicsView->getScene()->clear();
     ui->graphicsView->clear();
 
