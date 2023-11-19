@@ -1,13 +1,12 @@
-#include "AnimationVariable.h"
-#include "graphicals/GraphicalModelComponent.h"
+#include "AnimationTimer.h"
 
-AnimationVariable::AnimationVariable() : _isDrawingInicialized(true) {
+AnimationTimer::AnimationTimer() : _isDrawingInicialized(true){
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
 }
 
-void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+void AnimationTimer::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     Q_UNUSED(option);
     Q_UNUSED(widget);
 
@@ -17,16 +16,17 @@ void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem 
     painter->setBrush(Qt::blue);
     painter->drawRect(boundingRect());
 
-    QString counterText = QString::number(_value);
+    QString timeText = QString("%1:%2:%3").arg(_hours, 2, 10, QLatin1Char('0')).arg(_minutes, 2, 10, QLatin1Char('0')).arg(_seconds, 2, 10, QLatin1Char('0'));
+
     QFont font = painter->font();
 
     // Ajusta o tamanho da fonte com base nas dimensões do retângulo
-    int fontSize = qMin(boundingRect().width() / 5, boundingRect().height() / 2);
+    int fontSize = qMin(boundingRect().width() / 5, boundingRect().height() / 2); // Ajuste os valores conforme necessário
     font.setPixelSize(fontSize);
 
     painter->setFont(font);
     painter->setPen(Qt::white);
-    painter->drawText(boundingRect(), Qt::AlignCenter, counterText);
+    painter->drawText(boundingRect(), Qt::AlignCenter, timeText);
 
     if (isSelected()) {
         // Tamanho dos quadrados dos cantos
@@ -48,38 +48,31 @@ void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem 
     }
 }
 
-double AnimationVariable::getValue() {
-    return _value;
+double AnimationTimer::getTime() {
+    return _time;
 }
 
-QPointF AnimationVariable::getOldPosition() {
+QPointF AnimationTimer::getOldPosition() {
     return _oldPosition;
 }
 
-GraphicalModelComponent *AnimationVariable::getOwnerComponent(){
-    return _ownerComponent;
-}
-
-void AnimationVariable::setValue(double value) {
-    _value = value;
+void AnimationTimer::setTime(double value) {
+    _time = value;
+    convertSeconds();
     update();
 }
 
-void AnimationVariable::setOldPosition(QPointF oldPosition) {
+void AnimationTimer::setOldPosition(QPointF oldPosition) {
     _oldPosition = oldPosition;
 }
 
-void AnimationVariable::setOwnerComponent(GraphicalModelComponent *ownerComponent){
-    _ownerComponent = ownerComponent;
-}
-
-void AnimationVariable::startDrawing(QGraphicsSceneMouseEvent *event) {
+void AnimationTimer::startDrawing(QGraphicsSceneMouseEvent *event) {
     _isResizing = true;
     _startPoint = event->scenePos();
     setPos(_startPoint);
 }
 
-void AnimationVariable::continueDrawing(QGraphicsSceneMouseEvent *event) {
+void AnimationTimer::continueDrawing(QGraphicsSceneMouseEvent *event) {
     if (_isResizing) {
         // Obtém a posição atual do mouse
         QPointF newPos = event->scenePos();
@@ -98,7 +91,7 @@ void AnimationVariable::continueDrawing(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-void AnimationVariable::stopDrawing(QGraphicsSceneMouseEvent *event) {
+void AnimationTimer::stopDrawing(QGraphicsSceneMouseEvent *event) {
     // Cria um novo retângulo com as dimensões e posições corretas
     adjustSizeAndPosition(event);
 
@@ -109,7 +102,7 @@ void AnimationVariable::stopDrawing(QGraphicsSceneMouseEvent *event) {
     _isDrawingFinalized = true;
 }
 
-void AnimationVariable::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
+void AnimationTimer::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
     qreal minimunX = 0.0;
     qreal minimunY = 0.0;
 
@@ -153,11 +146,26 @@ void AnimationVariable::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
     update();
 }
 
-bool AnimationVariable::isDrawingInicialized() {
+void AnimationTimer::convertSeconds() {
+    int remainingSeconds = 0;
+
+    // Calculate hours
+    _hours = static_cast<int>(_time / 3600);
+
+    // Calcula os segundos restantes após as horas
+    remainingSeconds = static_cast<int>(_time) % 3600;
+
+    // Calcula os minutos
+    _minutes = remainingSeconds / 60;
+
+    // Calcula os segundos finais
+    _seconds = remainingSeconds % 60;
+}
+
+bool AnimationTimer::isDrawingInicialized() {
     return _isDrawingInicialized;
 }
 
-bool AnimationVariable::isDrawingFinalized() {
+bool AnimationTimer::isDrawingFinalized() {
     return _isDrawingFinalized;
 }
-

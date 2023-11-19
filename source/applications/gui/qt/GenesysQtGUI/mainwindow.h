@@ -216,7 +216,7 @@ private: // view
 	void _clearModelEditors();
 	void _gentle_zoom(double factor);
 	void _showMessageNotImplemented();
-	void _recursivalyGenerateGraphicalModelFromModel(ModelComponent* component, List<ModelComponent*>* visited, std::map<ModelComponent*,GraphicalModelComponent*>* map, int *x, int *y, int *ymax, int sequenceInline);
+    void _recursivalyGenerateGraphicalModelFromModel(ModelComponent* component, List<ModelComponent*>* visited, std::map<ModelComponent*,GraphicalModelComponent*>* map, int *x, int *y, int *ymax, int sequenceInline);
 	void _generateGraphicalModelFromModel();
     void saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QList<GraphicalConnection*> * connList);
 	//bool _checkStartSimulation();
@@ -253,6 +253,9 @@ private: // misc useful
 
     bool _firstClickShowConnection = true;
 
+public:
+    QList<ModelDataDefinition *> *getCountersModelDataDefinitions();
+    QList<ModelDataDefinition *> *getVariablesModelDataDefinitions();
 private:
 
 	const struct TABINDEXES_STRUC {

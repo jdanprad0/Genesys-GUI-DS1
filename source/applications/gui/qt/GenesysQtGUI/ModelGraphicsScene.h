@@ -46,6 +46,10 @@
 #include "../../../../kernel/simulator/Plugin.h"
 #include "animations/AnimationTransition.h"
 #include "animations/AnimationVariable.h"
+#include "animations/AnimationCounter.h"
+#include "animations/AnimationTimer.h"
+#include "../../../../kernel/simulator/Counter.h"
+#include "../../../../plugins/data/Variable.h"
 
 class GraphicalModelEvent {
 public:
@@ -145,9 +149,15 @@ public:
     QList<AnimationTransition *> *getAnimationsTransition();
     void clearAnimations();
     void clearAnimationsTransition();
+    void clearAnimationsCounter();
     void clearAnimationsVariable();
+    void clearAnimationsTimer();
     QList<QString> *getImagesAnimation();
+    void drawingCounter();
     void drawingVariable();
+    void drawingTimer();
+    void setCounters();
+    void setVariables();
 
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
@@ -157,7 +167,12 @@ public:
 	QList<QGraphicsItem*>*getGraphicalAnimations() const;
 	QList<QGraphicsItem*>*getGraphicalEntities() const;
     QList<QGraphicsItemGroup*>*getGraphicalGroups() const;
-    QList<AnimationTransition *> getAnimationsTransition() const;
+
+public:
+    void animateTransition(ModelComponent *source, ModelComponent *destination, QString image = "default.png");
+    void animateCounter();
+    void animateVariable();
+    void animateTimer(double time);
 
 protected: // virtual functions
 	virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *contextMenuEvent);
@@ -189,6 +204,8 @@ private:
     QUndoStack *_undoStack = nullptr;
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
     QMap<QGraphicsItem *, QPointF> _oldPositionsItems;
+    QList<Counter *> *_counters = new QList<Counter *>();
+    QList<Variable *> *_variables = new QList<Variable *>();
 private:
     DrawingMode _drawingMode = NONE;
     QGraphicsRectItem* _currentRectangle = nullptr;
@@ -204,9 +221,16 @@ private:
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;
     GraphicalComponentPort* _destinationGraphicalComponentPort;
-    AnimationVariable *_currentAnimationVariable;
-    bool _drawVariableInitialized = false;
+    AnimationCounter *_currentCounter;
+    AnimationVariable *_currentVariable;
+    AnimationTimer *_currentTimer;
 
+private:
+    QList<QString> *_imagesAnimation = new QList<QString>;
+    QList<AnimationTransition *> *_animationsTransition = new QList<AnimationTransition*>();
+    QList<AnimationCounter *> *_animationsCounter = new QList<AnimationCounter*>();
+    QList<AnimationVariable *> *_animationsVariable = new QList<AnimationVariable*>();
+    QList<AnimationTimer *> *_animationsTimer = new QList<AnimationTimer*>();
 private:
 	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
 	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();
@@ -217,9 +241,6 @@ private:
 	QList<QGraphicsItem*>* _graphicalAnimations = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalEntities = new QList<QGraphicsItem*>();
     QList<QGraphicsItemGroup*>* _graphicalGroups = new QList<QGraphicsItemGroup*>();
-    QList<AnimationTransition *> *_animationsTransition = new QList<AnimationTransition*>();
-    QList<QString> *_imagesAnimation = new QList<QString>;
-    QList<AnimationVariable *> *_animationsVariables = new QList<AnimationVariable*>();
 };
 
 #endif /* MODELGRAPHICSSCENE_H */

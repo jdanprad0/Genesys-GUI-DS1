@@ -34,6 +34,7 @@
 #include <QTreeWidget>
 #include <QMessageBox>
 #include <QUndoCommand>
+#include <QEventLoop>
 #include "ModelGraphicsScene.h"
 #include "ModelGraphicsView.h"
 #include "graphicals/GraphicalModelComponent.h"
@@ -44,6 +45,7 @@
 #include "actions/MoveUndoCommand.h"
 #include "actions/GroupUndoCommand.h"
 #include "actions/UngroupUndoCommand.h"
+#include "dialogs/DialogSelectCounter.h"
 
 ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent) : QGraphicsScene(x, y, width, height, parent) {
     // grid
@@ -55,7 +57,9 @@ ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal heig
     _grid.pen.setWidth(TraitsGUI<GScene>::gridPenWidth);
     _grid.pen.setStyle(Qt::DotLine);
 
-    _currentAnimationVariable = nullptr;
+    _currentCounter = nullptr;
+    _currentVariable = nullptr;
+    _currentTimer = nullptr;
 
     // Imagens pré-salvas para animação
     _imagesAnimation->append("boat.png");
@@ -718,8 +722,40 @@ bool ModelGraphicsScene::getSnapToGrid() {
     return _snapToGrid;
 }
 
-QList<AnimationTransition *>* ModelGraphicsScene::getAnimationsTransition() {
-    return _animationsTransition;
+void ModelGraphicsScene::animateTransition(ModelComponent *source, ModelComponent *destination, QString image) {
+    // Cria a animação
+    AnimationTransition *animationTransition = new AnimationTransition(this, source, destination, image);
+    _animationsTransition->append(animationTransition);
+
+    // Inicia a animação
+    animationTransition->startAnimation();
+
+    // Cria um loop de eventos para aguardar a conclusão da animação
+    QEventLoop loop;
+    connect(animationTransition, &AnimationTransition::finished, &loop, &QEventLoop::quit);
+
+    // Aguarda a conclusão da animação sem bloquear o restante do código
+    loop.exec();
+
+    _animationsTransition->removeOne(animationTransition);
+}
+
+void ModelGraphicsScene::animateCounter() {
+    for (unsigned int i = 0; i < (unsigned int) _animationsCounter->size(); i++) {
+        _animationsCounter->at(i)->setCounter(_counters->at(0)->getCountValue());
+    }
+}
+
+void ModelGraphicsScene::animateVariable() {
+    for (unsigned int i = 0; i < (unsigned int) _animationsVariable->size(); i++) {
+        _animationsVariable->at(i)->setValue(_animationsVariable->at(i)->getValue()+1);
+    }
+}
+
+void ModelGraphicsScene::animateTimer(double time) {
+    for (unsigned int i = 0; i < (unsigned int) _animationsTimer->size(); i++) {
+        _animationsTimer->at(i)->setTime(time);
+    }
 }
 
 QList<QString>* ModelGraphicsScene::getImagesAnimation() {
@@ -732,7 +768,9 @@ QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> ModelGraphicsScene:
 
 void ModelGraphicsScene::clearAnimations() {
     this->clearAnimationsTransition();
+    this->clearAnimationsCounter();
     this->clearAnimationsVariable();
+    this->clearAnimationsTimer();
 }
 
 void ModelGraphicsScene::clearAnimationsTransition() {
@@ -745,12 +783,28 @@ void ModelGraphicsScene::clearAnimationsTransition() {
     }
 }
 
+void ModelGraphicsScene::clearAnimationsCounter() {
+    // Limpa lista de animações de contadores
+    if (_animationsCounter) {
+        _animationsCounter->clear();
+    }
+    _currentCounter = nullptr;
+}
+
 void ModelGraphicsScene::clearAnimationsVariable() {
     // Limpa lista de animações de variáveis
-    if (_animationsVariables) {
-        _animationsVariables->clear();
+    if (_animationsVariable) {
+        _animationsVariable->clear();
     }
-    _currentAnimationVariable = nullptr;
+    _currentVariable = nullptr;
+}
+
+void ModelGraphicsScene::clearAnimationsTimer() {
+    // Limpa lista de animações de tempo
+    if (_animationsTimer) {
+        _animationsTimer->clear();
+    }
+    _currentTimer = nullptr;
 }
 
 void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup) {
@@ -1178,10 +1232,25 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mousePressEvent(mouseEvent);
 
-    if (_drawVariableInitialized) {
-        _currentAnimationVariable->startDrawing(mouseEvent);
-        addItem(_currentAnimationVariable);
-        _drawVariableInitialized = false;
+    if (_currentCounter) {
+        if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
+            _currentCounter->startDrawing(mouseEvent);
+            addItem(_currentCounter);
+        }
+    }
+
+    if (_currentVariable) {
+        if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
+            _currentVariable->startDrawing(mouseEvent);
+            addItem(_currentVariable);
+        }
+    }
+
+    if (_currentTimer) {
+        if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
+            _currentTimer->startDrawing(mouseEvent);
+            addItem(_currentTimer);
+        }
     }
 
     if (mouseEvent->button() == Qt::LeftButton) {
@@ -1279,12 +1348,28 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
 
-    if (_currentAnimationVariable) {
-        removeItem(_currentAnimationVariable);
-        _currentAnimationVariable->stopDrawing(mouseEvent);
-        _currentAnimationVariable->setSelected(true);
-        addItem(_currentAnimationVariable);
-        _currentAnimationVariable = nullptr;
+    if (_currentCounter) {
+        if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
+            removeItem(_currentCounter);
+            _currentCounter->stopDrawing(mouseEvent);
+            addItem(_currentCounter);
+        }
+    }
+
+    if (_currentVariable) {
+        if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
+            removeItem(_currentVariable);
+            _currentVariable->stopDrawing(mouseEvent);
+            addItem(_currentVariable);
+        }
+    }
+
+    if (_currentTimer) {
+        if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
+            removeItem(_currentTimer);
+            _currentTimer->stopDrawing(mouseEvent);
+            addItem(_currentTimer);
+        }
     }
 
     snapItemsToGrid();
@@ -1394,6 +1479,19 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
             _connectingStep = 0;
         }
     }
+
+    if (AnimationCounter *animationCounter = dynamic_cast<AnimationCounter *>(this->itemAt(mouseEvent->scenePos(), QTransform()))) {
+        DialogSelectCounter dialog;
+
+        QStringList counterNames;
+
+        dialog.setCounterNames(_counters);
+
+        if (dialog.exec() == QDialog::Accepted) {
+            Counter *counterSelected = dialog.selectedIndex();
+        }
+    }
+
     if (_drawingMode == POLYGON_POINTS)
         _drawingMode = POLYGON_FINISHED;
 }
@@ -1438,10 +1536,28 @@ QList<QGraphicsItemGroup*>*ModelGraphicsScene::getGraphicalGroups() const {
 void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseMoveEvent(mouseEvent);
 
-    if (_currentAnimationVariable) {
-        removeItem(_currentAnimationVariable);
-        _currentAnimationVariable->continueDrawing(mouseEvent);
-        addItem(_currentAnimationVariable);
+    if (_currentCounter) {
+        if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
+            removeItem(_currentCounter);
+            _currentCounter->continueDrawing(mouseEvent);
+            addItem(_currentCounter);
+        }
+    }
+
+    if (_currentVariable) {
+        if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
+            removeItem(_currentVariable);
+            _currentVariable->continueDrawing(mouseEvent);
+            addItem(_currentVariable);
+        }
+    }
+
+    if (_currentTimer) {
+        if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
+            removeItem(_currentTimer);
+            _currentTimer->continueDrawing(mouseEvent);
+            addItem(_currentTimer);
+        }
     }
 
     ((ModelGraphicsView *) (this->parent()))->notifySceneMouseEventHandler(mouseEvent); // to show coords
@@ -1564,10 +1680,19 @@ void ModelGraphicsScene::keyReleaseEvent(QKeyEvent *keyEvent) {
 //
 //--------------------------
 
+void ModelGraphicsScene::drawingCounter() {
+    _currentCounter = new AnimationCounter();
+    _animationsCounter->append(_currentCounter);
+}
+
 void ModelGraphicsScene::drawingVariable() {
-    _drawVariableInitialized = true;
-    _currentAnimationVariable = new AnimationVariable();
-    _animationsVariables->append(_currentAnimationVariable);
+    _currentVariable = new AnimationVariable();
+    _animationsVariable->append(_currentVariable);
+}
+
+void ModelGraphicsScene::drawingTimer() {
+    _currentTimer = new AnimationTimer();
+    _animationsTimer->append(_currentTimer);
 }
 
 void ModelGraphicsScene::setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged) {
@@ -1633,6 +1758,49 @@ GraphicalModelComponent* ModelGraphicsScene::findGraphicalModelComponent(Util::i
     return nullptr;
 }
 
+void ModelGraphicsScene::setCounters() {
+    Model* currentModel = _simulator->getModels()->current();
+
+    QList<ModelDataDefinition *> *counters = nullptr;
+
+    if (currentModel) {
+        _counters->clear();
+
+        List<ModelDataDefinition *> *countersList = currentModel->getDataManager()->getDataDefinitionList(Util::TypeOf<Counter>());
+
+        counters = new QList<ModelDataDefinition *>(countersList->list()->begin(), countersList->list()->end());
+
+        foreach(ModelDataDefinition *counter, *counters) {
+            Counter *newCounter = dynamic_cast<Counter *>(counter);
+
+            if (newCounter) {
+                _counters->append(newCounter);
+            }
+        }
+    }
+}
+
+void ModelGraphicsScene::setVariables() {
+    Model* currentModel = _simulator->getModels()->current();
+
+    QList<ModelDataDefinition *> *variables = nullptr;
+
+    if (currentModel) {
+        _variables->clear();
+
+        List<ModelDataDefinition *> *variablesList = currentModel->getDataManager()->getDataDefinitionList(Util::TypeOf<Variable>());
+
+        variables = new QList<ModelDataDefinition *>(variablesList->list()->begin(), variablesList->list()->end());
+
+        foreach(ModelDataDefinition *variable, *variables) {
+            Variable *newVariable = dynamic_cast<Variable *>(variable);
+
+            if (newVariable) {
+                _variables->append(newVariable);
+            }
+        }
+    }
+}
 //------------------------
 // Private
 //------------------------

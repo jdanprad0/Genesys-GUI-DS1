@@ -780,21 +780,13 @@ void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
 }
 
 void MainWindow::_onMoveEntityEvent(SimulationEvent *re) {
+    myScene()->animateCounter();
+    myScene()->animateVariable();
+    myScene()->animateTimer(re->getCurrentEvent()->getTime());
+
     // Cria a animação de transição
-
     if (ui->actionActivateGraphicalSimulation->isChecked() && re) {
-        AnimationTransition *animationTransition = new AnimationTransition(myScene(), re->getCurrentEvent()->getComponent(), re->getDestinationComponent(), "car.png");
-        myScene()->getAnimationsTransition()->append(animationTransition);
-
-        // Inicia a animação
-        animationTransition->startAnimation();
-
-        // Cria um loop de eventos para aguardar a conclusão da animação
-        QEventLoop loop;
-        connect(animationTransition, &AnimationTransition::finished, &loop, &QEventLoop::quit);
-
-        // Aguarda a conclusão da animação sem bloquear o restante do código
-        loop.exec();
+        myScene()->animateTransition(re->getCurrentEvent()->getComponent(), re->getDestinationComponent());
     }
 }
 
@@ -2650,12 +2642,12 @@ void MainWindow::on_actionAlignLeft_triggered()
 
 void MainWindow::on_actionAnimateSimulatedTime_triggered()
 {
-    _showMessageNotImplemented();
+    myScene()->drawingTimer();
 }
 
 void MainWindow::on_actionAnimateCounter_triggered()
 {
-    _showMessageNotImplemented();
+    myScene()->drawingCounter();
 }
 
 void MainWindow::on_actionAnimateEntity_triggered()
@@ -2942,6 +2934,8 @@ void MainWindow::on_actionModelCheck_triggered()
 	_actualizeTabPanes();
     if (res) {
         QMessageBox::information(this, "Model Check", "Model successfully checked.");
+        myScene()->setCounters();
+        myScene()->setVariables();
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
 	}

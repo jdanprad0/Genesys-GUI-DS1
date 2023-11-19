@@ -1,13 +1,13 @@
-#include "AnimationVariable.h"
+#include "AnimationCounter.h"
 #include "graphicals/GraphicalModelComponent.h"
 
-AnimationVariable::AnimationVariable() : _isDrawingInicialized(true) {
+AnimationCounter::AnimationCounter() : _isDrawingInicialized(true) {
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
 }
 
-void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+void AnimationCounter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     Q_UNUSED(option);
     Q_UNUSED(widget);
 
@@ -17,7 +17,7 @@ void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem 
     painter->setBrush(Qt::blue);
     painter->drawRect(boundingRect());
 
-    QString counterText = QString::number(_value);
+    QString counterText = QString::number(_counter);
     QFont font = painter->font();
 
     // Ajusta o tamanho da fonte com base nas dimensões do retângulo
@@ -48,38 +48,38 @@ void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem 
     }
 }
 
-double AnimationVariable::getValue() {
-    return _value;
+unsigned int AnimationCounter::getCounter() {
+    return _counter;
 }
 
-QPointF AnimationVariable::getOldPosition() {
+QPointF AnimationCounter::getOldPosition() {
     return _oldPosition;
 }
 
-GraphicalModelComponent *AnimationVariable::getOwnerComponent(){
+GraphicalModelComponent *AnimationCounter::getOwnerComponent(){
     return _ownerComponent;
 }
 
-void AnimationVariable::setValue(double value) {
-    _value = value;
+void AnimationCounter::setCounter(unsigned int value) {
+    _counter = value;
     update();
 }
 
-void AnimationVariable::setOldPosition(QPointF oldPosition) {
+void AnimationCounter::setOldPosition(QPointF oldPosition) {
     _oldPosition = oldPosition;
 }
 
-void AnimationVariable::setOwnerComponent(GraphicalModelComponent *ownerComponent){
+void AnimationCounter::setOwnerComponent(GraphicalModelComponent *ownerComponent){
     _ownerComponent = ownerComponent;
 }
 
-void AnimationVariable::startDrawing(QGraphicsSceneMouseEvent *event) {
+void AnimationCounter::startDrawing(QGraphicsSceneMouseEvent *event) {
     _isResizing = true;
     _startPoint = event->scenePos();
     setPos(_startPoint);
 }
 
-void AnimationVariable::continueDrawing(QGraphicsSceneMouseEvent *event) {
+void AnimationCounter::continueDrawing(QGraphicsSceneMouseEvent *event) {
     if (_isResizing) {
         // Obtém a posição atual do mouse
         QPointF newPos = event->scenePos();
@@ -98,7 +98,7 @@ void AnimationVariable::continueDrawing(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-void AnimationVariable::stopDrawing(QGraphicsSceneMouseEvent *event) {
+void AnimationCounter::stopDrawing(QGraphicsSceneMouseEvent *event) {
     // Cria um novo retângulo com as dimensões e posições corretas
     adjustSizeAndPosition(event);
 
@@ -109,7 +109,7 @@ void AnimationVariable::stopDrawing(QGraphicsSceneMouseEvent *event) {
     _isDrawingFinalized = true;
 }
 
-void AnimationVariable::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
+void AnimationCounter::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
     qreal minimunX = 0.0;
     qreal minimunY = 0.0;
 
@@ -153,11 +153,11 @@ void AnimationVariable::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
     update();
 }
 
-bool AnimationVariable::isDrawingInicialized() {
+bool AnimationCounter::isDrawingInicialized() {
     return _isDrawingInicialized;
 }
 
-bool AnimationVariable::isDrawingFinalized() {
+bool AnimationCounter::isDrawingFinalized() {
     return _isDrawingFinalized;
 }
 

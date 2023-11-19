@@ -1,5 +1,5 @@
-#ifndef ANIMATIONVARIABLE_H
-#define ANIMATIONVARIABLE_H
+#ifndef ANIMATIONCOUNTER_H
+#define ANIMATIONCOUNTER_H
 
 #include <QGraphicsRectItem>
 #include <QPainter>
@@ -7,21 +7,21 @@
 
 class GraphicalModelComponent;
 
-class AnimationVariable : public QGraphicsRectItem {
+class AnimationCounter : public QGraphicsRectItem {
 public:
     // Construtor
-    AnimationVariable();
+    AnimationCounter();
 
     // Sobrecarga do método paint
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
     // Getters
-    double getValue();
+    unsigned int getCounter();
     QPointF getOldPosition();
     GraphicalModelComponent *getOwnerComponent();
 
     // Setters
-    void setValue(double value);
+    void setCounter(unsigned int value);
     void setOldPosition(QPointF oldPosition);
     void setOwnerComponent(GraphicalModelComponent *ownerComponent);
 
@@ -34,7 +34,7 @@ public:
     bool isDrawingFinalized(); // Diz se a variável terminou de ser desenhada
 
 private:
-    double _value = 0.0;
+    unsigned int _counter = 0;
     QPointF _startPoint = QPointF(0, 0);
     QPointF _oldPosition = QPointF(0, 0);
     GraphicalModelComponent *_ownerComponent = nullptr;
@@ -43,4 +43,4 @@ private:
     bool _isDrawingFinalized = false;
 };
 
-#endif // ANIMATIONVARIABLE_H
+#endif // ANIMATIONCOUNTER_H

@@ -143,9 +143,12 @@ SOURCES += \
     actions/MoveUndoCommand.cpp \
     actions/PasteUndoCommand.cpp \
     actions/UngroupUndoCommand.cpp \
+    animations/AnimationCounter.cpp \
+    animations/AnimationTimer.cpp \
     animations/AnimationTransition.cpp \
     animations/AnimationVariable.cpp \
     dialogs/DialogFind.cpp \
+    dialogs/DialogSelectCounter.cpp \
 	dialogs/Dialogmodelinformation.cpp \
 	dialogs/dialogBreakpoint.cpp \
 	dialogs/dialogpluginmanager.cpp \
@@ -345,9 +348,12 @@ HEADERS += \
     actions/MoveUndoCommand.h \
     actions/PasteUndoCommand.h \
     actions/UngroupUndoCommand.h \
+    animations/AnimationCounter.h \
+    animations/AnimationTimer.h \
     animations/AnimationTransition.h \
     animations/AnimationVariable.h \
     dialogs/DialogFind.h \
+    dialogs/DialogSelectCounter.h \
 	dialogs/Dialogmodelinformation.h \
 	dialogs/dialogBreakpoint.h \
 	dialogs/dialogpluginmanager.h \

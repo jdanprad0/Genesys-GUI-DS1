@@ -20,7 +20,7 @@ class AnimationTransition : public QVariantAnimation
 {
 public:
     // Construtor
-    AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, const QString imageName = "default.png");
+    AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, const QString imageName);
     // Destrutor
     ~AnimationTransition();
 
