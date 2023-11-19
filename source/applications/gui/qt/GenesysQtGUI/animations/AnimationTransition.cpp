@@ -20,10 +20,12 @@ AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, ModelCompo
 
         // Pega a conexão gráfica em que a animação de transição irá percorrer
         for (unsigned int i = 0; i < (unsigned int) startComponentOutputPorts.size(); i++) {
-            if (startComponentOutputPorts.at(i)->getConnections()->at(0)->getDestination()->component->getId() == _graphicalEndComponent->getComponent()->getId()) {
-                connection = startComponentOutputPorts.at(i)->getConnections()->at(0);
-                _portNumber = i;
-                break;
+            if (!startComponentOutputPorts.at(i)->getConnections()->empty()) {
+                if (startComponentOutputPorts.at(i)->getConnections()->at(0)->getDestination()->component->getId() == _graphicalEndComponent->getComponent()->getId()) {
+                    connection = startComponentOutputPorts.at(i)->getConnections()->at(0);
+                    _portNumber = i;
+                    break;
+                }
             }
         }
 
