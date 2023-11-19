@@ -97,7 +97,7 @@ private slots:
 	void on_actionToolsOptimizator_triggered();
 	void on_actionToolsDataAnalyzer_triggered();
 
-	void on_actionSimulatorPluginManager_triggered();
+    void on_actionSimulatorsPluginManager_triggered();
 	void on_actionSimulatorExit_triggered();
 	void on_actionSimulatorPreferences_triggered();
 
@@ -234,6 +234,7 @@ private: // interface and model main elements to join
 private: // misc useful
 	bool _textModelHasChanged = false;
 	bool _graphicalModelHasChanged = false;
+    QString _autoLoadPluginsFilename = "autoloadplugins.txt";
 	bool _modelWasOpened = false;
 	QString _modelfilename;
 	std::map<std::string /*category*/,QColor>* _pluginCategoryColor = new std::map<std::string,QColor>();

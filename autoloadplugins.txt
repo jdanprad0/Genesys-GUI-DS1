@@ -8,7 +8,6 @@ cppcompiler.so
 create.so
 decide.so
 delay.so
-diffequations.so
 dispose.so
 dropoff.so
 dummy.so
