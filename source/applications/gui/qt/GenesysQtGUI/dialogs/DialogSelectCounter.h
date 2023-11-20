@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QComboBox>
 #include <QPushButton>
+
 #include "../../../../kernel/simulator/Counter.h"
 
 class DialogSelectCounter : public QDialog {
@@ -13,7 +14,9 @@ public:
     explicit DialogSelectCounter(QWidget *parent = nullptr);
 
     Counter* selectedIndex() const;
-    void setCounterNames(QList<Counter *> *counters);
+    void setCounterItems(QList<Counter *> *counters);
+
+    void actualizeSelectedItems();
 
 private slots:
     void onOkClicked();

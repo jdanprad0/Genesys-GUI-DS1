@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 
+#include "../../../../../plugins/data/Variable.h"
+
 class GraphicalModelComponent;
 
 class AnimationVariable : public QGraphicsRectItem {
@@ -18,12 +20,12 @@ public:
     // Getters
     double getValue();
     QPointF getOldPosition();
-    GraphicalModelComponent *getOwnerComponent();
+    Variable *getVariable();
 
     // Setters
     void setValue(double value);
     void setOldPosition(QPointF oldPosition);
-    void setOwnerComponent(GraphicalModelComponent *ownerComponent);
+    void setVariable(Variable *variable);
 
     // Outros
     void startDrawing(QGraphicsSceneMouseEvent *event); // Inicia o desenho da tela
@@ -37,10 +39,10 @@ private:
     double _value = 0.0;
     QPointF _startPoint = QPointF(0, 0);
     QPointF _oldPosition = QPointF(0, 0);
-    GraphicalModelComponent *_ownerComponent = nullptr;
     bool _isResizing = false;
     bool _isDrawingInicialized = false;
     bool _isDrawingFinalized = false;
+    Variable *_variable = nullptr;
 };
 
 #endif // ANIMATIONVARIABLE_H

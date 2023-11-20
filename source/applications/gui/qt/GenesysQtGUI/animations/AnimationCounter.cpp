@@ -17,7 +17,7 @@ void AnimationCounter::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     painter->setBrush(Qt::blue);
     painter->drawRect(boundingRect());
 
-    QString counterText = QString::number(_counter);
+    QString valueText = QString::number(_value);
     QFont font = painter->font();
 
     // Ajusta o tamanho da fonte com base nas dimensões do retângulo
@@ -26,7 +26,7 @@ void AnimationCounter::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 
     painter->setFont(font);
     painter->setPen(Qt::white);
-    painter->drawText(boundingRect(), Qt::AlignCenter, counterText);
+    painter->drawText(boundingRect(), Qt::AlignCenter, valueText);
 
     if (isSelected()) {
         // Tamanho dos quadrados dos cantos
@@ -48,8 +48,8 @@ void AnimationCounter::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     }
 }
 
-unsigned int AnimationCounter::getCounter() {
-    return _counter;
+double AnimationCounter::getValue() {
+    return _value;
 }
 
 QPointF AnimationCounter::getOldPosition() {
@@ -60,8 +60,17 @@ GraphicalModelComponent *AnimationCounter::getOwnerComponent(){
     return _ownerComponent;
 }
 
-void AnimationCounter::setCounter(unsigned int value) {
-    _counter = value;
+Counter *AnimationCounter::getCounter(){
+    if (Counter *counter = dynamic_cast<Counter *>(_counter)) {
+        return _counter;
+    } else {
+        _counter = nullptr;
+        return nullptr;
+    }
+}
+
+void AnimationCounter::setValue(double value) {
+    _value = value;
     update();
 }
 
@@ -71,6 +80,10 @@ void AnimationCounter::setOldPosition(QPointF oldPosition) {
 
 void AnimationCounter::setOwnerComponent(GraphicalModelComponent *ownerComponent){
     _ownerComponent = ownerComponent;
+}
+
+void AnimationCounter::setCounter(Counter *counter){
+    _counter = counter;
 }
 
 void AnimationCounter::startDrawing(QGraphicsSceneMouseEvent *event) {

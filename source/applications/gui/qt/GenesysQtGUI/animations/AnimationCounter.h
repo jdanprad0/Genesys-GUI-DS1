@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 
+#include "../../../../../kernel/simulator/Counter.h"
+
 class GraphicalModelComponent;
 
 class AnimationCounter : public QGraphicsRectItem {
@@ -16,14 +18,16 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
     // Getters
-    unsigned int getCounter();
+    double getValue();
     QPointF getOldPosition();
     GraphicalModelComponent *getOwnerComponent();
+    Counter *getCounter();
 
     // Setters
-    void setCounter(unsigned int value);
+    void setValue(double value);
     void setOldPosition(QPointF oldPosition);
     void setOwnerComponent(GraphicalModelComponent *ownerComponent);
+    void setCounter(Counter *myCounter);
 
     // Outros
     void startDrawing(QGraphicsSceneMouseEvent *event); // Inicia o desenho da tela
@@ -34,13 +38,14 @@ public:
     bool isDrawingFinalized(); // Diz se a variável terminou de ser desenhada
 
 private:
-    unsigned int _counter = 0;
+    double _value = 0.0;
     QPointF _startPoint = QPointF(0, 0);
     QPointF _oldPosition = QPointF(0, 0);
     GraphicalModelComponent *_ownerComponent = nullptr;
     bool _isResizing = false;
     bool _isDrawingInicialized = false;
     bool _isDrawingFinalized = false;
+    Counter *_counter = nullptr;
 };
 
 #endif // ANIMATIONCOUNTER_H

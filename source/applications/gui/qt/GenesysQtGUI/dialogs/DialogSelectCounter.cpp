@@ -23,7 +23,11 @@ DialogSelectCounter::DialogSelectCounter(QWidget *parent)
 
 Counter* DialogSelectCounter::selectedIndex() const {
     int currentIndex = comboBox->currentIndex();
-    return indexToCounter.value(currentIndex);
+    if (indexToCounter.contains(currentIndex)) {
+        return indexToCounter[currentIndex];
+    } else {
+        return nullptr;
+    }
 }
 
 void DialogSelectCounter::onOkClicked() {
@@ -34,18 +38,19 @@ void DialogSelectCounter::onCancelClicked() {
     reject();
 }
 
-void DialogSelectCounter::setCounterNames(QList<Counter *> *counters) {
+void DialogSelectCounter::setCounterItems(QList<Counter *> *counters) {
     comboBox->clear();
 
     QString standardInput = "None";
 
     comboBox->addItem(standardInput);
-    indexToCounter[1] = nullptr;
+    indexToCounter[0] = nullptr;
 
     for (unsigned int i = 0; i < (unsigned int) counters->size(); i++) {
         // Adiciona entradas ao mapeamento ponteiro-nome
         QString entryName = QString::fromStdString(counters->at(i)->getName());
-        indexToCounter[i+2] = counters->at(i);
+        indexToCounter[i+1] = counters->at(i);
         comboBox->addItem(entryName);
     }
 }
+

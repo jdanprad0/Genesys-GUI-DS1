@@ -46,6 +46,7 @@
 #include "actions/GroupUndoCommand.h"
 #include "actions/UngroupUndoCommand.h"
 #include "dialogs/DialogSelectCounter.h"
+#include "dialogs/DialogSelectVariable.h"
 
 ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent) : QGraphicsScene(x, y, width, height, parent) {
     // grid
@@ -407,6 +408,19 @@ void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc, bool noti
     //limpa as conexoes
     clearConnectionsComponent(gmc);
 
+    // limpa o contador
+    std::map<std::string, ModelDataDefinition*>* internalData = gmc->getComponent()->getInternalData();
+
+    for (const auto& pair : *internalData) {
+        ModelDataDefinition* data = pair.second;
+
+        if (Counter *counter = dynamic_cast<Counter *>(data)) {
+            counter->clear();
+        }
+    }
+
+    internalData->clear();
+
     //notify graphical model change
     if (notify) {
         GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
@@ -742,13 +756,24 @@ void ModelGraphicsScene::animateTransition(ModelComponent *source, ModelComponen
 
 void ModelGraphicsScene::animateCounter() {
     for (unsigned int i = 0; i < (unsigned int) _animationsCounter->size(); i++) {
-        _animationsCounter->at(i)->setCounter(_counters->at(0)->getCountValue());
+        AnimationCounter *animationCounter = _animationsCounter->at(i);
+        double currentValue = 0.0;
+
+        if (animationCounter->getCounter()) {
+            currentValue = animationCounter->getCounter()->getCountValue();
+        }
+        animationCounter->setValue(currentValue);
     }
 }
 
 void ModelGraphicsScene::animateVariable() {
     for (unsigned int i = 0; i < (unsigned int) _animationsVariable->size(); i++) {
-        _animationsVariable->at(i)->setValue(_animationsVariable->at(i)->getValue()+1);
+        AnimationVariable *animationVariable = _animationsVariable->at(i);
+        double currentValue = 0.0;
+        if (animationVariable->getVariable()) {
+            currentValue = animationVariable->getVariable()->getValue();
+        }
+        animationVariable->setValue(currentValue);
     }
 }
 
@@ -1462,10 +1487,12 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseDoubleClickEvent(mouseEvent);
 
+    QGraphicsItem* item = this->itemAt(mouseEvent->scenePos(), QTransform());
+
     if (_connectingStep == 0) {
         _connectingStep = 1;
 
-        GraphicalComponentPort* port = dynamic_cast<GraphicalComponentPort*> (this->itemAt(mouseEvent->scenePos(), QTransform()));
+        GraphicalComponentPort* port = dynamic_cast<GraphicalComponentPort*> (item);
 
         if (port != nullptr) { // if doubleclick on a port, then start connecting
             if (!port->isInputPort() && this->_connectingStep == 1 && port->getConnections()->empty()) {
@@ -1480,15 +1507,35 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
         }
     }
 
-    if (AnimationCounter *animationCounter = dynamic_cast<AnimationCounter *>(this->itemAt(mouseEvent->scenePos(), QTransform()))) {
+    if (AnimationCounter *animationCounter = dynamic_cast<AnimationCounter *>(item)) {
         DialogSelectCounter dialog;
 
-        QStringList counterNames;
-
-        dialog.setCounterNames(_counters);
+        dialog.setCounterItems(_counters);
 
         if (dialog.exec() == QDialog::Accepted) {
             Counter *counterSelected = dialog.selectedIndex();
+
+            if (counterSelected) {
+                animationCounter->setCounter(counterSelected);
+            } else {
+                animationCounter->setCounter(nullptr);
+            }
+        }
+    }
+
+    if (AnimationVariable *animationVariable = dynamic_cast<AnimationVariable *>(item)) {
+        DialogSelectVariable dialog;
+
+        dialog.setVariableItems(_variables);
+
+        if (dialog.exec() == QDialog::Accepted) {
+            Variable *variableSelected = dialog.selectedIndex();
+
+            if (variableSelected) {
+                animationVariable->setVariable(variableSelected);
+            } else {
+                animationVariable->setVariable(nullptr);
+            }
         }
     }
 

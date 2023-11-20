@@ -56,8 +56,8 @@ QPointF AnimationVariable::getOldPosition() {
     return _oldPosition;
 }
 
-GraphicalModelComponent *AnimationVariable::getOwnerComponent(){
-    return _ownerComponent;
+Variable *AnimationVariable::getVariable(){
+    return _variable;
 }
 
 void AnimationVariable::setValue(double value) {
@@ -69,8 +69,8 @@ void AnimationVariable::setOldPosition(QPointF oldPosition) {
     _oldPosition = oldPosition;
 }
 
-void AnimationVariable::setOwnerComponent(GraphicalModelComponent *ownerComponent){
-    _ownerComponent = ownerComponent;
+void AnimationVariable::setVariable(Variable *variable){
+    _variable = variable;
 }
 
 void AnimationVariable::startDrawing(QGraphicsSceneMouseEvent *event) {

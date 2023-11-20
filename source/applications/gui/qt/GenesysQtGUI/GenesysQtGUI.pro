@@ -149,6 +149,7 @@ SOURCES += \
     animations/AnimationVariable.cpp \
     dialogs/DialogFind.cpp \
     dialogs/DialogSelectCounter.cpp \
+    dialogs/DialogSelectVariable.cpp \
 	dialogs/Dialogmodelinformation.cpp \
 	dialogs/dialogBreakpoint.cpp \
 	dialogs/dialogpluginmanager.cpp \
@@ -354,6 +355,7 @@ HEADERS += \
     animations/AnimationVariable.h \
     dialogs/DialogFind.h \
     dialogs/DialogSelectCounter.h \
+    dialogs/DialogSelectVariable.h \
 	dialogs/Dialogmodelinformation.h \
 	dialogs/dialogBreakpoint.h \
 	dialogs/dialogpluginmanager.h \
