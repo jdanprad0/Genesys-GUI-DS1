@@ -2932,6 +2932,7 @@ void MainWindow::on_actionModelClose_triggered()
 	ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
 	ui->graphicsView->getScene()->getGraphicalConnections()->clear();
 	ui->graphicsView->getScene()->getAllComponents()->clear();
+    ui->graphicsView->getScene()->getAllConnections()->clear();
 	ui->graphicsView->getScene()->clearAnimations();
 	ui->graphicsView->getScene()->clear();
 	ui->graphicsView->clear();

@@ -1783,6 +1783,10 @@ QList<GraphicalModelComponent*> *ModelGraphicsScene::getAllComponents() {
     return &_allGraphicalModelComponents;
 }
 
+QList<GraphicalConnection*> *ModelGraphicsScene::getAllConnections() {
+    return &_allGraphicalConnections;
+}
+
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){
     QList<GraphicalModelComponent*>* list = new QList<GraphicalModelComponent*>();
     for(QGraphicsItem* item: this->items()) {

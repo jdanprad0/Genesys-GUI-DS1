@@ -142,6 +142,7 @@ public:
     DrawingMode getDrawingMode();
     void setAction(QAction* action);
     QList<GraphicalModelComponent*> *getAllComponents();
+    QList<GraphicalConnection*> *getAllConnections();
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
     void insertOldPositionItem(QGraphicsItem *item, QPointF position);
