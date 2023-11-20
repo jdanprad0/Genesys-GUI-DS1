@@ -7,8 +7,6 @@
 
 #include "../../../../../kernel/simulator/Counter.h"
 
-class GraphicalModelComponent;
-
 class AnimationCounter : public QGraphicsRectItem {
 public:
     // Construtor
@@ -20,13 +18,11 @@ public:
     // Getters
     double getValue();
     QPointF getOldPosition();
-    GraphicalModelComponent *getOwnerComponent();
     Counter *getCounter();
 
     // Setters
     void setValue(double value);
     void setOldPosition(QPointF oldPosition);
-    void setOwnerComponent(GraphicalModelComponent *ownerComponent);
     void setCounter(Counter *myCounter);
 
     // Outros
@@ -41,7 +37,6 @@ private:
     double _value = 0.0;
     QPointF _startPoint = QPointF(0, 0);
     QPointF _oldPosition = QPointF(0, 0);
-    GraphicalModelComponent *_ownerComponent = nullptr;
     bool _isResizing = false;
     bool _isDrawingInicialized = false;
     bool _isDrawingFinalized = false;

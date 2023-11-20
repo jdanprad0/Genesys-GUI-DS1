@@ -174,6 +174,7 @@ private: // simulator event handlers
 	void _onEntityCreateHandler(SimulationEvent* re);
 	void _onEntityRemoveHandler(SimulationEvent* re);
     void _onMoveEntityEvent(SimulationEvent * re);
+    void _onAfterProcessEvent(SimulationEvent * re);
 private: // model Graphics View handlers
     void _onSceneMouseEvent(QGraphicsSceneMouseEvent* mouseEvent);
     void _onSceneWheelInEvent();

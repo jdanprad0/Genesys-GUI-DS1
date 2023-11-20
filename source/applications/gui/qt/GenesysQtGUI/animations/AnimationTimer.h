@@ -5,8 +5,6 @@
 #include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 
-class GraphicalModelComponent;
-
 class AnimationTimer : public QGraphicsRectItem {
 public:
     // Construtor

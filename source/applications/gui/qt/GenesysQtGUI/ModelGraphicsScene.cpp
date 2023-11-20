@@ -116,9 +116,9 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
                         otherGraphComp->getComponent()->getConnections()->insertAtPort(numPort, new Connection({component, 0}));
 
                         //graphically
-                        _sourceGraphicalComponentPort = ((GraphicalModelComponent*) selectedItems().at(0))->getGraphicalOutputPorts().at(numPort);
+                        GraphicalComponentPort* srcport = ((GraphicalModelComponent*) selectedItems().at(0))->getGraphicalOutputPorts().at(numPort);
                         GraphicalComponentPort* destport = graphComp->getGraphicalInputPorts().at(0);
-                        addGraphicalConnection(_sourceGraphicalComponentPort, destport, numPort, 0);
+                        addGraphicalConnection(srcport, destport, numPort, 0);
 
                         otherGraphComp->setOcupiedOutputPorts(otherGraphComp->getOcupiedOutputPorts() + 1);
                         graphComp->setOcupiedInputPorts(graphComp->getOcupiedInputPorts() + 1);
@@ -137,9 +137,8 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
                     // model
                     otherGraphComp->getComponent()->getConnections()->insertAtPort(sourceGraphPort->portNum(), new Connection({component, 0}));
                     //graphically
-                    _sourceGraphicalComponentPort = sourceGraphPort;
                     GraphicalComponentPort* destport = graphComp->getGraphicalInputPorts().at(0);
-                    addGraphicalConnection(_sourceGraphicalComponentPort, destport, sourceGraphPort->portNum(), 0);
+                    addGraphicalConnection(sourceGraphPort, destport, sourceGraphPort->portNum(), 0);
 
                     otherGraphComp->setOcupiedOutputPorts(otherGraphComp->getOcupiedOutputPorts() + 1);
                     graphComp->setOcupiedInputPorts(graphComp->getOcupiedInputPorts() + 1);
@@ -812,6 +811,7 @@ void ModelGraphicsScene::clearAnimationsCounter() {
     // Limpa lista de animações de contadores
     if (_animationsCounter) {
         _animationsCounter->clear();
+        _counters->clear();
     }
     _currentCounter = nullptr;
 }
@@ -820,6 +820,7 @@ void ModelGraphicsScene::clearAnimationsVariable() {
     // Limpa lista de animações de variáveis
     if (_animationsVariable) {
         _animationsVariable->clear();
+        _variables->clear();
     }
     _currentVariable = nullptr;
 }
@@ -1300,7 +1301,7 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                     GraphicalComponentPort* src = dynamic_cast<GraphicalComponentPort*> (_sourceGraphicalComponentPort);
                     GraphicalComponentPort* dst = dynamic_cast<GraphicalComponentPort*> (_destinationGraphicalComponentPort);
 
-                    if (_connectingStep == 1 && src != nullptr && dst != nullptr) {
+                    if (_connectingStep == 1 && src == nullptr && dst == nullptr) {
                         if (!port->isInputPort() && port->getConnections()->empty()) {
                             _sourceGraphicalComponentPort = port;
                             _connectingStep = 2;
@@ -1314,7 +1315,7 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                         _destinationGraphicalComponentPort = port;
                         // create connection
                         // in the model
-                        GraphicalConnection* graphicconnection = new GraphicalConnection(_sourceGraphicalComponentPort, port);
+                        GraphicalConnection* graphicconnection = new GraphicalConnection(_sourceGraphicalComponentPort, _destinationGraphicalComponentPort);
 
                         // faz essa limpeza pois quando cria a conexao ela ja adiciona essa conexao nas portas
                         // porem o connectComponents ja faz isso pra quando há necessidade de fazer reconexao
@@ -1324,17 +1325,19 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                         addItem(graphicconnection);
 
                         ((ModelGraphicsView *) (this->parent()))->unsetCursor();
-
                         _connectingStep = 0;
+
+                        _sourceGraphicalComponentPort = nullptr;
+                        _destinationGraphicalComponentPort = nullptr;
                         return;
                     } else if (_connectingStep == 3 && !port->isInputPort() && _destinationGraphicalComponentPort != nullptr && port->getConnections()->empty()) {
+                        _sourceGraphicalComponentPort = port;
                         // create connection
                         // in the model
-                        GraphicalConnection* graphicconnection = new GraphicalConnection(port, _destinationGraphicalComponentPort);
+                        GraphicalConnection* graphicconnection = new GraphicalConnection(_sourceGraphicalComponentPort, _destinationGraphicalComponentPort);
 
                         // faz essa limpeza pois quando cria a conexao ela ja adiciona essa conexao nas portas
                         // porem o connectComponents ja faz isso pra quando há necessidade de fazer reconexao
-
                         QUndoCommand *addUndoCommand = new AddUndoCommand(graphicconnection, this);
                         _undoStack->push(addUndoCommand);
 
@@ -1342,12 +1345,18 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 
                         ((ModelGraphicsView *) (this->parent()))->unsetCursor();
                         _connectingStep = 0;
+
+                        _sourceGraphicalComponentPort = nullptr;
+                        _destinationGraphicalComponentPort = nullptr;
                         return;
                     }
                 }
+            } else {
+                _connectingStep = 0;
+                _sourceGraphicalComponentPort = nullptr;
+                _destinationGraphicalComponentPort = nullptr;
+                ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::ArrowCursor);
             }
-            ((ModelGraphicsView *) (this->parent()))->unsetCursor();
-            _connectingStep = 0;
         } else if (_drawingMode != NONE) {
             // Capturar o ponto de início do desenho
             _drawingStartPoint = mouseEvent->scenePos();
@@ -1618,7 +1627,9 @@ void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                     GraphicalModelComponent *teste = port->graphicalComponent();
                     teste->getComponent();
                 }
-                if (_connectingStep == 1 && port->getConnections()->empty()) {
+                if (_connectingStep == 1 && port->isInputPort()) {
+                    ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
+                } else if (_connectingStep == 1 && !port->isInputPort() && port->getConnections()->empty()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);
                 } else if (_connectingStep == 2 && port->isInputPort()) {
                     ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::PointingHandCursor);

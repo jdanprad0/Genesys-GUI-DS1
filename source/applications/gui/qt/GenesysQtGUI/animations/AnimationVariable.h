@@ -7,8 +7,6 @@
 
 #include "../../../../../plugins/data/Variable.h"
 
-class GraphicalModelComponent;
-
 class AnimationVariable : public QGraphicsRectItem {
 public:
     // Construtor

@@ -1658,6 +1658,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionAnimateSimulatedTime">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/icons3/resources/icons/pack3/ico/alarm clock.ico</normaloff>:/icons3/resources/icons/pack3/ico/alarm clock.ico</iconset>
@@ -1670,6 +1673,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionAnimateVariable">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/resources/ToolBar/_animvalor.bmp</normaloff>:/resources/ToolBar/_animvalor.bmp</iconset>
@@ -1889,6 +1895,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="actionAnimateCounter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="GenesysQtGUI_resources.qrc">
      <normaloff>:/icons3/resources/icons/pack3/ico/coin.ico</normaloff>:/icons3/resources/icons/pack3/ico/coin.ico</iconset>

@@ -606,8 +606,12 @@ void MainWindow::_actualizeTabPanes() {
 			}
 		} else if (index == CONST.TabCentralReportsIndex) {
 			index = ui->tabWidgetReports->currentIndex(); //@TODO: Add results
-		}
-	}
+        }
+    } else {
+        ui->actionAnimateCounter->setChecked(false);
+        ui->actionAnimateVariable->setChecked(false);
+        ui->actionAnimateSimulatedTime->setChecked(false);
+    }
 }
 
 void MainWindow::_actualizeModelTextHasChanged(bool hasChanged) {
@@ -787,14 +791,22 @@ void MainWindow::_actualizeGraphicalModel(SimulationEvent * re) {
 }
 
 void MainWindow::_onMoveEntityEvent(SimulationEvent *re) {
+    // Cria as animações de contadores, variáveis e tempo
     myScene()->animateCounter();
     myScene()->animateVariable();
-    myScene()->animateTimer(re->getCurrentEvent()->getTime());
+    myScene()->animateTimer(simulator->getModels()->current()->getSimulation()->getSimulatedTime());
 
     // Cria a animação de transição
     if (ui->actionActivateGraphicalSimulation->isChecked() && re) {
         myScene()->animateTransition(re->getCurrentEvent()->getComponent(), re->getDestinationComponent());
     }
+}
+
+void MainWindow::_onAfterProcessEvent(SimulationEvent *re) {
+    // Cria as animações de contadores, variáveis e tempo (atualiza assim que termina)
+    myScene()->animateCounter();
+    myScene()->animateVariable();
+    myScene()->animateTimer(simulator->getModels()->current()->getSimulation()->getSimulatedTime());
 }
 
 QColor MainWindow::myrgba(uint64_t color) {
@@ -1529,6 +1541,7 @@ void MainWindow::_setOnEventHandlers() {
 	simulator->getModels()->current()->getOnEvents()->addOnEntityCreateHandler(this, &MainWindow::_onEntityCreateHandler);
 	simulator->getModels()->current()->getOnEvents()->addOnEntityRemoveHandler(this, &MainWindow::_onEntityRemoveHandler);
     simulator->getModels()->current()->getOnEvents()->addOnEntityMoveHandler(this, &MainWindow::_onMoveEntityEvent);
+    simulator->getModels()->current()->getOnEvents()->addOnAfterProcessEventHandler(this, &MainWindow::_onAfterProcessEvent);
 	//@Todo: Check for new events that were created later
 }
 
@@ -2586,7 +2599,8 @@ bool MainWindow::checkSelectedDrawIcons() {
 }
 
 void MainWindow::on_actionAnimateVariable_triggered() {
-    myScene()->drawingVariable();
+    if (ui->actionAnimateVariable->isChecked())
+        myScene()->drawingVariable();
 }
 
 
@@ -2655,13 +2669,15 @@ void MainWindow::on_actionAlignLeft_triggered()
 
 void MainWindow::on_actionAnimateSimulatedTime_triggered()
 {
-    myScene()->drawingTimer();
+    if (ui->actionAnimateSimulatedTime->isChecked())
+        myScene()->drawingTimer();
 }
 
 
 void MainWindow::on_actionAnimateCounter_triggered()
 {
-    myScene()->drawingCounter();
+    if (ui->actionAnimateCounter->isChecked())
+        myScene()->drawingCounter();
 }
 
 

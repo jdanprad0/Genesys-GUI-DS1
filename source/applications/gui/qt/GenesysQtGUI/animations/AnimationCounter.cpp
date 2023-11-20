@@ -56,10 +56,6 @@ QPointF AnimationCounter::getOldPosition() {
     return _oldPosition;
 }
 
-GraphicalModelComponent *AnimationCounter::getOwnerComponent(){
-    return _ownerComponent;
-}
-
 Counter *AnimationCounter::getCounter(){
     if (Counter *counter = dynamic_cast<Counter *>(_counter)) {
         return _counter;
@@ -76,10 +72,6 @@ void AnimationCounter::setValue(double value) {
 
 void AnimationCounter::setOldPosition(QPointF oldPosition) {
     _oldPosition = oldPosition;
-}
-
-void AnimationCounter::setOwnerComponent(GraphicalModelComponent *ownerComponent){
-    _ownerComponent = ownerComponent;
 }
 
 void AnimationCounter::setCounter(Counter *counter){
