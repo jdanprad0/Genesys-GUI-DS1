@@ -2895,12 +2895,11 @@ void MainWindow::on_actionModelCheck_triggered()
 	_actualizeActions();
 	_actualizeTabPanes();
 	if (res) {
-		QMessageBox::information(this, "Model Check", "Model successfully checked.");
-
         if (ui->actionDiagrams->isChecked()) {
             ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
             scene->showDiagrams();
         }
+    QMessageBox::information(this, "Model Check", "Model successfully checked.");
 
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
@@ -2948,7 +2947,6 @@ void MainWindow::on_treeWidgetDataDefnitions_itemDoubleClicked(QTreeWidgetItem *
         item->setFlags(item->flags() & ~Qt::ItemIsEditable);
 
     }
-
 }
 
 void MainWindow::on_treeWidgetDataDefnitions_itemChanged(QTreeWidgetItem *item, int column)

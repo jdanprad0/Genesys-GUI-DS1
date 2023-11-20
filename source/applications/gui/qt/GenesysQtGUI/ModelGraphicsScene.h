@@ -176,6 +176,7 @@ private:
 	QWidget* _parentWidget;
     QList<GraphicalModelComponent*> _allGraphicalModelComponents;
     QList<GraphicalConnection*> _allGraphicalConnections;
+    QList<GraphicalModelDataDefinition*> _allGraphicalModelDataDefinitions;
     QUndoStack *_undoStack = nullptr;
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
     QMap<QGraphicsItem *, QPointF> _oldPositionsItems;

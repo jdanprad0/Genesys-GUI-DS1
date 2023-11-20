@@ -34,6 +34,9 @@
 #include <QTreeWidget>
 #include <QMessageBox>
 #include <QUndoCommand>
+#include <iterator>
+#include <string>
+#include <list>
 #include "ModelGraphicsScene.h"
 #include "ModelGraphicsView.h"
 #include "graphicals/GraphicalModelComponent.h"
@@ -169,6 +172,19 @@ GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalCompone
     }
 
     return graphicconnection;
+}
+
+GraphicalModelDataDefinition* ModelGraphicsScene::addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color) {
+    // cria o componente gráfico
+    GraphicalModelDataDefinition* graphDataDef = new GraphicalModelDataDefinition(plugin, element, position, color);
+
+    // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
+    _allGraphicalModelDataDefinitions.append(graphDataDef);
+    getGraphicalModelDataDefinitions()->append(graphDataDef);
+
+    addItem(graphDataDef);
+
+    return graphDataDef;
 }
 
 
@@ -697,8 +713,36 @@ void ModelGraphicsScene::showGrid()
 
 void ModelGraphicsScene::showDiagrams()
 {
-    QList<QGraphicsItem*>* test = getGraphicalModelDataDefinitions();
-    int size = test->size();
+
+    qreal x = 10;
+    qreal y = 10;
+
+    Model * m = _simulator->getModels()->current();
+    ModelDataManager* dataManager = m->getDataManager();
+
+    QColor purple(128,0,128);
+    QColor grey(220,220,220);
+
+    for (std::string dataTypename : *m->getDataManager()->getDataDefinitionClassnames()) {
+        List<ModelDataDefinition*>* listDataDefinitions = dataManager->getDataDefinitionList(dataTypename);//->list();
+        int size = listDataDefinitions->size();
+        for (int i = 0; i < size; i++) {
+            ModelDataDefinition* datadef = listDataDefinitions->next();
+            std::string pluginName = datadef->getName();
+            Plugin* plugin = _simulator->getPlugins()->find(pluginName);
+            if (datadef->getLevel() > 0) {
+                addGraphicalModelDataDefinition(plugin, datadef, QPointF(x, y), grey);
+            } else {
+                addGraphicalModelDataDefinition(plugin, datadef, QPointF(x, y), purple);
+            }
+            x += 50;
+            y += 50;
+        }
+    }
+
+    QList<QGraphicsItem*>* gmdd = getGraphicalModelDataDefinitions();
+    int gmdd_size = gmdd->size();
+
 }
 
 void ModelGraphicsScene::setSnapToGrid(bool activated)
@@ -1340,6 +1384,10 @@ QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalConnections() const {
 
 QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalModelComponents() const {
     return _graphicalModelComponents;
+}
+
+QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalModelDataDefinitions() const {
+    return _graphicalModelDataDefinitions;
 }
 
 QList<QGraphicsItemGroup*>*ModelGraphicsScene::getGraphicalGroups() const {
