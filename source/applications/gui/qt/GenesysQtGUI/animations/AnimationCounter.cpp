@@ -1,5 +1,4 @@
 #include "AnimationCounter.h"
-#include "graphicals/GraphicalModelComponent.h"
 
 AnimationCounter::AnimationCounter() : _isDrawingInicialized(true) {
     setFlag(QGraphicsItem::ItemIsMovable);

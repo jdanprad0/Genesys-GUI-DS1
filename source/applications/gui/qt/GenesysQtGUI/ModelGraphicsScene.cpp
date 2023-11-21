@@ -1749,7 +1749,7 @@ void ModelGraphicsScene::drawingVariable() {
 }
 
 void ModelGraphicsScene::drawingTimer() {
-    _currentTimer = new AnimationTimer();
+    _currentTimer = new AnimationTimer(this);
     _animationsTimer->append(_currentTimer);
 }
 
@@ -1792,6 +1792,20 @@ void ModelGraphicsScene::setGraphicalComponentPort(GraphicalComponentPort * in) 
 
 QList<GraphicalModelComponent*> *ModelGraphicsScene::getAllComponents() {
     return &_allGraphicalModelComponents;
+}
+
+QList<AnimationTransition *> *ModelGraphicsScene::getAnimationsTransition() {
+    return _animationsTransition;
+}
+
+QList<AnimationCounter *> *ModelGraphicsScene::getAnimationsCounter() {
+    return _animationsCounter;
+}
+QList<AnimationVariable *> *ModelGraphicsScene::getAnimationsVariable() {
+    return _animationsVariable;
+}
+QList<AnimationTimer *> *ModelGraphicsScene::getAnimationsTimer() {
+    return _animationsTimer;
 }
 
 QList<GraphicalConnection*> *ModelGraphicsScene::getAllConnections() {

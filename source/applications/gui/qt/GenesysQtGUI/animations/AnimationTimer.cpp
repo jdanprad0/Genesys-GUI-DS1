@@ -1,6 +1,9 @@
 #include "AnimationTimer.h"
+#include "../ModelGraphicsScene.h"
 
-AnimationTimer::AnimationTimer() : _isDrawingInicialized(true){
+double AnimationTimer::_conversionFactorToSeconds = 0.0;
+
+AnimationTimer::AnimationTimer(ModelGraphicsScene* myScene) : _myScene(myScene), _isDrawingInicialized(true){
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
@@ -57,13 +60,17 @@ QPointF AnimationTimer::getOldPosition() {
 }
 
 void AnimationTimer::setTime(double value) {
-    _time = value;
+    _time = value * _conversionFactorToSeconds;
     convertSeconds();
     update();
 }
 
 void AnimationTimer::setOldPosition(QPointF oldPosition) {
     _oldPosition = oldPosition;
+}
+
+void AnimationTimer::setConversionFactorToSeconds(double factor) {
+    _conversionFactorToSeconds = factor;
 }
 
 void AnimationTimer::startDrawing(QGraphicsSceneMouseEvent *event) {
@@ -150,7 +157,7 @@ void AnimationTimer::convertSeconds() {
     int remainingSeconds = 0;
 
     // Calculate hours
-    _hours = static_cast<int>(_time / 3600);
+    _hours = static_cast<int>(_time / 3600) % 24;
 
     // Calcula os segundos restantes após as horas
     remainingSeconds = static_cast<int>(_time) % 3600;

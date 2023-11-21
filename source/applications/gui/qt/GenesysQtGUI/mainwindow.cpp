@@ -794,7 +794,6 @@ void MainWindow::_onMoveEntityEvent(SimulationEvent *re) {
     // Cria as animações de contadores, variáveis e tempo
     myScene()->animateCounter();
     myScene()->animateVariable();
-    myScene()->animateTimer(simulator->getModels()->current()->getSimulation()->getSimulatedTime());
 
     // Cria a animação de transição
     if (ui->actionActivateGraphicalSimulation->isChecked() && re) {
@@ -1392,17 +1391,21 @@ void MainWindow::_onSimulationStartHandler(SimulationEvent * re) {
 	ui->tableWidget_Variables->setRowCount(0);
 	ui->textEdit_Simulation->clear();
 	ui->textEdit_Reports->clear();
+
+    // Fator de conversão para segundos
+    Util::TimeUnit replicationBaseTimeUnit = simulator->getModels()->current()->getSimulation()->getReplicationBaseTimeUnit();
+    double conversionFactorToSeconds = Util::TimeUnitConvert(replicationBaseTimeUnit, Util::TimeUnit(5));
+    AnimationTimer::setConversionFactorToSeconds(conversionFactorToSeconds);
+
 	QCoreApplication::processEvents();
 }
 
 void MainWindow::_onSimulationPausedHandler(SimulationEvent * re) {
-
 	_actualizeActions();
 	QCoreApplication::processEvents();
 }
 
 void MainWindow::_onSimulationResumeHandler(SimulationEvent * re) {
-
 	_actualizeActions();
 	QCoreApplication::processEvents();
 }
@@ -1541,6 +1544,7 @@ void MainWindow::_setOnEventHandlers() {
 	simulator->getModels()->current()->getOnEvents()->addOnEntityCreateHandler(this, &MainWindow::_onEntityCreateHandler);
 	simulator->getModels()->current()->getOnEvents()->addOnEntityRemoveHandler(this, &MainWindow::_onEntityRemoveHandler);
     simulator->getModels()->current()->getOnEvents()->addOnEntityMoveHandler(this, &MainWindow::_onMoveEntityEvent);
+    simulator->getModels()->current()->getOnEvents()->addOnSimulationStartHandler(this, &MainWindow::_onMoveEntityEvent);
     simulator->getModels()->current()->getOnEvents()->addOnAfterProcessEventHandler(this, &MainWindow::_onAfterProcessEvent);
 	//@Todo: Check for new events that were created later
 }
@@ -2978,7 +2982,6 @@ void MainWindow::on_actionModelInformation_triggered()
 
 void MainWindow::on_actionModelCheck_triggered()
 {
-    //_onAfterProcessEventHandlers
 	_insertCommandInConsole("check");
 	bool res = simulator->getModels()->current()->check();
 	_actualizeActions();
