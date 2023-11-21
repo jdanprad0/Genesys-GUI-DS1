@@ -3015,6 +3015,8 @@ void MainWindow::on_actionSimulatorExit_triggered()
 void MainWindow::on_actionSimulationConfigure_triggered()
 {
 	DialogSimulationConfigure* dialog = new DialogSimulationConfigure(this);
+    dialog->setModelSimulaion(simulator->getModels()->current()->getSimulation());
+    dialog->setTraceManager(simulator->getTracer());
 	dialog->show();
 }
 
