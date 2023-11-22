@@ -193,15 +193,7 @@ void PasteUndoCommand::redo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        //add in model (apenas para delete)
-        _myGraphicsScene->getSimulator()->getModels()->current()->insert(componentItem.graphicalComponent->getComponent());
-
-        _myGraphicsScene->getAllComponents()->append(componentItem.graphicalComponent);
-        //add graphically
-        _myGraphicsScene->getGraphicalModelComponents()->append(componentItem.graphicalComponent);
-
-        //refaz as conexões
-        _myGraphicsScene->redoConnections(componentItem.graphicalComponent, &componentItem.inputConnections, &componentItem.outputConnections);
+        _myGraphicsScene->insertComponent(componentItem.graphicalComponent, &componentItem.inputConnections, &componentItem.outputConnections);
     }
 
     // varre todos os GraphicalConnection e realiza a conexao

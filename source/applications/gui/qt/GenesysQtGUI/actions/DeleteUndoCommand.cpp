@@ -139,14 +139,7 @@ void DeleteUndoCommand::undo() {
     for (int i = 0; i < _myComponentItems->size(); ++i) {
         ComponentItem componentItem = _myComponentItems->at(i);
 
-        //add in model (apenas para delete)
-        _myGraphicsScene->getSimulator()->getModels()->current()->insert(componentItem.graphicalComponent->getComponent());
-
-        //add graphically
-        _myGraphicsScene->getGraphicalModelComponents()->append(componentItem.graphicalComponent);
-
-        //refaz as conexões
-        _myGraphicsScene->redoConnections(componentItem.graphicalComponent, &componentItem.inputConnections, &componentItem.outputConnections);
+        _myGraphicsScene->insertComponent(componentItem.graphicalComponent, &componentItem.inputConnections, &componentItem.outputConnections, true, false);
     }
 
     // varre todos os GraphicalConnection e realiza a conexao
@@ -169,14 +162,7 @@ void DeleteUndoCommand::undo() {
         for (int j = 0; j < groupItem.myComponentItems.size(); ++j) {
             ComponentItem componentItem = groupItem.myComponentItems.at(j);
 
-            //add in model (apenas para delete)
-            _myGraphicsScene->getSimulator()->getModels()->current()->insert(componentItem.graphicalComponent->getComponent());
-
-            //add graphically
-            _myGraphicsScene->getGraphicalModelComponents()->append(componentItem.graphicalComponent);
-
-            //refaz as conexões
-            _myGraphicsScene->redoConnections(componentItem.graphicalComponent, &componentItem.inputConnections, &componentItem.outputConnections);
+            _myGraphicsScene->insertComponent(componentItem.graphicalComponent, &componentItem.inputConnections, &componentItem.outputConnections, true, false);
 
             componentsGroup->append(componentItem.graphicalComponent);
         }
@@ -238,9 +224,6 @@ void DeleteUndoCommand::redo() {
 
         _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
 
-        SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(componentItem.graphicalComponent->getComponent());
-        if (isSrc)
-            isSrc->setEntityType(nullptr);
     }
 
     // varre todos os GraphicalConnection

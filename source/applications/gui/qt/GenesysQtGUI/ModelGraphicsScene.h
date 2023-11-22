@@ -99,6 +99,7 @@ public: // editing graphic model
     bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
     void redoConnections(GraphicalModelComponent *graphicalComponent, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections);
     void removeComponentInModel(GraphicalModelComponent* gmc);
+    void insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC = true, bool addAllGMC = true);
     void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify = false);
     void removeConnectionInModel(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source);
 	void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
@@ -162,6 +163,11 @@ public:
     void drawingTimer();
     void setCounters();
     void setVariables();
+    // TODO: Funções abaixo são usadas para reaver os dataDefinitions do componente nos dataDefinitions do modelo dos componentes deletados, "checados" e reinseridos (Control Z de um delete, por exemplo).
+    // O kernel não trata este caso, ale acusa erro, pois não encontra os dataDefinitions do componente nos dataDefinitions do modelo, pois ele os remove como "órfãos" e não os reinsere quando voltados ao modelo.
+    void insertRestoredDataDefinitions();
+    void saveDataDefinitions();
+    // --------------------------------- //
 
 public:
 	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;

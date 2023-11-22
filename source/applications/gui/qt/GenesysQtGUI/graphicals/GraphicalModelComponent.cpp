@@ -314,15 +314,33 @@ QList<GraphicalComponentPort *> GraphicalModelComponent::getGraphicalInputPorts(
 	return _graphicalInputPorts;
 }
 
+QList<ModelDataDefinition *> *GraphicalModelComponent::getInternalData() const {
+    return _internalData;
+}
+
+QList<ModelDataDefinition *> *GraphicalModelComponent::getAttachedData() const {
+    return _attachedData;
+}
+
+EntityType * GraphicalModelComponent::getEntityType() const{
+    return _entityType;
+}
+
 unsigned int GraphicalModelComponent::getOcupiedInputPorts() const {
     return _ocupiedInputPorts;
 }
 unsigned int GraphicalModelComponent::getOcupiedOutputPorts() const {
     return _ocupiedOutputPorts;
 }
+
+void GraphicalModelComponent::setEntityType(EntityType *entityType) {
+    _entityType = entityType;
+}
+
 void GraphicalModelComponent::setOcupiedInputPorts(unsigned int value) {
     _ocupiedInputPorts = value;
 }
+
 void GraphicalModelComponent::setOcupiedOutputPorts(unsigned int value) {
     _ocupiedOutputPorts = value;
 }

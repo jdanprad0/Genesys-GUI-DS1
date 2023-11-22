@@ -418,8 +418,6 @@ void ModelGraphicsScene::removeComponent(GraphicalModelComponent* gmc, bool noti
         }
     }
 
-    internalData->clear();
-
     //notify graphical model change
     if (notify) {
         GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
@@ -437,6 +435,35 @@ void ModelGraphicsScene::removeComponentInModel(GraphicalModelComponent* gmc) {
     Model* model = _simulator->getModels()->current();
     // remove o componente do modelo
     model->getComponents()->remove(component);
+
+    gmc->setEntityType(nullptr);
+}
+
+void ModelGraphicsScene::insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC, bool addAllGMC) {
+    // pega o componente do modelo grafico
+    ModelComponent* component = gmc->getComponent();
+    // pega o modelo corrente
+    Model* model = _simulator->getModels()->current();
+    // adiciona o componente do modelo
+    model->insert(component);
+    // adiciona na lista de componentes do modelo
+    if (addGMC) {
+        this->getGraphicalModelComponents()->append(gmc);
+    }
+    // adiciona na lista de todos os componentes
+    if (addAllGMC) {
+        this->getAllComponents()->append(gmc);
+    }
+    // refaz as conexões
+    redoConnections(gmc, inputConnections, outputConnections);
+
+    // Seta o EntityType
+    SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(component);
+
+    if (isSrc) {
+        EntityType* entityType = isSrc->getEntityType();
+        gmc->setEntityType(entityType);
+    }
 }
 
 // trata da remocao das conexoes de um componente
@@ -609,7 +636,7 @@ bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, Gra
         // varre todas as portas de entrada do componente de destino, ate encontrar a porta correta
         for (GraphicalComponentPort* port : dst->getGraphicalInputPorts()) {
             // se encontrar a porta correta
-            if (port->portNum() == connection->getDestination()->channel.portNumber) {
+            if (port->portNum() == connection->getDestination()->channel.portNumber && !port->getConnections()->contains(connection)) {
                 // adiciona o componente grafico nessa porta
                 port->addGraphicalConnection(connection);
                 // nao e necessario adicionar a conexao no modelo do componente de destino, pois apenas os componentes de origem a possui
@@ -626,7 +653,7 @@ bool ModelGraphicsScene::connectDestination(GraphicalConnection* connection, Gra
     return false;
 }
 
-
+// Refaz as conexões depois de voltar pra tela
 void ModelGraphicsScene::redoConnections(GraphicalModelComponent *graphicalComponent, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections) {
     for (int j = 0; j < inputConnections->size(); ++j) {
         GraphicalConnection *connection = inputConnections->at(j);
@@ -647,6 +674,80 @@ void ModelGraphicsScene::redoConnections(GraphicalModelComponent *graphicalCompo
     }
 }
 
+
+void ModelGraphicsScene::saveDataDefinitions() {
+    QList<GraphicalModelComponent*> *components = this->graphicalModelComponentItems();
+
+    for (GraphicalModelComponent* component : *components) {
+        if (component->getInternalData()->empty() || component->getAttachedData()->empty()) {
+            std::map<std::string, ModelDataDefinition*>* internalsData = component->getComponent()->getInternalData();
+            std::map<std::string, ModelDataDefinition*>* attachedData = component->getComponent()->getAttachedData();
+
+            if (component->getInternalData()->empty()) {
+                for (auto it = internalsData->begin(); it != internalsData->end(); ++it) {
+                    ModelDataDefinition* dataDefinition = it->second;
+
+                    component->getInternalData()->append(dataDefinition);
+                }
+            }
+
+            if (component->getAttachedData()->empty()) {
+                for (auto it = attachedData->begin(); it != attachedData->end(); ++it) {
+                    ModelDataDefinition* dataDefinition = it->second;
+
+                    if (dataDefinition->getClassname() != "EntityType")
+                        component->getAttachedData()->append(dataDefinition);
+                }
+            }
+
+            SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(component->getComponent());
+
+            if (isSrc) {
+                EntityType* entityType = isSrc->getEntityType();
+                component->setEntityType(entityType);
+            }
+        }
+    }
+}
+
+void ModelGraphicsScene::insertRestoredDataDefinitions() {
+    QList<GraphicalModelComponent*> *components = this->graphicalModelComponentItems();
+    QList<GraphicalModelComponent*> *allComponentes = this->getAllComponents();
+
+    if (!allComponentes->empty()) {
+        for (GraphicalModelComponent* component : *allComponentes) {
+            if (component->getEntityType() == nullptr) {
+                SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(component->getComponent());
+
+                if (isSrc) {
+                    EntityType* entityType = isSrc->getEntityType();
+                    if (entityType != nullptr)
+                        _simulator->getModels()->current()->getDataManager()->remove(entityType);
+                }
+            }
+        }
+    }
+
+    if (!components->empty()) {
+        for (GraphicalModelComponent* component : *components) {
+            for (ModelDataDefinition* dataInternal : *component->getInternalData()) {
+                _simulator->getModels()->current()->getDataManager()->insert(dataInternal);
+            }
+
+            for (ModelDataDefinition* dataAttached : *component->getAttachedData()) {
+                _simulator->getModels()->current()->getDataManager()->insert(dataAttached);
+            }
+
+            if (component->getEntityType() != nullptr) {
+                unsigned int size = _simulator->getModels()->current()->getDataManager()->getNumberOfDataDefinitions("EntityType");
+
+                if (size == 0) {
+                    _simulator->getModels()->current()->getDataManager()->insert(component->getEntityType());
+                }
+            }
+        }
+    }
+}
 
 void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
     removeItem(item);

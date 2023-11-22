@@ -2983,18 +2983,44 @@ void MainWindow::on_actionModelInformation_triggered()
 void MainWindow::on_actionModelCheck_triggered()
 {
 	_insertCommandInConsole("check");
-	bool res = simulator->getModels()->current()->check();
-	_actualizeActions();
-	_actualizeTabPanes();
-	if (res) {
+    myScene()->insertRestoredDataDefinitions();
+
+    bool res = simulator->getModels()->current()->check();
+    setStatisticsCollector();
+    _actualizeActions();
+    _actualizeTabPanes();
+    if (res) {
 		QMessageBox::information(this, "Model Check", "Model successfully checked.");
+        myScene()->saveDataDefinitions();
         myScene()->setCounters();
         myScene()->setVariables();
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
-	}
+    }
 }
 
+void MainWindow::setStatisticsCollector() {
+    std::list<ModelDataDefinition*>* entityTypes = simulator->getModels()->current()->getDataManager()->getDataDefinitionList(Util::TypeOf<EntityType>())->list();
+    std::list<ModelDataDefinition*>* stCollectors = simulator->getModels()->current()->getDataManager()->getDataDefinitionList(Util::TypeOf<StatisticsCollector>())->list();
+
+    QList<ModelDataDefinition*> qlStCollectors(stCollectors->begin(), stCollectors->end());
+
+    if (!entityTypes->empty()) {
+        std::string suffix = ".TotalTimeInSystem";
+
+        for (ModelDataDefinition* stCollector : *entityTypes) {
+            if (stCollector->isReportStatistics()) {
+                StatisticsCollector* stc = static_cast<EntityType*> (stCollector)->addGetStatisticsCollector(stCollector->getName() + suffix);
+
+                // necessário pois o kernel remove o StatisticsCollector de DataManager mas não de _statisticsCollectors usado
+                // por addGetStatisticsCollector para criar ou não (veridica se tem na lista) o Data Definition
+                if (!qlStCollectors.contains(stc)) {
+                    simulator->getModels()->current()->getDataManager()->insert(stc);
+                }
+            }
+        }
+    }
+}
 
 void MainWindow::on_actionSimulatorExit_triggered()
 {

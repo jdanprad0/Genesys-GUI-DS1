@@ -240,7 +240,15 @@ private: // misc useful
 	QString _modelfilename;
 	std::map<std::string /*category*/,QColor>* _pluginCategoryColor = new std::map<std::string,QColor>();
     int _zoomValue; // todo should be set for each open graphical model, such as view rect, etc
-
+    // TODO 1: Faz parte do mecanismo de restaurar dataDefinitions deletados do modelo e que são restaurados com um Control Z
+    // Caso: Ao adicionar um Create no modelo e dar um check() o EntityType será criado,
+    // mas ao deletar o Create, dar outro check() e em sequida dar um Control Z (voltando o Create no modelo) e checar novamente, o EntityType não é restaurado
+    // na lista de dataDefinitions do modelo, apesar de ainda existir no Create.
+    // Neste caso, ocorre um erro acusando que o EntityType do Create não está no modelo.
+    // Isso se dá ao fato de que no Kernel ele verifica se _entityType = nullptr para criar um novo e reinserir no modelo, mas não trata o caso dele não ser nullptr
+    // e não estar nos dataDefinitions do modelo, que é o que ocorre na situação que foi descrita.
+    // Esta função foi feita para tratar esse caso, assim como é feito com insertRestoredDataDefinitions e saveDataDefinitions em ModelGraphicScene
+    void setStatisticsCollector();
 
     bool _cut;
     QList<GraphicalModelComponent*> * _gmc_copies  = new QList<GraphicalModelComponent*>();
@@ -255,9 +263,6 @@ private: // misc useful
 
     bool _firstClickShowConnection = true;
 
-public:
-    QList<ModelDataDefinition *> *getCountersModelDataDefinitions();
-    QList<ModelDataDefinition *> *getVariablesModelDataDefinitions();
 private:
 
 	const struct TABINDEXES_STRUC {

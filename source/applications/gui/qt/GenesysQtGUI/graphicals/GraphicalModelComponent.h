@@ -33,6 +33,10 @@ public:
 	QList<GraphicalComponentPort *> getGraphicalInputPorts() const;
 	QList<GraphicalComponentPort *> getGraphicalOutputPorts() const;
     QColor getColor() const;
+    QList<ModelDataDefinition *> *getInternalData() const;
+    QList<ModelDataDefinition *> *getAttachedData() const;
+    EntityType* getEntityType() const;
+    void setEntityType(EntityType *entityType);
     unsigned int getOcupiedInputPorts() const;
     unsigned int getOcupiedOutputPorts() const;
     void setOcupiedInputPorts(unsigned int value);
@@ -76,6 +80,9 @@ protected:
 private:
 	QList<GraphicalComponentPort*> _graphicalInputPorts = QList<GraphicalComponentPort*>();
 	QList<GraphicalComponentPort*> _graphicalOutputPorts = QList<GraphicalComponentPort*>();
+    QList<ModelDataDefinition *> *_internalData = new QList<ModelDataDefinition*>();
+    QList<ModelDataDefinition *> *_attachedData = new QList<ModelDataDefinition*>();
+    EntityType* _entityType = nullptr;
     unsigned int _ocupiedInputPorts = 0;
     unsigned int _ocupiedOutputPorts = 0;
 };

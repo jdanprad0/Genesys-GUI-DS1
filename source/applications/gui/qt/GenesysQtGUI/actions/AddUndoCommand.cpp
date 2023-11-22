@@ -123,11 +123,7 @@ void AddUndoCommand::redo() {
         _myGraphicsScene->getGraphicalModelComponents()->append(_myComponentItem.graphicalComponent);
 
         if (!_firstExecution) {
-            //add in model (apenas para delete)
-            _myGraphicsScene->getSimulator()->getModels()->current()->insert(_myComponentItem.graphicalComponent->getComponent());
-
-            //refaz as conexões
-            _myGraphicsScene->redoConnections(_myComponentItem.graphicalComponent, &_myComponentItem.inputConnections, &_myComponentItem.outputConnections);
+            _myGraphicsScene->insertComponent(_myComponentItem.graphicalComponent, &_myComponentItem.inputConnections, &_myComponentItem.outputConnections, false, false);
 
             _myGraphicsScene->notifyGraphicalModelChange(GraphicalModelEvent::EventType::CREATE, GraphicalModelEvent::EventObjectType::COMPONENT, _myComponentItem.graphicalComponent);
 
