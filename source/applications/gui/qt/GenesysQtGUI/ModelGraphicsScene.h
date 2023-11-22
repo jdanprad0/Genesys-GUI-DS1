@@ -148,6 +148,9 @@ public:
     void insertOldPositionItem(QGraphicsItem *item, QPointF position);
     QPointF getOldPositionItem(QGraphicsItem *item) const;
     QList<AnimationTransition *> *getAnimationsTransition();
+    QList<AnimationCounter *> *getAnimationsCounter();
+    QList<AnimationVariable *> *getAnimationsVariable();
+    QList<AnimationTimer *> *getAnimationsTimer();
     void clearAnimations();
     void clearAnimationsTransition();
     void clearAnimationsCounter();

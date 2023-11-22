@@ -5,10 +5,12 @@
 #include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 
+class ModelGraphicsScene;
+
 class AnimationTimer : public QGraphicsRectItem {
 public:
     // Construtor
-    AnimationTimer();
+    AnimationTimer(ModelGraphicsScene* myScene);
 
     // Sobrecarga do método paint
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
@@ -20,6 +22,7 @@ public:
     // Setters
     void setTime(double value);
     void setOldPosition(QPointF oldPosition);
+    static void setConversionFactorToSeconds(double factor);
 
     // Outros
     void startDrawing(QGraphicsSceneMouseEvent *event); // Inicia o desenho da tela
@@ -31,7 +34,9 @@ public:
     bool isDrawingFinalized(); // Diz se o relógio terminou de ser desenhado
 
 private:
+    ModelGraphicsScene* _myScene;
     double _time = 0.0;
+    static double _conversionFactorToSeconds;
     QPointF _startPoint = QPointF(0, 0);
     QPointF _oldPosition = QPointF(0, 0);
     unsigned int _hours = 0;

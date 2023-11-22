@@ -237,6 +237,10 @@ void DeleteUndoCommand::redo() {
         ComponentItem componentItem = _myComponentItems->at(i);
 
         _myGraphicsScene->removeComponent(componentItem.graphicalComponent);
+
+        SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(componentItem.graphicalComponent->getComponent());
+        if (isSrc)
+            isSrc->setEntityType(nullptr);
     }
 
     // varre todos os GraphicalConnection
