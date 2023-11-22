@@ -3014,11 +3014,8 @@ void MainWindow::on_actionSimulatorExit_triggered()
 
 void MainWindow::on_actionSimulationConfigure_triggered()
 {
-    // dialogSimulationConfigure->previousConfiguration();
-
     DialogSimulationConfigure * dialog = new DialogSimulationConfigure(this);
-    dialog->setModelSimulaion(simulator->getModels()->current()->getSimulation());
-    dialog->setTraceManager(simulator->getTracer());
+    dialog->setSimulator(simulator);
     dialog->previousConfiguration();
     dialog->show();
 

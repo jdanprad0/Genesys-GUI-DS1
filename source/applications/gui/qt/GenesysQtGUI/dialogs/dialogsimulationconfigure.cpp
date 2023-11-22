@@ -13,27 +13,18 @@ DialogSimulationConfigure::~DialogSimulationConfigure()
     delete ui;
 }
 
+// Set the attributes required to save in model
+void DialogSimulationConfigure::setSimulator(Simulator * sim) {
+    ms = sim->getModels()->current()->getSimulation();
+    trace = sim->getTracer();
+    infos = sim->getModels()->current()->getInfos();
 
-void DialogSimulationConfigure::setModelSimulaion(ModelSimulation * model) {
-    ms = model;
 }
 
-void DialogSimulationConfigure::setTraceManager(TraceManager * traceManager) {
-    trace = traceManager;
-}
-
-void DialogSimulationConfigure::on_buttonBox_accepted()
+// Exeperiment name
+void DialogSimulationConfigure::on_plainTextEdit_textChanged()
 {
-    // Missing name
-    ms->setNumberOfReplications(numberOfReplication);
-    ms->setReplicationLength(replicationLength, replicationLengthtimeUnit);
-    ms->setWarmUpPeriod(warmUpPeriod, warmUpPeriodTimeUnit);
-    ms->setTerminatingCondition(terminatingCondition);
-    trace->setTraceLevel(traceLevel);
-    ms->setInitializeSystem(initializeSystem);
-    ms->setInitializeStatistics(initializeStatistics);
-    ms->setShowReportsAfterReplication(showReportsAfterReplication);
-    ms->setShowReportsAfterSimulation(showReportsAfterSimulation);
+    experimentName = ui->plainTextEdit->toPlainText().toStdString();
 }
 
 // Number of replication
@@ -195,15 +186,31 @@ void DialogSimulationConfigure::on_checkBox_2_stateChanged(int arg1)
    showReportsAfterSimulation = arg1;
 }
 
+// Ok Button
+void DialogSimulationConfigure::on_buttonBox_accepted()
+{
+   infos->setName(experimentName);
+   ms->setNumberOfReplications(numberOfReplication);
+   ms->setReplicationLength(replicationLength, replicationLengthtimeUnit);
+   ms->setWarmUpPeriod(warmUpPeriod, warmUpPeriodTimeUnit);
+   ms->setTerminatingCondition(terminatingCondition);
+   trace->setTraceLevel(traceLevel);
+   ms->setInitializeSystem(initializeSystem);
+   ms->setInitializeStatistics(initializeStatistics);
+   ms->setShowReportsAfterReplication(showReportsAfterReplication);
+   ms->setShowReportsAfterSimulation(showReportsAfterSimulation);
+}
 
+// Set previous configuration when it's cancel
 void DialogSimulationConfigure::on_buttonBox_rejected()
 {
    previousConfiguration();
 }
-
+// Get previous configuration from model and update ui
 void DialogSimulationConfigure::previousConfiguration() {
 
    // Missing name
+   experimentName = infos->getName();
    numberOfReplication = ms->getNumberOfReplications();
    replicationLength = ms->getReplicationLength();
    replicationLengthtimeUnit = ms->getReplicationBaseTimeUnit();
@@ -211,16 +218,24 @@ void DialogSimulationConfigure::previousConfiguration() {
    warmUpPeriodTimeUnit = ms->getWarmUpPeriodTimeUnit();
    terminatingCondition =  ms->getTerminatingCondition();
    traceLevel = trace->getTraceLevel();
-   //   initializeSystem =   ms->getInitializeSystem();
-   //   initializeStatistics = ms->getInitializeStatistics();
-    //   showReportsAfterReplication =  ms->getShowReportsAfterReplication();
-    //   showReportsAfterSimulation = ms->getShowReportsAfterSimulation();
 
+   initializeSystem =   ms->isInitializeSystem();
+   initializeStatistics = ms->isInitializeStatistics();
+   showReportsAfterReplication =  ms->isShowReportsAfterReplication();
+   showReportsAfterSimulation = ms->isShowReportsAfterSimulation();
+
+   ui->plainTextEdit->setPlainText(QString::fromStdString(experimentName));
    ui->spinBox->setValue(numberOfReplication);
    ui->spinBox_3->setValue(replicationLength);
-   // Inserir itens
-   ui->comboBox->setCurrentIndex(0);
+   ui->comboBox->setCurrentIndex(static_cast<int>(replicationLengthtimeUnit));
+   ui->spinBox_2->setValue(warmUpPeriod);
+   ui->comboBox_2->setCurrentIndex(static_cast<int>(warmUpPeriodTimeUnit));
+   ui->plainTextEdit_2->setPlainText(QString::fromStdString(terminatingCondition));
+   ui->comboBox_3->setCurrentIndex(static_cast<int>(traceLevel));
 
+   ui->checkBox->setChecked(initializeSystem);
+   ui->checkBox_2->setChecked(showReportsAfterSimulation);
+   ui->checkBox_3->setChecked(showReportsAfterReplication);
+   ui->checkBox_4->setChecked(initializeStatistics);
 }
-
 

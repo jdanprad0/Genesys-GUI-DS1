@@ -15,15 +15,13 @@ class DialogSimulationConfigure : public QDialog
 public:
     explicit DialogSimulationConfigure(QWidget *parent = nullptr);
     ~DialogSimulationConfigure();
-    void setModelSimulaion(ModelSimulation * model);
-    void setTraceManager(TraceManager * traceManager);
+    void setSimulator(Simulator * sim);
     void previousConfiguration();
-    void setNumberOfReplication(unsigned int numberOfReplication);
 
 
 private slots:
-    // OK button
-    void on_buttonBox_accepted();
+    // Experiment Name
+    void on_plainTextEdit_textChanged();
     // Number of replication
     void on_spinBox_valueChanged(int arg1);
     // Replication Length time unit
@@ -46,13 +44,21 @@ private slots:
     void on_checkBox_3_stateChanged(int arg1);
     // Show Reports after Simulation
     void on_checkBox_2_stateChanged(int arg1);
+    // OK button
+    void on_buttonBox_accepted();
     // Cancel button
     void on_buttonBox_rejected();
 
+
+
 private:
+
+    // Attributes required to save in Model
     Ui::DialogSimulationConfigure *ui;
     ModelSimulation * ms;
     TraceManager * trace;
+    ModelInfo * infos;
+    Model * model;
 
 
     std::string experimentName;
