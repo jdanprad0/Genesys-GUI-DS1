@@ -716,13 +716,15 @@ void ModelGraphicsScene::insertRestoredDataDefinitions() {
 
     if (!allComponentes->empty()) {
         for (GraphicalModelComponent* component : *allComponentes) {
-            if (component->getEntityType() == nullptr) {
-                SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(component->getComponent());
+            if (!components->contains(component)) {
+                if (component->getEntityType() == nullptr) {
+                    SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(component->getComponent());
 
-                if (isSrc) {
-                    EntityType* entityType = isSrc->getEntityType();
-                    if (entityType != nullptr)
-                        _simulator->getModels()->current()->getDataManager()->remove(entityType);
+                    if (isSrc) {
+                        EntityType* entityType = isSrc->getEntityType();
+                        if (entityType != nullptr)
+                            _simulator->getModels()->current()->getDataManager()->remove(entityType);
+                    }
                 }
             }
         }
