@@ -3043,8 +3043,11 @@ void MainWindow::on_actionSimulatorExit_triggered()
 
 void MainWindow::on_actionSimulationConfigure_triggered()
 {
-	DialogSimulationConfigure* dialog = new DialogSimulationConfigure(this);
-	dialog->show();
+    DialogSimulationConfigure * dialog = new DialogSimulationConfigure(this);
+    dialog->setSimulator(simulator);
+    dialog->previousConfiguration();
+    dialog->show();
+
 }
 
 
