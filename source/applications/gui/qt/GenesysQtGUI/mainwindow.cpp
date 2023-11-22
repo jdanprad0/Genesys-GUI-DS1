@@ -796,8 +796,9 @@ void MainWindow::_onMoveEntityEvent(SimulationEvent *re) {
     myScene()->animateVariable();
 
     // Cria a animação de transição
-    if (ui->actionActivateGraphicalSimulation->isChecked() && re) {
-        myScene()->animateTransition(re->getCurrentEvent()->getComponent(), re->getDestinationComponent());
+    if (ui->actionActivateGraphicalSimulation->isChecked() && re && re->getCurrentEvent()) {
+        if (re->getCurrentEvent()->getComponent())
+            myScene()->animateTransition(re->getCurrentEvent()->getComponent(), re->getDestinationComponent());
     }
 }
 
@@ -2984,7 +2985,6 @@ void MainWindow::on_actionModelCheck_triggered()
 {
 	_insertCommandInConsole("check");
     myScene()->insertRestoredDataDefinitions();
-
     bool res = simulator->getModels()->current()->check();
     setStatisticsCollector();
     _actualizeActions();

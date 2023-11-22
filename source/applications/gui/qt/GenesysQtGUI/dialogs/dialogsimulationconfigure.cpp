@@ -43,31 +43,31 @@ void DialogSimulationConfigure::on_spinBox_3_textChanged(const QString &arg1)
 void DialogSimulationConfigure::on_comboBox_currentIndexChanged(int index)
 {
     switch (index) {
-    case 1:
+    case 0:
         replicationLengthtimeUnit = Util::TimeUnit::picosecond;
         break;
-    case 2:
+    case 1:
         replicationLengthtimeUnit = Util::TimeUnit::nanosecond;
         break;
-    case 3:
+    case 2:
         replicationLengthtimeUnit = Util::TimeUnit::microsecond;
         break;
-    case 4:
+    case 3:
         replicationLengthtimeUnit = Util::TimeUnit::milisecond;
         break;
-    case 5:
+    case 4:
         replicationLengthtimeUnit = Util::TimeUnit::second;
         break;
-    case 6:
+    case 5:
         replicationLengthtimeUnit = Util::TimeUnit::minute;
         break;
-    case 7:
+    case 6:
         replicationLengthtimeUnit = Util::TimeUnit::hour;
         break;
-    case 8:
+    case 7:
         replicationLengthtimeUnit = Util::TimeUnit::day;
         break;
-    case 9:
+    case 8:
         replicationLengthtimeUnit = Util::TimeUnit::week;
         break;
     default:
@@ -86,31 +86,31 @@ void DialogSimulationConfigure::on_spinBox_2_textChanged(const QString &arg1)
 void DialogSimulationConfigure::on_comboBox_2_currentIndexChanged(int index)
 {
     switch (index) {
-    case 1:
+    case 0:
         warmUpPeriodTimeUnit = Util::TimeUnit::picosecond;
         break;
-    case 2:
+    case 1:
         warmUpPeriodTimeUnit = Util::TimeUnit::nanosecond;
         break;
-    case 3:
+    case 2:
         warmUpPeriodTimeUnit = Util::TimeUnit::microsecond;
         break;
-    case 4:
+    case 3:
         warmUpPeriodTimeUnit = Util::TimeUnit::milisecond;
         break;
-    case 5:
+    case 4:
         warmUpPeriodTimeUnit = Util::TimeUnit::second;
         break;
-    case 6:
+    case 5:
         warmUpPeriodTimeUnit = Util::TimeUnit::minute;
         break;
-    case 7:
+    case 6:
         warmUpPeriodTimeUnit = Util::TimeUnit::hour;
         break;
-    case 8:
+    case 7:
         warmUpPeriodTimeUnit = Util::TimeUnit::day;
         break;
-    case 9:
+    case 8:
         warmUpPeriodTimeUnit = Util::TimeUnit::week;
         break;
     default:
@@ -129,31 +129,31 @@ void DialogSimulationConfigure::on_plainTextEdit_2_textChanged()
 void DialogSimulationConfigure::on_comboBox_3_currentIndexChanged(int index)
 {
    switch (index) {
-   case 1:
+   case 0:
         traceLevel = TraceManager::Level::L1_errorFatal;
         break;
-   case 2:
+   case 1:
         traceLevel = TraceManager::Level::L2_results;
         break;
-   case 3:
+   case 2:
         traceLevel = TraceManager::Level::L3_errorRecover;
         break;
-   case 4:
+   case 3:
         traceLevel = TraceManager::Level::L4_warning;
         break;
-   case 5:
+   case 4:
         traceLevel = TraceManager::Level::L5_event;
         break;
-   case 6:
+   case 5:
         traceLevel = TraceManager::Level::L6_arrival;
         break;
-   case 7:
+   case 6:
         traceLevel = TraceManager::Level::L7_internal;
         break;
-   case 8:
+   case 7:
         traceLevel = TraceManager::Level::L8_detailed;
         break;
-   case 9:
+   case 8:
         traceLevel = TraceManager::Level::L9_mostDetailed;
         break;
    default:
@@ -190,9 +190,15 @@ void DialogSimulationConfigure::on_checkBox_2_stateChanged(int arg1)
 void DialogSimulationConfigure::on_buttonBox_accepted()
 {
    infos->setName(experimentName);
+
    ms->setNumberOfReplications(numberOfReplication);
-   ms->setReplicationLength(replicationLength, replicationLengthtimeUnit);
-   ms->setWarmUpPeriod(warmUpPeriod, warmUpPeriodTimeUnit);
+
+   ms->setReplicationLength(replicationLength);
+   ms->setReplicationLengthTimeUnit(replicationLengthtimeUnit);
+
+   ms->setWarmUpPeriod(warmUpPeriod);
+   ms->setWarmUpPeriodTimeUnit(warmUpPeriodTimeUnit);
+
    ms->setTerminatingCondition(terminatingCondition);
    trace->setTraceLevel(traceLevel);
    ms->setInitializeSystem(initializeSystem);
@@ -213,7 +219,7 @@ void DialogSimulationConfigure::previousConfiguration() {
    experimentName = infos->getName();
    numberOfReplication = ms->getNumberOfReplications();
    replicationLength = ms->getReplicationLength();
-   replicationLengthtimeUnit = ms->getReplicationBaseTimeUnit();
+   replicationLengthtimeUnit = ms->getReplicationLengthTimeUnit();
    warmUpPeriod = ms->getWarmUpPeriod();
    warmUpPeriodTimeUnit = ms->getWarmUpPeriodTimeUnit();
    terminatingCondition =  ms->getTerminatingCondition();
