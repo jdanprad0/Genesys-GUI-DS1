@@ -6,10 +6,6 @@ DialogSimulationConfigure::DialogSimulationConfigure(QWidget *parent) :
     ui(new Ui::DialogSimulationConfigure)
 {
     ui->setupUi(this);
-//    experimentName = ms-;
-//numberOfReplication = ms->getNumberOfReplications();
-//    replicationLength = ms->getReplicationLength();
-//    replicationLengthtimeUnit = ms->getReplicationLengthTimeUnit();
 }
 
 DialogSimulationConfigure::~DialogSimulationConfigure()
@@ -26,15 +22,18 @@ void DialogSimulationConfigure::setTraceManager(TraceManager * traceManager) {
     trace = traceManager;
 }
 
-
 void DialogSimulationConfigure::on_buttonBox_accepted()
 {
+    // Missing name
     ms->setNumberOfReplications(numberOfReplication);
     ms->setReplicationLength(replicationLength, replicationLengthtimeUnit);
-    ms->setWarmUpPeriod(warmUpPerid, warmUpPeridTimeUnit);
+    ms->setWarmUpPeriod(warmUpPeriod, warmUpPeriodTimeUnit);
     ms->setTerminatingCondition(terminatingCondition);
     trace->setTraceLevel(traceLevel);
     ms->setInitializeSystem(initializeSystem);
+    ms->setInitializeStatistics(initializeStatistics);
+    ms->setShowReportsAfterReplication(showReportsAfterReplication);
+    ms->setShowReportsAfterSimulation(showReportsAfterSimulation);
 }
 
 // Number of replication
@@ -89,7 +88,7 @@ void DialogSimulationConfigure::on_comboBox_currentIndexChanged(int index)
 // Warm up Period
 void DialogSimulationConfigure::on_spinBox_2_textChanged(const QString &arg1)
 {
-    warmUpPerid = arg1.toDouble();
+    warmUpPeriod = arg1.toDouble();
 }
 
 // Warm up Period time unit
@@ -97,34 +96,34 @@ void DialogSimulationConfigure::on_comboBox_2_currentIndexChanged(int index)
 {
     switch (index) {
     case 1:
-        replicationLengthtimeUnit = Util::TimeUnit::picosecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::picosecond;
         break;
     case 2:
-        replicationLengthtimeUnit = Util::TimeUnit::nanosecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::nanosecond;
         break;
     case 3:
-        replicationLengthtimeUnit = Util::TimeUnit::microsecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::microsecond;
         break;
     case 4:
-        replicationLengthtimeUnit = Util::TimeUnit::milisecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::milisecond;
         break;
     case 5:
-        replicationLengthtimeUnit = Util::TimeUnit::second;
+        warmUpPeriodTimeUnit = Util::TimeUnit::second;
         break;
     case 6:
-        replicationLengthtimeUnit = Util::TimeUnit::minute;
+        warmUpPeriodTimeUnit = Util::TimeUnit::minute;
         break;
     case 7:
-        replicationLengthtimeUnit = Util::TimeUnit::hour;
+        warmUpPeriodTimeUnit = Util::TimeUnit::hour;
         break;
     case 8:
-        replicationLengthtimeUnit = Util::TimeUnit::day;
+        warmUpPeriodTimeUnit = Util::TimeUnit::day;
         break;
     case 9:
-        replicationLengthtimeUnit = Util::TimeUnit::week;
+        warmUpPeriodTimeUnit = Util::TimeUnit::week;
         break;
     default:
-        replicationLengthtimeUnit = Util::TimeUnit::unknown;
+        warmUpPeriodTimeUnit = Util::TimeUnit::unknown;
         break;
     }
 }
@@ -177,4 +176,51 @@ void DialogSimulationConfigure::on_checkBox_stateChanged(int arg1)
 {
    initializeSystem = arg1;
 }
+
+// initialize Statistics
+void DialogSimulationConfigure::on_checkBox_4_stateChanged(int arg1)
+{
+   initializeStatistics = arg1;
+}
+
+// Show Reports after Replication
+void DialogSimulationConfigure::on_checkBox_3_stateChanged(int arg1)
+{
+   showReportsAfterReplication = arg1;
+}
+
+// Show Reports after Simulation
+void DialogSimulationConfigure::on_checkBox_2_stateChanged(int arg1)
+{
+   showReportsAfterSimulation = arg1;
+}
+
+
+void DialogSimulationConfigure::on_buttonBox_rejected()
+{
+   previousConfiguration();
+}
+
+void DialogSimulationConfigure::previousConfiguration() {
+
+   // Missing name
+   numberOfReplication = ms->getNumberOfReplications();
+   replicationLength = ms->getReplicationLength();
+   replicationLengthtimeUnit = ms->getReplicationBaseTimeUnit();
+   warmUpPeriod = ms->getWarmUpPeriod();
+   warmUpPeriodTimeUnit = ms->getWarmUpPeriodTimeUnit();
+   terminatingCondition =  ms->getTerminatingCondition();
+   traceLevel = trace->getTraceLevel();
+   //   initializeSystem =   ms->getInitializeSystem();
+   //   initializeStatistics = ms->getInitializeStatistics();
+    //   showReportsAfterReplication =  ms->getShowReportsAfterReplication();
+    //   showReportsAfterSimulation = ms->getShowReportsAfterSimulation();
+
+   ui->spinBox->setValue(numberOfReplication);
+   ui->spinBox_3->setValue(replicationLength);
+   // Inserir itens
+   ui->comboBox->setCurrentIndex(0);
+
+}
+
 

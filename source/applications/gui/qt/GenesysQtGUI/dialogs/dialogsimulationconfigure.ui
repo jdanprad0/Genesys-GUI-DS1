@@ -127,7 +127,13 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox"/>
+        <widget class="QComboBox" name="comboBox">
+         <item>
+          <property name="text">
+           <string>second</string>
+          </property>
+         </item>
+        </widget>
        </item>
       </layout>
      </item>
@@ -194,7 +200,7 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
      <property name="leftMargin">
       <number>0</number>
      </property>
