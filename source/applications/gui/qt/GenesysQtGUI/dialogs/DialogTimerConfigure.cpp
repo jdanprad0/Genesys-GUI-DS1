@@ -55,7 +55,7 @@ void DialogTimerConfigure::updateAnimationTimer()
     _animationTimer->setInitialMinutes(ui->spinBoxMinute->value());
     _animationTimer->setInitialSeconds(ui->spinBoxSecond->value());
 
-    _animationTimer->setTime(33948);
+    _animationTimer->setTime(0.0);
 }
 
 void DialogTimerConfigure::on_buttonBox_accepted()
