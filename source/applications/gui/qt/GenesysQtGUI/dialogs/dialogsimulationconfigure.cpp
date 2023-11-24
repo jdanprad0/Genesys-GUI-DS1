@@ -44,30 +44,33 @@ void DialogSimulationConfigure::on_comboBox_currentIndexChanged(int index)
 {
     switch (index) {
     case 0:
-        replicationLengthtimeUnit = Util::TimeUnit::picosecond;
+        replicationLengthtimeUnit = Util::TimeUnit::unknown;
         break;
     case 1:
-        replicationLengthtimeUnit = Util::TimeUnit::nanosecond;
+        replicationLengthtimeUnit = Util::TimeUnit::picosecond;
         break;
     case 2:
-        replicationLengthtimeUnit = Util::TimeUnit::microsecond;
+        replicationLengthtimeUnit = Util::TimeUnit::nanosecond;
         break;
     case 3:
-        replicationLengthtimeUnit = Util::TimeUnit::milisecond;
+        replicationLengthtimeUnit = Util::TimeUnit::microsecond;
         break;
     case 4:
-        replicationLengthtimeUnit = Util::TimeUnit::second;
+        replicationLengthtimeUnit = Util::TimeUnit::milisecond;
         break;
     case 5:
-        replicationLengthtimeUnit = Util::TimeUnit::minute;
+        replicationLengthtimeUnit = Util::TimeUnit::second;
         break;
     case 6:
-        replicationLengthtimeUnit = Util::TimeUnit::hour;
+        replicationLengthtimeUnit = Util::TimeUnit::minute;
         break;
     case 7:
-        replicationLengthtimeUnit = Util::TimeUnit::day;
+        replicationLengthtimeUnit = Util::TimeUnit::hour;
         break;
     case 8:
+        replicationLengthtimeUnit = Util::TimeUnit::day;
+        break;
+    case 9:
         replicationLengthtimeUnit = Util::TimeUnit::week;
         break;
     default:
@@ -87,34 +90,34 @@ void DialogSimulationConfigure::on_comboBox_2_currentIndexChanged(int index)
 {
     switch (index) {
     case 0:
-        warmUpPeriodTimeUnit = Util::TimeUnit::picosecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::unknown;
         break;
     case 1:
-        warmUpPeriodTimeUnit = Util::TimeUnit::nanosecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::picosecond;
         break;
     case 2:
-        warmUpPeriodTimeUnit = Util::TimeUnit::microsecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::nanosecond;
         break;
     case 3:
-        warmUpPeriodTimeUnit = Util::TimeUnit::milisecond;
+        warmUpPeriodTimeUnit = Util::TimeUnit::microsecond;
         break;
     case 4:
-        warmUpPeriodTimeUnit = Util::TimeUnit::second;
+        warmUpPeriodTimeUnit = Util::TimeUnit::milisecond;
         break;
     case 5:
-        warmUpPeriodTimeUnit = Util::TimeUnit::minute;
+        warmUpPeriodTimeUnit = Util::TimeUnit::second;
         break;
     case 6:
-        warmUpPeriodTimeUnit = Util::TimeUnit::hour;
+        warmUpPeriodTimeUnit = Util::TimeUnit::minute;
         break;
     case 7:
-        warmUpPeriodTimeUnit = Util::TimeUnit::day;
+        warmUpPeriodTimeUnit = Util::TimeUnit::hour;
         break;
     case 8:
-        warmUpPeriodTimeUnit = Util::TimeUnit::week;
+        warmUpPeriodTimeUnit = Util::TimeUnit::day;
         break;
-    default:
-        warmUpPeriodTimeUnit = Util::TimeUnit::unknown;
+    case 9:
+        warmUpPeriodTimeUnit = Util::TimeUnit::week;
         break;
     }
 }
@@ -130,30 +133,33 @@ void DialogSimulationConfigure::on_comboBox_3_currentIndexChanged(int index)
 {
    switch (index) {
    case 0:
-        traceLevel = TraceManager::Level::L1_errorFatal;
+        traceLevel = TraceManager::Level::L0_noTraces;
         break;
    case 1:
-        traceLevel = TraceManager::Level::L2_results;
+        traceLevel = TraceManager::Level::L1_errorFatal;
         break;
    case 2:
-        traceLevel = TraceManager::Level::L3_errorRecover;
+        traceLevel = TraceManager::Level::L2_results;
         break;
    case 3:
-        traceLevel = TraceManager::Level::L4_warning;
+        traceLevel = TraceManager::Level::L3_errorRecover;
         break;
    case 4:
-        traceLevel = TraceManager::Level::L5_event;
+        traceLevel = TraceManager::Level::L4_warning;
         break;
    case 5:
-        traceLevel = TraceManager::Level::L6_arrival;
+        traceLevel = TraceManager::Level::L5_event;
         break;
    case 6:
-        traceLevel = TraceManager::Level::L7_internal;
+        traceLevel = TraceManager::Level::L6_arrival;
         break;
    case 7:
-        traceLevel = TraceManager::Level::L8_detailed;
+        traceLevel = TraceManager::Level::L7_internal;
         break;
    case 8:
+        traceLevel = TraceManager::Level::L8_detailed;
+        break;
+   case 9:
         traceLevel = TraceManager::Level::L9_mostDetailed;
         break;
    default:
