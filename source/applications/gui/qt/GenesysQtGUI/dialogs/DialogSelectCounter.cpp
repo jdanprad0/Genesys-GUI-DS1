@@ -12,8 +12,8 @@ DialogSelectCounter::DialogSelectCounter(QWidget *parent)
     mainLayout->addWidget(comboBox);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
+    buttonLayout->addWidget(okButton);
     mainLayout->addLayout(buttonLayout);
 
     // Conecta os sinais aos slots
@@ -38,7 +38,7 @@ void DialogSelectCounter::onCancelClicked() {
     reject();
 }
 
-void DialogSelectCounter::setCounterItems(QList<Counter *> *counters) {
+void DialogSelectCounter::setCounterItems(QList<Counter *> *counters, Counter *counter) {
     comboBox->clear();
 
     QString standardInput = "None";
@@ -52,5 +52,7 @@ void DialogSelectCounter::setCounterItems(QList<Counter *> *counters) {
         indexToCounter[i+1] = counters->at(i);
         comboBox->addItem(entryName);
     }
+
+    comboBox->setCurrentIndex(indexToCounter.key(counter, 0));
 }
 

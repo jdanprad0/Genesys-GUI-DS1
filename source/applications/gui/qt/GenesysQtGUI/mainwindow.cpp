@@ -2046,6 +2046,7 @@ void MainWindow::on_actionEditCut_triggered() {
     _gmc_copies->clear();
     _ports_copies->clear();
     _group_copy->clear();
+    _draw_copy->clear();
 
     QList<QGraphicsItem *> selecteds =  ui->graphicsView->scene()->selectedItems();
 
@@ -2058,12 +2059,12 @@ void MainWindow::on_actionEditCut_triggered() {
         // Seta o cut
         _cut = true;
 
-        // Adiciona na lista de cópias (conexoes, componentes e poligonos)
+        // Adiciona na lista de cópias (conexões, componentes e poliíonos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
             QList<GraphicalModelComponent*> groupComponents  = QList<GraphicalModelComponent*>();
             QList<GraphicalConnection*> * connGroup = new QList<GraphicalConnection*>();
 
-            // Tenta transforma em um componente grafico de modelo
+            // Tenta transformar em um componente gráfico de modelo
             if (GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent*>(item)) {
                 // Adiciona em uma lista de cópias de componentes
                 _gmc_copies->append(gmc);
@@ -2106,7 +2107,7 @@ void MainWindow::on_actionEditCut_triggered() {
         }
 
         // Removendo as conexoes do modelo e graficamente
-        // Só não é removido a conexão quando todos os itens estão selecioinados
+        // Só não é removido a conexão quando todos os itens estão selecionados
         // (2x componentes e a conexão (similar ao arena)
         saveItemForCopy(_gmc_copies, _ports_copies);
 
@@ -2117,8 +2118,6 @@ void MainWindow::on_actionEditCut_triggered() {
 }
 
 void::MainWindow::saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QList<GraphicalConnection*> * connList) {
-    ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->getScene());
-
     foreach (GraphicalConnection *conn, *connList) {
         ModelComponent * source = conn->getSource()->component;
         ModelComponent * dst = conn->getDestination()->component;
@@ -2152,9 +2151,11 @@ void::MainWindow::saveItemForCopy(QList<GraphicalModelComponent*> * gmcList, QLi
 void MainWindow::on_actionEditCopy_triggered() {
     _gmc_copies->clear();
     _ports_copies->clear();
+    _group_copy->clear();
     _draw_copy->clear();
 
     QList<QGraphicsItem*> selected = ui->graphicsView->scene()->selectedItems();
+    QList<GraphicalModelComponent *> *gmc_copies_copy = _gmc_copies;
 
     // Verifica se tem itens selecionados
     if (selected.size() > 0) {
@@ -2162,62 +2163,39 @@ void MainWindow::on_actionEditCopy_triggered() {
         // Seta o cut
         _cut = false;
 
-        // Adiciona na lista de cópias (conexoes, componentes e poligonos)
+        // Adiciona na lista de cópias (conexões, componentes e polígonos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
-            // verifica se e um componente grafico
+            // verifica se é um componente gráfico
             if (GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent*>(item)) {
                 // Adiciona em uma lista de cópias de componentes
                 gmc->setSelected(false);
                 _gmc_copies->append(gmc);
             }
-            // verifica se e uma conexao grafica
+            // verifica se é uma conexão gráfica
             else if (GraphicalConnection *conn = dynamic_cast<GraphicalConnection*>(item)) {
                 conn->setSelected(false);
                 _ports_copies->append(conn);
             }
-            // verifica se e um grupo
+            // verifica se é um grupo
             else if (QGraphicsItemGroup *group = dynamic_cast<QGraphicsItemGroup*>(item)) {
                 group->setSelected(false);
                 _group_copy->append(group);
+
+                for (int i = 0; i < group->childItems().size(); i++) {
+                    GraphicalModelComponent * component = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(i));
+
+                    gmc_copies_copy->append(component);
+                }
             }
-            // se nao for nenhum deles e um desenho
+            // se não for nenhum deles é um desenho na tela
             else {
                 item->setSelected(false);
                 _draw_copy->append(item);
             }
         }
 
-        // Removendo as conexoes em que os seus componentes não foram selecionados
-        foreach (GraphicalConnection *conn, *_ports_copies) {
-            ModelComponent * source = conn->getSource()->component;
-            ModelComponent * dst = conn->getDestination()->component;
-
-            GraphicalModelComponent * sourceSelected = nullptr;
-            GraphicalModelComponent * dstSelected = nullptr;
-            foreach (GraphicalModelComponent * comp, *_gmc_copies) {
-
-                if (source != nullptr) {
-
-                    if (comp->getComponent()->getId() == source->getId()) {
-                        sourceSelected = comp;
-                    }
-                }
-
-                if (dst != nullptr) {
-
-                    if (comp->getComponent()->getId() == dst->getId()) {
-                        dstSelected = comp;
-                    }
-                }
-            }
-
-            // Os dois componentes foram copiados, para conseguir copiar as conexoes~
-            if (!(sourceSelected != nullptr && dstSelected != nullptr)) {
-                _ports_copies->removeOne(conn);
-
-            }
-
-        }
+        // Removendo as conexões em que os seus componentes não foram selecionados
+        saveItemForCopy(gmc_copies_copy, _ports_copies);
     }
 
 }
@@ -2437,8 +2415,31 @@ void MainWindow::_helpCopy() {
 
     //Adicionando os desenhos
     foreach(QGraphicsItem * draw, *_draw_copy) {
-        QGraphicsRectItem* rectItem = dynamic_cast<QGraphicsRectItem*>(draw);
+        AnimationCounter *animationCounter = dynamic_cast<AnimationCounter*>(draw);
+        if (animationCounter) {
+            AnimationCounter *copiedItem;
+            copiedItem = new AnimationCounter();
+            copiedItem->setRect(0, 0, animationCounter->boundingRect().width(), animationCounter->boundingRect().height());
+            copiedItem->setPos(animationCounter->pos());
+            copiedItem->setCounter(animationCounter->getCounter());
+            copiedItem->setValue(animationCounter->getValue());
+            drawing_aux->append(copiedItem);
+            continue;
+        }
 
+        AnimationVariable *animationVariable = dynamic_cast<AnimationVariable*>(draw);
+        if (animationVariable) {
+            AnimationVariable *copiedItem;
+            copiedItem = new AnimationVariable();
+            copiedItem->setRect(0, 0, animationVariable->boundingRect().width(), animationVariable->boundingRect().height());
+            copiedItem->setPos(animationVariable->pos());
+            copiedItem->setVariable(animationVariable->getVariable());
+            copiedItem->setValue(animationVariable->getValue());
+            drawing_aux->append(copiedItem);
+            continue;
+        }
+
+        QGraphicsRectItem* rectItem = dynamic_cast<QGraphicsRectItem*>(draw);
         if (rectItem) {
             QGraphicsRectItem *copiedItem;
             copiedItem = new QGraphicsRectItem(rectItem->rect());
@@ -2446,6 +2447,7 @@ void MainWindow::_helpCopy() {
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
+            continue;
         }
 
         QGraphicsEllipseItem* ellipseItem = dynamic_cast<QGraphicsEllipseItem*>(draw);
@@ -2456,6 +2458,7 @@ void MainWindow::_helpCopy() {
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
+            continue;
         }
 
         QGraphicsPolygonItem* polygonItem = dynamic_cast<QGraphicsPolygonItem*>(draw);
@@ -2466,6 +2469,7 @@ void MainWindow::_helpCopy() {
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
+            continue;
         }
 
         QGraphicsLineItem *lineItem = dynamic_cast<QGraphicsLineItem*>(draw);
@@ -2476,6 +2480,7 @@ void MainWindow::_helpCopy() {
             copiedItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
             copiedItem->setFlag(QGraphicsItem::ItemIsMovable, true);
             drawing_aux->append(copiedItem);
+            continue;
         }
     }
 
@@ -2521,6 +2526,7 @@ void MainWindow::on_actionZoom_All_triggered() {
 void MainWindow::on_actionDrawLine_triggered() {
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     if (!checkSelectedDrawIcons() && ui->actionDrawLine->isChecked()) {
+        ui->graphicsView->setCursor(Qt::SizeHorCursor);
         ui->actionDrawLine->setChecked(true);
         // Ative a ferramenta de desenho de linha
         scene->setAction(ui->actionDrawLine);
@@ -2535,6 +2541,7 @@ void MainWindow::on_actionDrawRectangle_triggered() {
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     // Ative a ferramenta de desenho de retangulo
     if (!checkSelectedDrawIcons() && ui->actionDrawRectangle->isChecked()) {
+        ui->graphicsView->setCursor(Qt::CrossCursor);
         ui->actionDrawRectangle->setChecked(true);
         scene->setAction(ui->actionDrawRectangle);
         scene->setDrawingMode(ModelGraphicsScene::DrawingMode::RECTANGLE);
@@ -2548,6 +2555,7 @@ void MainWindow::on_actionDrawEllipse_triggered() {
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     // Ative a ferramenta de desenho de ellipse
     if (!checkSelectedDrawIcons() && ui->actionDrawEllipse->isChecked()) {
+        ui->graphicsView->setCursor(Qt::CrossCursor);
         ui->actionDrawEllipse->setChecked(true);
         scene->setAction(ui->actionDrawEllipse);
         scene->setDrawingMode(ModelGraphicsScene::DrawingMode::ELLIPSE);
@@ -2573,6 +2581,7 @@ void MainWindow::on_actionDrawPoligon_triggered()
 {
     ModelGraphicsScene* scene = ui->graphicsView->getScene();
     if (!checkSelectedDrawIcons() && ui->actionDrawPoligon->isChecked()) {
+        ui->graphicsView->setCursor(Qt::ArrowCursor);
         ui->actionDrawPoligon->setChecked(true);
         scene->setAction(ui->actionDrawPoligon);
         // Ative a ferramenta de desenho do polygon
@@ -2589,7 +2598,10 @@ void MainWindow::unselectDrawIcons() {
     ui->actionDrawEllipse->setChecked(false);
     ui->actionDrawPoligon->setChecked(false);
     ui->actionDrawText->setChecked(false);
-    scene->setDrawingMode(ModelGraphicsScene::DrawingMode::NONE);
+    ui->actionAnimateCounter->setChecked(false);
+    ui->actionAnimateVariable->setChecked(false);
+    ui->actionAnimateSimulatedTime->setChecked(false);
+    scene->clearDrawingMode();
 }
 
 bool MainWindow::checkSelectedDrawIcons() {
@@ -2599,15 +2611,12 @@ bool MainWindow::checkSelectedDrawIcons() {
     if(ui->actionDrawEllipse->isChecked()) alreadyChecked++;
     if(ui->actionDrawPoligon->isChecked()) alreadyChecked++;
     if(ui->actionDrawText->isChecked()) alreadyChecked++;
+    if(ui->actionAnimateCounter->isChecked()) alreadyChecked++;
+    if(ui->actionAnimateVariable->isChecked()) alreadyChecked++;
+    if(ui->actionAnimateSimulatedTime->isChecked()) alreadyChecked++;
     if (alreadyChecked > 1) return true;
     else return false;
 }
-
-void MainWindow::on_actionAnimateVariable_triggered() {
-    if (ui->actionAnimateVariable->isChecked())
-        myScene()->drawingVariable();
-}
-
 
 void MainWindow::on_actionAnimateExpression_triggered() {
 	_showMessageNotImplemented();
@@ -2671,20 +2680,37 @@ void MainWindow::on_actionAlignLeft_triggered()
 	_showMessageNotImplemented();
 }
 
+void MainWindow::on_actionAnimateCounter_triggered()
+{
+    if (!checkSelectedDrawIcons() && ui->actionAnimateCounter->isChecked()) {
+        ui->graphicsView->setCursor(Qt::CrossCursor);
+        myScene()->setAction(ui->actionAnimateCounter);
+        myScene()->drawingCounter();
+    } else {
+        unselectDrawIcons();
+    }
+}
+
+void MainWindow::on_actionAnimateVariable_triggered() {
+    if (!checkSelectedDrawIcons() && ui->actionAnimateVariable->isChecked()) {
+        ui->graphicsView->setCursor(Qt::CrossCursor);
+        myScene()->setAction(ui->actionAnimateVariable);
+        myScene()->drawingVariable();
+    } else {
+        unselectDrawIcons();
+    }
+}
 
 void MainWindow::on_actionAnimateSimulatedTime_triggered()
 {
-    if (ui->actionAnimateSimulatedTime->isChecked())
+    if (!checkSelectedDrawIcons() && ui->actionAnimateSimulatedTime->isChecked()) {
+        ui->graphicsView->setCursor(Qt::CrossCursor);
+        myScene()->setAction(ui->actionAnimateSimulatedTime);
         myScene()->drawingTimer();
+    } else {
+        unselectDrawIcons();
+    }
 }
-
-
-void MainWindow::on_actionAnimateCounter_triggered()
-{
-    if (ui->actionAnimateCounter->isChecked())
-        myScene()->drawingCounter();
-}
-
 
 void MainWindow::on_actionAnimateEntity_triggered()
 {
@@ -2984,14 +3010,28 @@ void MainWindow::on_actionModelInformation_triggered()
 void MainWindow::on_actionModelCheck_triggered()
 {
 	_insertCommandInConsole("check");
+
+    // reinsere os data definitions no modelo de componentes restaurados
     myScene()->insertRestoredDataDefinitions();
+
     bool res = simulator->getModels()->current()->check();
+
+    // cria o StatisticsCollector pro EntityType se necessário
     setStatisticsCollector();
+
+    // limpa o valor dos contadores, variáveis e timer na cena
+    myScene()->clearAnimationsValues();
+
     _actualizeActions();
     _actualizeTabPanes();
+
     if (res) {
 		QMessageBox::information(this, "Model Check", "Model successfully checked.");
+
+        // Salva os data definitions dos componentes atuais
         myScene()->saveDataDefinitions();
+
+        // Seta os em uma lista os contadores e variáveis criadas
         myScene()->setCounters();
         myScene()->setVariables();
 	} else {

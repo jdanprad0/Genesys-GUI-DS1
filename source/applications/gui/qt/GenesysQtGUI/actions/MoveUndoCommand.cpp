@@ -1,8 +1,8 @@
 #include "MoveUndoCommand.h"
 #include "ModelGraphicsScene.h"
 
-MoveUndoCommand::MoveUndoCommand(QList<QGraphicsItem*> gmc, ModelGraphicsScene *scene, QList<QPointF> &oldPos, QList<QPointF> &newPos, QUndoCommand *parent)
-    : QUndoCommand(parent), _myGraphicalModelComponent(gmc), _myGraphicsScene(scene), _myOldPos(oldPos), _myNewPos(newPos), _firstExecution(true) {
+MoveUndoCommand::MoveUndoCommand(QList<QGraphicsItem*> item, ModelGraphicsScene *scene, QList<QPointF> &oldPos, QList<QPointF> &newPos, QUndoCommand *parent)
+    : QUndoCommand(parent), _myGraphicalItem(item), _myGraphicsScene(scene), _myOldPos(oldPos), _myNewPos(newPos), _firstExecution(true) {
     setText(QObject::tr("Move"));
 }
 
@@ -10,15 +10,15 @@ MoveUndoCommand::~MoveUndoCommand() {}
 
 void MoveUndoCommand::undo() {
 
-    for (int i = 0; i < _myGraphicalModelComponent.size(); i++) {
-        if (GraphicalModelComponent *item = dynamic_cast<GraphicalModelComponent *> (_myGraphicalModelComponent[i])) {
+    for (int i = 0; i < _myGraphicalItem.size(); i++) {
+        if (GraphicalModelComponent *item = dynamic_cast<GraphicalModelComponent *> (_myGraphicalItem[i])) {
             QPointF oldPos = _myOldPos[i];
             item->setPos(oldPos);
             item->setOldPosition(oldPos);
         } else {
             QPointF oldPos = _myOldPos[i];
-            _myGraphicalModelComponent[i]->setPos(oldPos);
-            _myGraphicsScene->insertOldPositionItem(_myGraphicalModelComponent[i], oldPos);
+            _myGraphicalItem[i]->setPos(oldPos);
+            _myGraphicsScene->insertOldPositionItem(_myGraphicalItem[i], oldPos);
         }
     }
 

@@ -47,6 +47,7 @@
 #include "actions/UngroupUndoCommand.h"
 #include "dialogs/DialogSelectCounter.h"
 #include "dialogs/DialogSelectVariable.h"
+#include "dialogs/DialogTimerConfigure.h"
 
 ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent) : QGraphicsScene(x, y, width, height, parent) {
     // grid
@@ -63,16 +64,8 @@ ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal heig
     _currentTimer = nullptr;
 
     // Imagens pré-salvas para animação
-    _imagesAnimation->append("boat.png");
-    _imagesAnimation->append("car.png");
+    // Recomendável imagens com mesma altura e largura de no mínimo 50x50 px e não muito além disso
     _imagesAnimation->append("default.png");
-    _imagesAnimation->append("gear.png");
-    _imagesAnimation->append("laptop.png");
-    _imagesAnimation->append("motorcycle.png");
-    _imagesAnimation->append("motorcycle-with-person.png");
-    _imagesAnimation->append("plane.png");
-    _imagesAnimation->append("tractor.png");
-    _imagesAnimation->append("woman.png");
 }
 
 ModelGraphicsScene::ModelGraphicsScene(const ModelGraphicsScene& orig) { // : QGraphicsScene(orig) {
@@ -146,6 +139,8 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
             }
         }
     }
+    // adiciona na lista de componentes do modelo;
+    _graphicalModelComponents->append(graphComp);
 
     // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
     _allGraphicalModelComponents.append(graphComp);
@@ -190,7 +185,7 @@ GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalCompone
 }
 
 
-void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) {
+void ModelGraphicsScene::addGeometry(QPointF endPoint, bool moving) {
     QGraphicsItem *drawingItem = nullptr;
 
     if (_drawingMode == LINE) {
@@ -210,23 +205,11 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 QGraphicsLineItem* line = new QGraphicsLineItem(_drawingStartPoint.x(), _drawingStartPoint.y(), endPoint.x(), endPoint.y());
                 line->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 line->setFlag(QGraphicsItem::ItemIsMovable, true);
-                getGraphicalDrawings()->append(line);
                 drawingItem = line;
             }
         }
 
     } else if (_drawingMode == TEXT) {
-        /*
-        QGraphicsTextItem* textItem = new QGraphicsTextItem("Seu Texto Aqui");
-        textItem->setFont(QFont("Arial", 12)); // Configurar a fonte (opcional)
-        textItem->setPos(endPoint.x(), endPoint.y()); // Definir a posição na cena
-        textItem->setDefaultTextColor(Qt::black); // Configurar a cor do texto
-        textItem->setTextWidth(30*_grid.interval); // Definir largura máxima para quebrar o texto
-        textItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
-        textItem->setFlag(QGraphicsItem::ItemIsMovable, true);
-        textItem->setVisible(true); */
-
-        //connect(this, &QGraphicsScene::selectionChanged, this, &ModelGraphicsScene::startTextEditing);
 
     } else if (_drawingMode == RECTANGLE) {
         if (abs(_drawingStartPoint.x() - endPoint.x()) > _grid.interval && abs(_drawingStartPoint.y() - endPoint.y()) > _grid.interval) {
@@ -247,7 +230,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 rectangle->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 rectangle->setFlag(QGraphicsItem::ItemIsMovable, true);
                 rectangle->setPos(_drawingStartPoint.x(), _drawingStartPoint.y());
-                getGraphicalDrawings()->append(rectangle);
                 drawingItem = rectangle;
             }
         }
@@ -270,7 +252,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
                 ellipse->setFlag(QGraphicsItem::ItemIsSelectable, true);
                 ellipse->setFlag(QGraphicsItem::ItemIsMovable, true);
                 ellipse->setPos(_drawingStartPoint.x(), _drawingStartPoint.y());
-                getGraphicalDrawings()->append(ellipse);
                 drawingItem = ellipse;
             }
         }
@@ -291,7 +272,6 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
     } else if (_drawingMode == POLYGON_FINISHED) {
         _currentPolygon->setFlag(QGraphicsItem::ItemIsSelectable, true);
         _currentPolygon->setFlag(QGraphicsItem::ItemIsMovable, true);
-        getGraphicalDrawings()->append(_currentPolygon);
         drawingItem = _currentPolygon;
     }
     // Redefina o estado de desenho
@@ -303,27 +283,15 @@ void ModelGraphicsScene::addDrawing(QPointF endPoint, bool moving, bool notify) 
         _currentPolygon = nullptr;
         _currentPolygonPoints.clear();
         _drawing = false;
-        //_drawingStartPoint =
-
-        //notify graphical model change (colocar aqui um ponteiro)
-        if (notify) {
-            GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
-            GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
-
-            notifyGraphicalModelChange(eventType, eventObjectType, nullptr);
-        }
 
         if (_currentAction != nullptr)
             _currentAction->setChecked(false);
 
-        QUndoCommand *addUndoCommand = new AddUndoCommand(drawingItem , this);
-        _undoStack->push(addUndoCommand);
-
+        if (drawingItem) {
+            QUndoCommand *addUndoCommand = new AddUndoCommand(drawingItem, this);
+            _undoStack->push(addUndoCommand);
+        }
     }
-}
-
-void ModelGraphicsScene::addAnimation() {
-
 }
 
 void ModelGraphicsScene::startTextEditing() {
@@ -439,7 +407,7 @@ void ModelGraphicsScene::removeComponentInModel(GraphicalModelComponent* gmc) {
     gmc->setEntityType(nullptr);
 }
 
-void ModelGraphicsScene::insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC, bool addAllGMC) {
+void ModelGraphicsScene::insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC, bool addAllGMC, bool notify) {
     // pega o componente do modelo grafico
     ModelComponent* component = gmc->getComponent();
     // pega o modelo corrente
@@ -463,6 +431,13 @@ void ModelGraphicsScene::insertComponent(GraphicalModelComponent* gmc, QList<Gra
     if (isSrc) {
         EntityType* entityType = isSrc->getEntityType();
         gmc->setEntityType(entityType);
+    }
+
+    if (notify) {
+        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::COMPONENT;
+
+        notifyGraphicalModelChange(eventType, eventObjectType, gmc);
     }
 }
 
@@ -751,23 +726,87 @@ void ModelGraphicsScene::insertRestoredDataDefinitions() {
     }
 }
 
-void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
-    removeItem(item);
+void ModelGraphicsScene::addDrawing(QGraphicsItem * item, bool notify) {
+    bool isGeometry = false;
+    bool isAnimation = false;
 
-    _graphicalDrawings->removeOne(item);
+    isAnimation = addDrawingAnimation(item);
 
-    //notify graphical model change
-    if (notify) {
-        GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
-        GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
+    if (!isAnimation)
+        isGeometry = removeDrawingGeometry(item);
 
-        notifyGraphicalModelChange(eventType, eventObjectType, item);
+    if (isAnimation || isGeometry) {
+        addItem(item);
+
+        if (notify) {
+            //notify graphical model change
+            GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::CREATE;
+            GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
+
+            notifyGraphicalModelChange(eventType, eventObjectType, item);
+        }
     }
 }
 
-void ModelGraphicsScene::removeAnimation() {}
+bool ModelGraphicsScene::addDrawingAnimation(QGraphicsItem * item) {
+    if (AnimationCounter *animationCounter = dynamic_cast<AnimationCounter *>(item)) {
+        _animationsCounter->append(animationCounter);
+        return true;
+    } else if (AnimationVariable *animationVariable = dynamic_cast<AnimationVariable *>(item)) {
+        _animationsVariable->append(animationVariable);
+        return true;
+    } else if (AnimationTimer *animationTimer = dynamic_cast<AnimationTimer *>(item)) {
+        _animationsTimer->append(animationTimer);
+        return true;
+    }
 
+    return false;
+}
 
+bool ModelGraphicsScene::addDrawingGeometry(QGraphicsItem * item) {
+    _graphicalGeometries->append(item);
+
+    return true;
+}
+
+void ModelGraphicsScene::removeDrawing(QGraphicsItem * item, bool notify) {
+    bool isGeometry = false;
+    bool isAnimation = false;
+
+    isAnimation = removeDrawingAnimation(item);
+
+    if (!isAnimation)
+        isGeometry = removeDrawingGeometry(item);
+
+    if (isAnimation || isGeometry) {
+        removeItem(item);
+
+        if (notify) {
+            //notify graphical model change
+            GraphicalModelEvent::EventType eventType = GraphicalModelEvent::EventType::REMOVE;
+            GraphicalModelEvent::EventObjectType eventObjectType = GraphicalModelEvent::EventObjectType::DRAWING;
+
+            notifyGraphicalModelChange(eventType, eventObjectType, item);
+        }
+    }
+}
+
+bool ModelGraphicsScene::removeDrawingAnimation(QGraphicsItem * item) {
+    if (AnimationCounter *animationCounter = dynamic_cast<AnimationCounter *>(item))
+        return _animationsCounter->removeOne(animationCounter);
+    else if (AnimationVariable *animationVariable = dynamic_cast<AnimationVariable *>(item))
+        return _animationsVariable->removeOne(animationVariable);
+    else if (AnimationTimer *animationTimer = dynamic_cast<AnimationTimer *>(item))
+        return _animationsTimer->removeOne(animationTimer);
+
+    return false;
+}
+
+bool ModelGraphicsScene::removeDrawingGeometry(QGraphicsItem * item) {
+    bool removed = _graphicalGeometries->removeOne(item);
+
+    return removed;
+}
 //------------------------------------------------------------------------
 
 
@@ -1361,27 +1400,6 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mousePressEvent(mouseEvent);
 
-    if (_currentCounter) {
-        if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
-            _currentCounter->startDrawing(mouseEvent);
-            addItem(_currentCounter);
-        }
-    }
-
-    if (_currentVariable) {
-        if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
-            _currentVariable->startDrawing(mouseEvent);
-            addItem(_currentVariable);
-        }
-    }
-
-    if (_currentTimer) {
-        if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
-            _currentTimer->startDrawing(mouseEvent);
-            addItem(_currentTimer);
-        }
-    }
-
     if (mouseEvent->button() == Qt::LeftButton) {
 
         QGraphicsItem* item = this->itemAt(mouseEvent->scenePos(), QTransform());
@@ -1469,14 +1487,18 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 
             if (_drawingMode == POLYGON) {
                 // Cria o poligono
-                addDrawing(_drawingStartPoint, false);
+                addGeometry(_drawingStartPoint, false);
             } else if (_drawingMode == POLYGON_POINTS) {
                 // Continue a adicionar pontos ao polígono
-                addDrawing(mouseEvent->scenePos(), false);
+                addGeometry(mouseEvent->scenePos(), false);
             } else if (_drawingMode == TEXT) {
-                addDrawing(mouseEvent->scenePos(), false);
+                addGeometry(mouseEvent->scenePos(), false);
             } else {
                 _drawing = true;
+            }
+
+            if (_drawingMode == COUNTER || _drawingMode == VARIABLE || _drawingMode == TIMER) {
+                initializeAnimationDrawing(mouseEvent);
             }
         }
     }
@@ -1484,30 +1506,6 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 
 void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
-
-    if (_currentCounter) {
-        if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
-            removeItem(_currentCounter);
-            _currentCounter->stopDrawing(mouseEvent);
-            addItem(_currentCounter);
-        }
-    }
-
-    if (_currentVariable) {
-        if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
-            removeItem(_currentVariable);
-            _currentVariable->stopDrawing(mouseEvent);
-            addItem(_currentVariable);
-        }
-    }
-
-    if (_currentTimer) {
-        if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
-            removeItem(_currentTimer);
-            _currentTimer->stopDrawing(mouseEvent);
-            addItem(_currentTimer);
-        }
-    }
 
     snapItemsToGrid();
 
@@ -1522,46 +1520,38 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
         GraphicalComponentPort *port = dynamic_cast<GraphicalComponentPort *> (item);
         GraphicalConnection* connection = dynamic_cast<GraphicalConnection*>(item);
 
-//        if (connectionTeste) {
-//            for (unsigned int i = 0; i < 2; i++) {
-//                int aux = 0;
-//                if (i == 1) aux = 2;
-
-//                qreal x1 = connectionTeste->getPoints().at(0+aux).x();
-//                qreal y1 = connectionTeste->getPoints().at(0+aux).y();
-//                qreal x2 = connectionTeste->getPoints().at(1+aux).x();
-//                qreal y2 = connectionTeste->getPoints().at(1+aux).y();
-
-//                _currentLine = new QGraphicsLineItem(x1, y1, x2, y2);
-//                _currentLine->setZValue(2.0);
-//                QPen pen = _currentLine->pen();
-//                pen.setWidth(10);
-//                _currentLine->setPen(pen);
-//                addItem(_currentLine);
-//            }
-//        }
-
+        // As posições são diferentes fora da tolerância de 1.5
 
         if (component && component->getOldPosition() != component->scenePos()) {
-            items.append(component);
-            oldPositions.append(component->getOldPosition());
-            newPositions.append(component->scenePos());
+            myQPointF = component->pos();
+            QPointF oldPos = component->getOldPosition();
+
+            if (!(qAbs(oldPos.x() - myQPointF.x()) <= 1.5 && qAbs(oldPos.y() - myQPointF.y()) <= 1.5)) {
+                items.append(component);
+                oldPositions.append(component->getOldPosition());
+                newPositions.append(component->pos());
+            }
         } else if (group) {
-            items.append(item);
-            oldPositions.append(_oldPositionsItems[group]);
-            newPositions.append(item->pos());
+            myQPointF = group->pos();
+            QPointF oldPos = _oldPositionsItems[group];
+
+            if (!(qAbs(oldPos.x() - myQPointF.x()) <= 1.5 && qAbs(oldPos.y() - myQPointF.y()) <= 1.5)) {
+                items.append(group);
+                oldPositions.append(_oldPositionsItems[group]);
+                newPositions.append(group->pos());
+            }
         } else if (component == nullptr && group == nullptr && port == nullptr && connection == nullptr){
             QRectF rectScenePost = item->sceneBoundingRect();
 
-            qreal rectX = rectScenePost.bottomLeft().x(); // position X
-            qreal rectY = rectScenePost.topRight().y(); // position Y
+            qreal rectX = rectScenePost.bottomLeft().x();
+            qreal rectY = rectScenePost.topRight().y();
 
             myQPointF.setX(rectX);
             myQPointF.setY(rectY);
 
             QPointF oldPos = _oldPositionsItems[item];
 
-            if (oldPos != myQPointF) {
+            if (!(qAbs(oldPos.x() - myQPointF.x()) <= 1.5 && qAbs(oldPos.y() - myQPointF.y()) <= 1.5)) {
                 items.append(item);
                 oldPositions.append(_oldPositionsItems[item]);
                 newPositions.append(item->pos());
@@ -1584,10 +1574,14 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 
 
     if (mouseEvent->button() == Qt::LeftButton && _drawingMode != NONE) {
-        // Capturar o ponto final da linha
-        QPointF drawingEndPoint = mouseEvent->scenePos();
-        //Adicionar desenho a tela
-        addDrawing(drawingEndPoint, false);
+        if (_drawingMode == COUNTER || _drawingMode == VARIABLE || _drawingMode == TIMER) {
+            finishAnimationDrawing(mouseEvent);
+        } else {
+            // Capturar o ponto final da linha
+            QPointF drawingEndPoint = mouseEvent->scenePos();
+            //Adicionar desenho a tela
+            addGeometry(drawingEndPoint, false);
+        }
         ((ModelGraphicsView *) (this->parent()))->unsetCursor();
     } else if (_drawingMode == NONE && _currentPolygon != nullptr) {
         removeItem(_currentPolygon);
@@ -1613,6 +1607,8 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
             } else if (port->isInputPort() && this->_connectingStep == 1) {
                 _destinationGraphicalComponentPort = port;
                 _connectingStep = 3;
+            } else if (!port->isInputPort() && !port->getConnections()->empty()) {
+                _connectingStep = 0;
             }
         } else {
             _connectingStep = 0;
@@ -1622,7 +1618,7 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
     if (AnimationCounter *animationCounter = dynamic_cast<AnimationCounter *>(item)) {
         DialogSelectCounter dialog;
 
-        dialog.setCounterItems(_counters);
+        dialog.setCounterItems(_counters, animationCounter->getCounter());
 
         if (dialog.exec() == QDialog::Accepted) {
             Counter *counterSelected = dialog.selectedIndex();
@@ -1638,7 +1634,7 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
     if (AnimationVariable *animationVariable = dynamic_cast<AnimationVariable *>(item)) {
         DialogSelectVariable dialog;
 
-        dialog.setVariableItems(_variables);
+        dialog.setVariableItems(_variables, animationVariable->getVariable());
 
         if (dialog.exec() == QDialog::Accepted) {
             Variable *variableSelected = dialog.selectedIndex();
@@ -1649,6 +1645,14 @@ void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEv
                 animationVariable->setVariable(nullptr);
             }
         }
+    }
+
+
+    if (AnimationTimer *animationTimer = dynamic_cast<AnimationTimer *>(item)) {
+        DialogTimerConfigure dialog;
+
+        dialog.setAnimationTimer(animationTimer);
+        dialog.exec();
     }
 
     if (_drawingMode == POLYGON_POINTS)
@@ -1676,8 +1680,8 @@ QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalAnimations() const {
     return _graphicalAnimations;
 }
 
-QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalDrawings() const {
-    return _graphicalDrawings;
+QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalGeometries() const {
+    return _graphicalGeometries;
 }
 
 QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalConnections() const {
@@ -1692,32 +1696,119 @@ QList<QGraphicsItemGroup*>*ModelGraphicsScene::getGraphicalGroups() const {
     return _graphicalGroups;
 }
 
+void ModelGraphicsScene::initializeAnimationDrawing(QGraphicsSceneMouseEvent *mouseEvent) {
+    if (_drawingMode == COUNTER) {
+        _currentCounter = new AnimationCounter();
+        _currentCounter->startDrawing(mouseEvent);
+        addItem(_currentCounter);
+    }
+
+    if (_drawingMode == VARIABLE) {
+        _currentVariable = new AnimationVariable();
+        _currentVariable->startDrawing(mouseEvent);
+        addItem(_currentVariable);
+    }
+
+    if (_drawingMode == TIMER) {
+        _currentTimer = new AnimationTimer(this);
+        _currentTimer->startDrawing(mouseEvent);
+        addItem(_currentTimer);
+    }
+}
+
+void ModelGraphicsScene::continueAnimationDrawing(QGraphicsSceneMouseEvent *mouseEvent) {
+    if (_drawingMode == COUNTER) {
+        if (_currentCounter) {
+            if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
+                removeItem(_currentCounter);
+                _currentCounter->continueDrawing(mouseEvent);
+                addItem(_currentCounter);
+            }
+        } else {
+            _currentCounter = new AnimationCounter();
+        }
+    }
+
+    if (_drawingMode == VARIABLE) {
+        if (_currentVariable) {
+            if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
+                removeItem(_currentVariable);
+                _currentVariable->continueDrawing(mouseEvent);
+                addItem(_currentVariable);
+            }
+        } else {
+            _currentVariable = new AnimationVariable();
+        }
+    }
+
+    if (_drawingMode == TIMER) {
+        if (_currentTimer) {
+            if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
+                removeItem(_currentTimer);
+                _currentTimer->continueDrawing(mouseEvent);
+                addItem(_currentTimer);
+            } else {
+                _currentTimer = new AnimationTimer(this);
+            }
+        }
+    }
+}
+
+void ModelGraphicsScene::finishAnimationDrawing(QGraphicsSceneMouseEvent *mouseEvent) {
+    QGraphicsItem *animatedItem = nullptr;
+
+    if (_drawingMode == COUNTER) {
+        if (_currentCounter) {
+            if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
+                removeItem(_currentCounter);
+                _currentCounter->stopDrawing(mouseEvent);
+                addItem(_currentCounter);
+                _animationsCounter->append(_currentCounter);
+                animatedItem = _currentCounter;
+                _currentCounter = nullptr;
+            }
+        }
+    }
+
+    if (_drawingMode == VARIABLE) {
+        if (_currentVariable) {
+            if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
+                removeItem(_currentVariable);
+                _currentVariable->stopDrawing(mouseEvent);
+                addItem(_currentVariable);
+                _animationsVariable->append(_currentVariable);
+                animatedItem = _currentVariable;
+                _currentVariable = nullptr;
+            }
+        }
+    }
+
+    if (_drawingMode == TIMER) {
+        if (_currentTimer) {
+            if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
+                removeItem(_currentTimer);
+                _currentTimer->stopDrawing(mouseEvent);
+                addItem(_currentTimer);
+                _animationsTimer->append(_currentTimer);
+                animatedItem = _currentTimer;
+                _currentTimer = nullptr;
+            }
+        }
+    }
+
+    if (animatedItem != nullptr) {
+        if (_currentAction != nullptr)
+            _currentAction->setChecked(false);
+
+        QUndoCommand *addUndoCommand = new AddUndoCommand(animatedItem , this);
+        _undoStack->push(addUndoCommand);
+
+        _drawingMode = DrawingMode::NONE;
+        _drawing = false;
+    }
+}
 void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     QGraphicsScene::mouseMoveEvent(mouseEvent);
-
-    if (_currentCounter) {
-        if (_currentCounter->isDrawingInicialized() && !_currentCounter->isDrawingFinalized()) {
-            removeItem(_currentCounter);
-            _currentCounter->continueDrawing(mouseEvent);
-            addItem(_currentCounter);
-        }
-    }
-
-    if (_currentVariable) {
-        if (_currentVariable->isDrawingInicialized() && !_currentVariable->isDrawingFinalized()) {
-            removeItem(_currentVariable);
-            _currentVariable->continueDrawing(mouseEvent);
-            addItem(_currentVariable);
-        }
-    }
-
-    if (_currentTimer) {
-        if (_currentTimer->isDrawingInicialized() && !_currentTimer->isDrawingFinalized()) {
-            removeItem(_currentTimer);
-            _currentTimer->continueDrawing(mouseEvent);
-            addItem(_currentTimer);
-        }
-    }
 
     ((ModelGraphicsView *) (this->parent()))->notifySceneMouseEventHandler(mouseEvent); // to show coords
     if (_connectingStep > 0) {
@@ -1748,10 +1839,23 @@ void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
             ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::CrossCursor);
         }
     }  else if (_drawingMode != NONE && _drawing){
-        //mostrar desenho se formando
-        QPointF currentPoint = mouseEvent->scenePos();
-        addDrawing(currentPoint, true);
-        ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::SplitHCursor);
+        if (_drawingMode == COUNTER || _drawingMode == VARIABLE || _drawingMode == TIMER) {
+            continueAnimationDrawing(mouseEvent);
+            ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::CrossCursor);
+        } else {
+            //mostrar desenho se formando
+            QPointF currentPoint = mouseEvent->scenePos();
+            addGeometry(currentPoint, true);
+
+            if (_drawingMode == LINE) {
+                ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::SizeHorCursor);
+            } else if (_drawingMode == POLYGON || _drawingMode == POLYGON_POINTS) {
+                ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::ArrowCursor);
+            } else {
+                ((ModelGraphicsView *) (this->parent()))->setCursor(Qt::CrossCursor);
+            }
+        }
+
     }
 
     update();
@@ -1842,18 +1946,15 @@ void ModelGraphicsScene::keyReleaseEvent(QKeyEvent *keyEvent) {
 //--------------------------
 
 void ModelGraphicsScene::drawingCounter() {
-    _currentCounter = new AnimationCounter();
-    _animationsCounter->append(_currentCounter);
+    _drawingMode = DrawingMode::COUNTER;
 }
 
 void ModelGraphicsScene::drawingVariable() {
-    _currentVariable = new AnimationVariable();
-    _animationsVariable->append(_currentVariable);
+    _drawingMode = DrawingMode::VARIABLE;
 }
 
 void ModelGraphicsScene::drawingTimer() {
-    _currentTimer = new AnimationTimer(this);
-    _animationsTimer->append(_currentTimer);
+    _drawingMode = DrawingMode::TIMER;
 }
 
 void ModelGraphicsScene::setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged) {
@@ -1915,6 +2016,16 @@ QList<GraphicalConnection*> *ModelGraphicsScene::getAllConnections() {
     return &_allGraphicalConnections;
 }
 
+void ModelGraphicsScene::clearDrawingMode() {
+    if (_drawingMode == ModelGraphicsScene::POLYGON_POINTS) {
+        removeItem(_currentPolygon);
+        _currentPolygonPoints.clear();
+        _currentPolygon = nullptr;
+    }
+
+    _drawingMode = ModelGraphicsScene::NONE;
+    ((QGraphicsView*)this->parent())->setCursor(Qt::ArrowCursor);
+}
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){
     QList<GraphicalModelComponent*>* list = new QList<GraphicalModelComponent*>();
     for(QGraphicsItem* item: this->items()) {
@@ -1936,6 +2047,22 @@ GraphicalModelComponent* ModelGraphicsScene::findGraphicalModelComponent(Util::i
     }
     return nullptr;
 }
+
+void ModelGraphicsScene::clearAnimationsValues() {
+    for (AnimationCounter* counter : *_animationsCounter) {
+        counter->setValue(0);
+    }
+
+    for (AnimationVariable* variable : *_animationsVariable) {
+        variable->setValue(0);
+    }
+
+    for (AnimationTimer* timer : *_animationsTimer) {
+        timer->setTime(0.0);
+    }
+}
+
+
 
 void ModelGraphicsScene::setCounters() {
     Model* currentModel = _simulator->getModels()->current();

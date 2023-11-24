@@ -54,40 +54,41 @@
 class GraphicalModelEvent {
 public:
 
-	enum class EventType : int {
-		CREATE = 1, REMOVE = 2, EDIT = 3, CLONE = 4, OTHER = 5
-	};
+    enum class EventType : int {
+        CREATE = 1, REMOVE = 2, EDIT = 3, CLONE = 4, OTHER = 5
+    };
 
-	enum class EventObjectType : int {
+    enum class EventObjectType : int {
         COMPONENT = 1, DATADEFINITION = 2, CONNECTION = 3, DRAWING = 4, ANIMATION = 5, OTHER = 6
-	};
+    };
 
 public:
 
-	GraphicalModelEvent(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem* item) {
-		this->eventType = eventType;
-		this->eventObjectType = eventObjectType;
-		this->item = item;
-	}
-	GraphicalModelEvent::EventType eventType;
-	GraphicalModelEvent::EventObjectType eventObjectType;
-	QGraphicsItem* item;
+    GraphicalModelEvent(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem* item) {
+        this->eventType = eventType;
+        this->eventObjectType = eventObjectType;
+        this->item = item;
+    }
+    GraphicalModelEvent::EventType eventType;
+    GraphicalModelEvent::EventObjectType eventObjectType;
+    QGraphicsItem* item;
 };
 
 class ModelGraphicsScene : public QGraphicsScene {
 public:
-	ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent = nullptr);
-	ModelGraphicsScene(const ModelGraphicsScene& orig);
+    ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent = nullptr);
+    ModelGraphicsScene(const ModelGraphicsScene& orig);
     virtual ~ModelGraphicsScene();
 public: // editing graphic model
     enum DrawingMode{
-        NONE, LINE, TEXT, RECTANGLE, ELLIPSE, POLYGON,  POLYGON_POINTS, POLYGON_FINISHED
+        NONE, LINE, TEXT, RECTANGLE, ELLIPSE, POLYGON,  POLYGON_POINTS, POLYGON_FINISHED, COUNTER, VARIABLE, TIMER
     };
     GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color = Qt::blue, bool notify = false);
     GraphicalConnection* addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection, bool notify = false);
-	GraphicalModelDataDefinition* addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color = Qt::blue);
-    void addDrawing(QPointF endPoint, bool moving, bool notify = false);
-	void addAnimation();
+    GraphicalModelDataDefinition* addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color = Qt::blue);
+    void initializeAnimationDrawing(QGraphicsSceneMouseEvent *mouseEvent);
+    void continueAnimationDrawing(QGraphicsSceneMouseEvent *mouseEvent);
+    void finishAnimationDrawing(QGraphicsSceneMouseEvent *mouseEvent);
     void startTextEditing();
     void removeComponent(GraphicalModelComponent* gmc, bool notify = false);
     void clearConnectionsComponent(GraphicalModelComponent* gmc);
@@ -99,12 +100,17 @@ public: // editing graphic model
     bool connectDestination(GraphicalConnection* connection, GraphicalModelComponent *destination = nullptr);
     void redoConnections(GraphicalModelComponent *graphicalComponent, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections);
     void removeComponentInModel(GraphicalModelComponent* gmc);
-    void insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC = true, bool addAllGMC = true);
+    void insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC = true, bool addAllGMC = true, bool notify = false);
     void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify = false);
     void removeConnectionInModel(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source);
-	void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
+    void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
+    void addGeometry(QPointF endPoint, bool moving);
+    void addDrawing(QGraphicsItem * item, bool notify = false);
+    bool addDrawingGeometry(QGraphicsItem * item);
+    bool addDrawingAnimation(QGraphicsItem * item);
     void removeDrawing(QGraphicsItem * item, bool notify = false);
-	void removeAnimation();
+    bool removeDrawingGeometry(QGraphicsItem * item);
+    bool removeDrawingAnimation(QGraphicsItem * item);
     void removeGroup(QGraphicsItemGroup* group, bool notify = false);
     void clearGraphicalModelComponents();
     void clearGraphicalModelConnections();
@@ -129,16 +135,17 @@ public:
     QUndoStack* getUndoStack();
     Simulator* getSimulator();
     void setUndoStack(QUndoStack* undo);
-	void beginConnection();
-	void setSimulator(Simulator *simulator);
-	void setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged);
-	void setParentWidget(QWidget *parentWidget);
-	unsigned short connectingStep() const;
-	void setConnectingStep(unsigned short connectingStep);
+    void beginConnection();
+    void setSimulator(Simulator *simulator);
+    void setObjectBeingDragged(QTreeWidgetItem* objectBeingDragged);
+    void setParentWidget(QWidget *parentWidget);
+    unsigned short connectingStep() const;
+    void setConnectingStep(unsigned short connectingStep);
     void setSnapToGrid(bool activated);
     bool getSnapToGrid();
     void arranjeModels(int direction);
     void setDrawingMode(DrawingMode drawingMode);
+    void clearDrawingMode();
     void setGraphicalComponentPort(GraphicalComponentPort * in);
     DrawingMode getDrawingMode();
     void setAction(QAction* action);
@@ -161,6 +168,7 @@ public:
     void drawingCounter();
     void drawingVariable();
     void drawingTimer();
+    void clearAnimationsValues();
     void setCounters();
     void setVariables();
     // TODO: Funções abaixo são usadas para reaver os dataDefinitions do componente nos dataDefinitions do modelo dos componentes deletados, "checados" e reinseridos (Control Z de um delete, por exemplo).
@@ -170,12 +178,12 @@ public:
     // --------------------------------- //
 
 public:
-	QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
-	QList<QGraphicsItem*>*getGraphicalModelComponents() const;
-	QList<QGraphicsItem*>*getGraphicalConnections() const;
-	QList<QGraphicsItem*>*getGraphicalDrawings() const;
-	QList<QGraphicsItem*>*getGraphicalAnimations() const;
-	QList<QGraphicsItem*>*getGraphicalEntities() const;
+    QList<QGraphicsItem*>*getGraphicalModelDataDefinitions() const;
+    QList<QGraphicsItem*>*getGraphicalModelComponents() const;
+    QList<QGraphicsItem*>*getGraphicalConnections() const;
+    QList<QGraphicsItem*>*getGraphicalGeometries() const;
+    QList<QGraphicsItem*>*getGraphicalAnimations() const;
+    QList<QGraphicsItem*>*getGraphicalEntities() const;
     QList<QGraphicsItemGroup*>*getGraphicalGroups() const;
 
 public:
@@ -185,30 +193,30 @@ public:
     void animateTimer(double time);
 
 protected: // virtual functions
-	virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *contextMenuEvent);
-	virtual void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
-	virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent *event);
-	virtual void dragMoveEvent(QGraphicsSceneDragDropEvent *event);
-	//virtual void	drawBackground(QPainter *painter, const QRectF &rect);
-	//virtual void	drawForeground(QPainter *painter, const QRectF &rect);
-	virtual void dropEvent(QGraphicsSceneDragDropEvent *event);
-	virtual void focusInEvent(QFocusEvent *focusEvent);
-	virtual void focusOutEvent(QFocusEvent *focusEvent);
-	//virtual void	helpEvent(QGraphicsSceneHelpEvent *helpEvent);
-	//virtual void	inputMethodEvent(QInputMethodEvent *event);
-	virtual void keyPressEvent(QKeyEvent *keyEvent);
-	virtual void keyReleaseEvent(QKeyEvent *keyEvent);
-	virtual void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent);
-	virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent);
-	virtual void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent);
-	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent);
-	virtual void wheelEvent(QGraphicsSceneWheelEvent *wheelEvent);
+    virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *contextMenuEvent);
+    virtual void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
+    virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent *event);
+    virtual void dragMoveEvent(QGraphicsSceneDragDropEvent *event);
+    //virtual void	drawBackground(QPainter *painter, const QRectF &rect);
+    //virtual void	drawForeground(QPainter *painter, const QRectF &rect);
+    virtual void dropEvent(QGraphicsSceneDragDropEvent *event);
+    virtual void focusInEvent(QFocusEvent *focusEvent);
+    virtual void focusOutEvent(QFocusEvent *focusEvent);
+    //virtual void	helpEvent(QGraphicsSceneHelpEvent *helpEvent);
+    //virtual void	inputMethodEvent(QInputMethodEvent *event);
+    virtual void keyPressEvent(QKeyEvent *keyEvent);
+    virtual void keyReleaseEvent(QKeyEvent *keyEvent);
+    virtual void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent);
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent);
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent);
+    virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent);
+    virtual void wheelEvent(QGraphicsSceneWheelEvent *wheelEvent);
 
 private:
     GRID _grid;
-	Simulator* _simulator = nullptr;
-	QTreeWidgetItem* _objectBeingDragged = nullptr;
-	QWidget* _parentWidget;
+    Simulator* _simulator = nullptr;
+    QTreeWidgetItem* _objectBeingDragged = nullptr;
+    QWidget* _parentWidget;
     QList<GraphicalModelComponent*> _allGraphicalModelComponents;
     QList<GraphicalConnection*> _allGraphicalConnections;
     QUndoStack *_undoStack = nullptr;
@@ -227,7 +235,7 @@ private:
     QAction* _currentAction = nullptr;
     bool _drawing = false;
     unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source or destination, 2: click on source, 3: click on destination
-	bool _controlIsPressed = false;
+    bool _controlIsPressed = false;
     bool _snapToGrid = false;
     GraphicalComponentPort* _sourceGraphicalComponentPort;
     GraphicalComponentPort* _destinationGraphicalComponentPort;
@@ -242,14 +250,14 @@ private:
     QList<AnimationVariable *> *_animationsVariable = new QList<AnimationVariable*>();
     QList<AnimationTimer *> *_animationsTimer = new QList<AnimationTimer*>();
 private:
-	// IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
-	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();
-	QList<QGraphicsItem*>* _graphicalModelDataDefinitions = new QList<QGraphicsItem*>();
-	QList<QGraphicsItem*>* _graphicalConnections = new QList<QGraphicsItem*>();
-	QList<QGraphicsItem*>* _graphicalAssociations = new QList<QGraphicsItem*>();
-	QList<QGraphicsItem*>* _graphicalDrawings = new QList<QGraphicsItem*>();
-	QList<QGraphicsItem*>* _graphicalAnimations = new QList<QGraphicsItem*>();
-	QList<QGraphicsItem*>* _graphicalEntities = new QList<QGraphicsItem*>();
+    // IMPORTANT. MUST BE CONSISTENT WITH SIMULATOR->MODEL
+    QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalModelDataDefinitions = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalConnections = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalAssociations = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalGeometries = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalAnimations = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalEntities = new QList<QGraphicsItem*>();
     QList<QGraphicsItemGroup*>* _graphicalGroups = new QList<QGraphicsItemGroup*>();
 };
 

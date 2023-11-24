@@ -14,9 +14,7 @@ public:
     explicit DialogSelectCounter(QWidget *parent = nullptr);
 
     Counter* selectedIndex() const;
-    void setCounterItems(QList<Counter *> *counters);
-
-    void actualizeSelectedItems();
+    void setCounterItems(QList<Counter *> *counters, Counter *counter);
 
 private slots:
     void onOkClicked();

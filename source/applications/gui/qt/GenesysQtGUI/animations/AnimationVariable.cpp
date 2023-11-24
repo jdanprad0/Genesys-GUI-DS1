@@ -1,10 +1,11 @@
 #include "AnimationVariable.h"
-#include "graphicals/GraphicalModelComponent.h"
 
 AnimationVariable::AnimationVariable() : _isDrawingInicialized(true) {
-    setFlag(QGraphicsItem::ItemIsMovable);
-    setFlag(QGraphicsItem::ItemIsSelectable);
-    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+    setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsFocusable);
+    setAcceptHoverEvents(true);
+    setAcceptTouchEvents(true);
+    setActive(true);
+    setSelected(false);
 }
 
 void AnimationVariable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -52,10 +53,6 @@ double AnimationVariable::getValue() {
     return _value;
 }
 
-QPointF AnimationVariable::getOldPosition() {
-    return _oldPosition;
-}
-
 Variable *AnimationVariable::getVariable(){
     return _variable;
 }
@@ -63,10 +60,6 @@ Variable *AnimationVariable::getVariable(){
 void AnimationVariable::setValue(double value) {
     _value = value;
     update();
-}
-
-void AnimationVariable::setOldPosition(QPointF oldPosition) {
-    _oldPosition = oldPosition;
 }
 
 void AnimationVariable::setVariable(Variable *variable){
@@ -147,7 +140,6 @@ void AnimationVariable::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
 
     // Seta a posição
     setPos(position);
-    _oldPosition = position;
 
     // Atualiza o item na cena
     update();

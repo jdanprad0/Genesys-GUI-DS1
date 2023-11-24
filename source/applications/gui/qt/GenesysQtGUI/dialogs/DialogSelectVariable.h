@@ -14,7 +14,7 @@ public:
     explicit DialogSelectVariable(QWidget *parent = nullptr);
 
     Variable* selectedIndex() const;
-    void setVariableItems(QList<Variable *> *variables);
+    void setVariableItems(QList<Variable *> *variables, Variable *variable);
 
 private slots:
     void onOkClicked();

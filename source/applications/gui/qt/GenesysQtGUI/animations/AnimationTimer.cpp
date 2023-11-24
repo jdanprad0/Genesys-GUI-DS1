@@ -1,19 +1,19 @@
 #include "AnimationTimer.h"
 #include "../ModelGraphicsScene.h"
 
-double AnimationTimer::_conversionFactorToSeconds = 0.0;
+double AnimationTimer::_conversionFactorToSeconds = 1.0;
 
 AnimationTimer::AnimationTimer(ModelGraphicsScene* myScene) : _myScene(myScene), _isDrawingInicialized(true){
-    setFlag(QGraphicsItem::ItemIsMovable);
-    setFlag(QGraphicsItem::ItemIsSelectable);
-    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+    setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsFocusable);
+    setAcceptHoverEvents(true);
+    setAcceptTouchEvents(true);
+    setActive(true);
+    setSelected(false);
 }
 
 void AnimationTimer::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     Q_UNUSED(option);
     Q_UNUSED(widget);
-
-    QBrush brush;
 
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setBrush(Qt::blue);
@@ -51,13 +51,40 @@ void AnimationTimer::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     }
 }
 
+// Getters
 double AnimationTimer::getTime() {
     return _time;
 }
 
-QPointF AnimationTimer::getOldPosition() {
-    return _oldPosition;
+unsigned int AnimationTimer::getInitialHours() {
+    return _initialHours;
 }
+
+unsigned int AnimationTimer::getInitialMinutes() {
+    return _initialMinutes;
+}
+
+unsigned int AnimationTimer::getInitialSeconds() {
+    return _initialSeconds;
+}
+
+unsigned int AnimationTimer::getHours() {
+    return _hours;
+}
+
+unsigned int AnimationTimer::getMinutes() {
+    return _minutes;
+}
+
+unsigned int AnimationTimer::getSeconds() {
+    return _seconds;
+}
+
+Util::TimeFormat AnimationTimer::getTimeFormat() {
+    return _timeFormat;
+}
+
+// Setters
 
 void AnimationTimer::setTime(double value) {
     _time = value * _conversionFactorToSeconds;
@@ -65,12 +92,36 @@ void AnimationTimer::setTime(double value) {
     update();
 }
 
-void AnimationTimer::setOldPosition(QPointF oldPosition) {
-    _oldPosition = oldPosition;
-}
-
 void AnimationTimer::setConversionFactorToSeconds(double factor) {
     _conversionFactorToSeconds = factor;
+}
+
+void AnimationTimer::setInitialHours(unsigned int initialHours) {
+    _initialHours = initialHours;
+}
+
+void AnimationTimer::setInitialMinutes(unsigned int initialMinutes) {
+    _initialMinutes = initialMinutes;
+}
+
+void AnimationTimer::setInitialSeconds(unsigned int initialSeconds) {
+    _initialSeconds = initialSeconds;
+}
+
+void AnimationTimer::setHours(unsigned int hours) {
+    _hours = hours;
+}
+
+void AnimationTimer::setMinutes(unsigned int minutes) {
+    _minutes = minutes;
+}
+
+void AnimationTimer::setSeconds(unsigned int seconds) {
+    _seconds = seconds;
+}
+
+void AnimationTimer::setTimeFormat(Util::TimeFormat timeFormat) {
+    _timeFormat = timeFormat;
 }
 
 void AnimationTimer::startDrawing(QGraphicsSceneMouseEvent *event) {
@@ -147,7 +198,6 @@ void AnimationTimer::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
 
     // Seta a posição
     setPos(position);
-    _oldPosition = position;
 
     // Atualiza o item na cena
     update();
@@ -155,9 +205,10 @@ void AnimationTimer::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
 
 void AnimationTimer::convertSeconds() {
     int remainingSeconds = 0;
+    unsigned int timeFormatValue = static_cast<unsigned int>(_timeFormat);
 
-    // Calculate hours
-    _hours = static_cast<int>(_time / 3600) % 24;
+    // Calculate horas
+    _hours = static_cast<int>(_time / 3600);
 
     // Calcula os segundos restantes após as horas
     remainingSeconds = static_cast<int>(_time) % 3600;
@@ -167,6 +218,32 @@ void AnimationTimer::convertSeconds() {
 
     // Calcula os segundos finais
     _seconds = remainingSeconds % 60;
+
+    // Somar aos valores iniciais
+    _hours += _initialHours;
+    _minutes += _initialMinutes;
+    _seconds += _initialSeconds;
+
+    // Ajusta caso necessário
+    _minutes += _seconds / 60;
+    _seconds %= 60;
+
+    _hours += _minutes / 60;
+    _minutes %= 60;
+
+    if (timeFormatValue == 24) {
+        _hours %= timeFormatValue;
+    } else {
+        if (_hours == 0 || _hours == 24) {
+            _hours = 12;
+        } else if (_hours >= 1 && _hours <= 12) {
+            // Horas entre 1 e 12 permanecem as mesmas
+            _hours += 0;
+        } else if (_hours >= 13 && _hours <= 23) {
+            _hours = _hours - 12;
+        }
+    }
+
 }
 
 bool AnimationTimer::isDrawingInicialized() {

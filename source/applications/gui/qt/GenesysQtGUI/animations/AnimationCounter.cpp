@@ -1,9 +1,11 @@
 #include "AnimationCounter.h"
 
 AnimationCounter::AnimationCounter() : _isDrawingInicialized(true) {
-    setFlag(QGraphicsItem::ItemIsMovable);
-    setFlag(QGraphicsItem::ItemIsSelectable);
-    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+    setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsFocusable);
+    setAcceptHoverEvents(true);
+    setAcceptTouchEvents(true);
+    setActive(true);
+    setSelected(false);
 }
 
 void AnimationCounter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -51,10 +53,6 @@ double AnimationCounter::getValue() {
     return _value;
 }
 
-QPointF AnimationCounter::getOldPosition() {
-    return _oldPosition;
-}
-
 Counter *AnimationCounter::getCounter(){
     if (Counter *counter = dynamic_cast<Counter *>(_counter)) {
         return _counter;
@@ -67,10 +65,6 @@ Counter *AnimationCounter::getCounter(){
 void AnimationCounter::setValue(double value) {
     _value = value;
     update();
-}
-
-void AnimationCounter::setOldPosition(QPointF oldPosition) {
-    _oldPosition = oldPosition;
 }
 
 void AnimationCounter::setCounter(Counter *counter){
@@ -151,7 +145,6 @@ void AnimationCounter::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
 
     // Seta a posição
     setPos(position);
-    _oldPosition = position;
 
     // Atualiza o item na cena
     update();

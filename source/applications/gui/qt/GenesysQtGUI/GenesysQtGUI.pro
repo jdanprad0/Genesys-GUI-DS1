@@ -150,6 +150,7 @@ SOURCES += \
     dialogs/DialogFind.cpp \
     dialogs/DialogSelectCounter.cpp \
     dialogs/DialogSelectVariable.cpp \
+    dialogs/DialogTimerConfigure.cpp \
 	dialogs/Dialogmodelinformation.cpp \
 	dialogs/dialogBreakpoint.cpp \
 	dialogs/dialogpluginmanager.cpp \
@@ -356,6 +357,7 @@ HEADERS += \
     dialogs/DialogFind.h \
     dialogs/DialogSelectCounter.h \
     dialogs/DialogSelectVariable.h \
+    dialogs/DialogTimerConfigure.h \
 	dialogs/Dialogmodelinformation.h \
 	dialogs/dialogBreakpoint.h \
 	dialogs/dialogpluginmanager.h \
@@ -372,6 +374,7 @@ HEADERS += \
 	qcustomplot.h
 
 FORMS += \
+	dialogs/DialogTimerConfigure.ui \
 	dialogs/Dialogmodelinformation.ui \
 	dialogs/dialogBreakpoint.ui \
 	dialogs/dialogpluginmanager.ui \

@@ -1,8 +1,9 @@
 #ifndef DIALOGSIMULATIONCONFIGURE_H
 #define DIALOGSIMULATIONCONFIGURE_H
 
+#include "../../../../../kernel/simulator/Simulator.h"
+
 #include <QDialog>
-#include "ModelGraphicsScene.h"
 
 namespace Ui {
     class DialogSimulationConfigure;

@@ -17,12 +17,10 @@ public:
 
     // Getters
     double getValue();
-    QPointF getOldPosition();
     Counter *getCounter();
 
     // Setters
     void setValue(double value);
-    void setOldPosition(QPointF oldPosition);
     void setCounter(Counter *myCounter);
 
     // Outros
@@ -36,7 +34,6 @@ public:
 private:
     double _value = 0.0;
     QPointF _startPoint = QPointF(0, 0);
-    QPointF _oldPosition = QPointF(0, 0);
     bool _isResizing = false;
     bool _isDrawingInicialized = false;
     bool _isDrawingFinalized = false;

@@ -10,12 +10,14 @@ GroupUndoCommand::GroupUndoCommand(QList<GraphicalModelComponent *> graphicalCom
 GroupUndoCommand::~GroupUndoCommand() {}
 
 void GroupUndoCommand::undo() {
+    // desagrupa
     _myGraphicsScene->ungroupModelComponents(_group);
 
     _myGraphicsScene->update();
 }
 
 void GroupUndoCommand::redo() {
+    // agrupa
     _myGraphicsScene->groupModelComponents(&_myGraphicalComponents, _group);
 
     _myGraphicsScene->update();
