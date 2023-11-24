@@ -115,7 +115,7 @@ public: // editing graphic model
     void clearGraphicalModelComponents();
     void clearGraphicalModelConnections();
     void groupComponents(bool notify = false); // tenta agrupar (verifica se sao ModelGraphicalComponents)
-    void groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents, QGraphicsItemGroup *group); // agrupa componentes
+    void groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents, QGraphicsItemGroup *group, bool deleteUndo = false); // agrupa componentes
     void ungroupComponents(bool notify = false);
     void ungroupModelComponents(QGraphicsItemGroup *group);
     void notifyGraphicalModelChange(GraphicalModelEvent::EventType eventType, GraphicalModelEvent::EventObjectType eventObjectType, QGraphicsItem *item);

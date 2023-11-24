@@ -408,6 +408,8 @@ void ModelGraphicsScene::removeComponentInModel(GraphicalModelComponent* gmc) {
 }
 
 void ModelGraphicsScene::insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC, bool addAllGMC, bool notify) {
+    // Adiciona na tela
+    addItem(gmc);
     // pega o componente do modelo grafico
     ModelComponent* component = gmc->getComponent();
     // pega o modelo corrente
@@ -1089,7 +1091,7 @@ void ModelGraphicsScene::groupComponents(bool notify) {
     }
 }
 
-void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group) {
+void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group, bool deleteUndo) {
     // cria um grupo auxiliar
     QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
 
@@ -1099,7 +1101,24 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
 
     // copia os grupos pra um novo grupo
     for (int i = 0; i < graphicalComponents->size(); i++) {
-        newGroup->addToGroup(graphicalComponents->at(i));
+        if (ModelComponent *component = dynamic_cast<ModelComponent *>(graphicalComponents->at(i)->getComponent())) {
+            newGroup->addToGroup(graphicalComponents->at(i));
+
+            qreal x1 = graphicalComponents->at(i)->pos().x();
+            qreal x2 = graphicalComponents->at(i)->pos().y();
+
+            if ((x1 == 0 || x2 == 0) && deleteUndo == false) {
+                int a = 1;
+            }
+        }
+
+        qreal x1 = graphicalComponents->at(i)->pos().x();
+        qreal x2 = graphicalComponents->at(i)->pos().y();
+
+        if ((x1 == 0 || x2 == 0) && deleteUndo == false) {
+            int a = 1;
+        }
+
     }
 
     // pega as coordenadas do retangulo do grupo
@@ -1145,8 +1164,6 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
 
     // remove as referencias do grupo auxiliar
     destroyItemGroup(newGroup);
-
-    insertOldPositionItem(group, group->pos());
 }
 
 

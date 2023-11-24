@@ -183,7 +183,7 @@ void DeleteUndoCommand::undo() {
 
         groupItem.group->update();
 
-        _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group);
+        _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group, true);
 
         groupItem.group->setPos(groupItem.initialPosition);
 

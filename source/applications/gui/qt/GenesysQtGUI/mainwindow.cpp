@@ -2059,7 +2059,7 @@ void MainWindow::on_actionEditCut_triggered() {
         // Seta o cut
         _cut = true;
 
-        // Adiciona na lista de cópias (conexões, componentes e poliíonos)
+        // Adiciona na lista de cópias (conexões, componentes e desenhos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
             QList<GraphicalModelComponent*> groupComponents  = QList<GraphicalModelComponent*>();
             QList<GraphicalConnection*> * connGroup = new QList<GraphicalConnection*>();
@@ -2155,21 +2155,22 @@ void MainWindow::on_actionEditCopy_triggered() {
     _draw_copy->clear();
 
     QList<QGraphicsItem*> selected = ui->graphicsView->scene()->selectedItems();
-    QList<GraphicalModelComponent *> *gmc_copies_copy = _gmc_copies;
+    QList<GraphicalModelComponent *> gmc_copies_copy = QList<GraphicalModelComponent *>();
 
-    // Verifica se tem itens selecionados
+    // verifica se tem itens selecionados
     if (selected.size() > 0) {
 
-        // Seta o cut
+        // seta o cut
         _cut = false;
 
-        // Adiciona na lista de cópias (conexões, componentes e polígonos)
+        // adiciona na lista de cópias (conexões, componentes e desenhos)
         foreach (QGraphicsItem *item , ui->graphicsView->scene()->selectedItems()) {
             // verifica se é um componente gráfico
             if (GraphicalModelComponent *gmc = dynamic_cast<GraphicalModelComponent*>(item)) {
                 // Adiciona em uma lista de cópias de componentes
                 gmc->setSelected(false);
                 _gmc_copies->append(gmc);
+                gmc_copies_copy.append(gmc);
             }
             // verifica se é uma conexão gráfica
             else if (GraphicalConnection *conn = dynamic_cast<GraphicalConnection*>(item)) {
@@ -2184,7 +2185,7 @@ void MainWindow::on_actionEditCopy_triggered() {
                 for (int i = 0; i < group->childItems().size(); i++) {
                     GraphicalModelComponent * component = dynamic_cast<GraphicalModelComponent *>(group->childItems().at(i));
 
-                    gmc_copies_copy->append(component);
+                    gmc_copies_copy.append(component);
                 }
             }
             // se não for nenhum deles é um desenho na tela
@@ -2194,27 +2195,33 @@ void MainWindow::on_actionEditCopy_triggered() {
             }
         }
 
-        // Removendo as conexões em que os seus componentes não foram selecionados
-        saveItemForCopy(gmc_copies_copy, _ports_copies);
+        // removendo as conexões em que os seus componentes não foram selecionados
+        saveItemForCopy(&gmc_copies_copy, _ports_copies);
+
+        // limpa a lista auxiliar
+        gmc_copies_copy.clear();
     }
 
 }
 
 void MainWindow::on_actionEditPaste_triggered() {
 
-    // Se tiver componente copiados
+    // se tiver componente copiados
     if (_gmc_copies->size() > 0 || _draw_copy->size() > 0 || _group_copy->size() > 0) {
 
-        // Pega a cena
+        // pega a cena
         ModelGraphicsScene *scene = (ModelGraphicsScene *)(ui->graphicsView->getScene());
 
+        // se não for ação de recorte chama o auxiliar do copy
         if (!_cut) {
             _helpCopy();
         }
 
+        // cola na cena o que foi copiado
         QUndoCommand *pasteUndoCommand = new PasteUndoCommand(_gmc_copies, _ports_copies, _group_copy, _draw_copy, scene);
         scene->getUndoStack()->push(pasteUndoCommand);
 
+        // limpa todas as listas
         _gmc_copies->clear();
         _ports_copies->clear();
         _draw_copy->clear();
@@ -2831,7 +2838,7 @@ void MainWindow::_initUiForNewModel(Model* m) {
 void MainWindow::_actualizeUndo() {
     undoView = new QUndoView(ui->graphicsView->getScene()->getUndoStack());
     undoView->setWindowTitle(tr("Command List"));
-    undoView->setVisible(false);
+    undoView->setVisible(true);
     undoView->setAttribute(Qt::WA_QuitOnClose, false);
 }
 

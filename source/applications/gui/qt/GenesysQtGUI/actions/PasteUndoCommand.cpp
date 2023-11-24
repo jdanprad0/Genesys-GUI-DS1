@@ -268,6 +268,8 @@ void PasteUndoCommand::redo() {
         for (int j = 0; j < groupItem.myComponentItems.size(); ++j) {
             ComponentItem componentItem = groupItem.myComponentItems.at(j);
 
+            _myGraphicsScene->addItem(componentItem.graphicalComponent);
+            
             if (componentItem.graphicalComponent->group())
                 groupItem.group->removeFromGroup(componentItem.graphicalComponent);
             componentsGroup->append(componentItem.graphicalComponent);
@@ -275,6 +277,8 @@ void PasteUndoCommand::redo() {
 
         _myGraphicsScene->groupModelComponents(componentsGroup, groupItem.group);
         groupItem.group->update();
+
+        _myGraphicsScene->insertOldPositionItem(groupItem.group, groupItem.group->pos());
 
         delete componentsGroup;
     }

@@ -20,7 +20,6 @@ private:
     ModelGraphicsScene *_myGraphicsScene;
     QList<QPointF> _myOldPos;
     QList<QPointF> _myNewPos;
-    bool _firstExecution;
 };
 
 #endif // MOVEUNDOCOMMAND_H
