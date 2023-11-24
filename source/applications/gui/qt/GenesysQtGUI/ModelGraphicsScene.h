@@ -120,6 +120,10 @@ public:
     void showGrid();
     void snapItemsToGrid();
     void showDiagrams();
+    void hideDiagrams();
+    bool existDiagram();
+    void destroyDiagram();
+    void createDiagrams();
     QUndoStack* getUndoStack();
     Simulator* getSimulator();
     void setUndoStack(QUndoStack* undo);
@@ -137,6 +141,7 @@ public:
     DrawingMode getDrawingMode();
     void setAction(QAction* action);
     QList<GraphicalModelComponent*> *getAllComponents();
+    QList<GraphicalModelDataDefinition*> *getAllDataDefinitions();
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
     void insertOldPositionItem(QGraphicsItem *item, QPointF position);
@@ -190,6 +195,7 @@ private:
     QPointF _drawingStartPoint;
     QAction* _currentAction = nullptr;
     bool _drawing = false;
+    bool _diagram = false;
     unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source or destination, 2: click on source, 3: click on destination
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;

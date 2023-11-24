@@ -424,6 +424,12 @@ void ModelGraphicsScene::removeComponentInModel(GraphicalModelComponent* gmc) {
     model->getComponents()->remove(component);
 }
 
+void ModelGraphicsScene::removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd) {
+    //graphically
+    removeItem(gmdd);
+    getGraphicalModelComponents()->removeOne(gmdd);
+}
+
 // trata da remocao das conexoes de um componente
 void ModelGraphicsScene::clearConnectionsComponent(GraphicalModelComponent* gmc) {
     ModelGraphicsScene::clearInputConnectionsComponent(gmc);
@@ -711,38 +717,146 @@ void ModelGraphicsScene::showGrid()
     _grid.visible = !_grid.visible;
 }
 
-void ModelGraphicsScene::showDiagrams()
+void ModelGraphicsScene::createDiagrams()
 {
-
-    qreal x = 10;
-    qreal y = 10;
-
     Model * m = _simulator->getModels()->current();
     ModelDataManager* dataManager = m->getDataManager();
 
     QColor purple(128,0,128);
     QColor grey(220,220,220);
-
+    //creating graphicalModelDataDefinitions
     for (std::string dataTypename : *m->getDataManager()->getDataDefinitionClassnames()) {
-        List<ModelDataDefinition*>* listDataDefinitions = dataManager->getDataDefinitionList(dataTypename);//->list();
-        int size = listDataDefinitions->size();
-        for (int i = 0; i < size; i++) {
-            ModelDataDefinition* datadef = listDataDefinitions->next();
+        std::list<ModelDataDefinition*>* listDataDefinitions = dataManager->getDataDefinitionList(dataTypename)->list();
+
+        for (auto it = listDataDefinitions->begin(); it != listDataDefinitions->end(); ++it) {
+            ModelDataDefinition* datadef = *it;
             std::string pluginName = datadef->getName();
             Plugin* plugin = _simulator->getPlugins()->find(pluginName);
-            if (datadef->getLevel() > 0) {
-                addGraphicalModelDataDefinition(plugin, datadef, QPointF(x, y), grey);
-            } else {
-                addGraphicalModelDataDefinition(plugin, datadef, QPointF(x, y), purple);
-            }
-            x += 50;
-            y += 50;
+            addGraphicalModelDataDefinition(plugin, datadef, QPointF(0, 0), grey);
         }
     }
+    //organizing diagram
+    QList<GraphicalModelDataDefinition*>* datadef_visited = new QList<GraphicalModelDataDefinition*>();
+    QList<GraphicalModelComponent*>* gmcs = getAllComponents();
+    //internal and attached data of the modelComponents
+    for (int i = 0; i < gmcs->size(); i++) {
+        GraphicalModelComponent* gmc = gmcs->at(i);
+        std::map<std::string, ModelDataDefinition*>* internalData = gmc->getComponent()->getInternalData();
+        std::map<std::string, ModelDataDefinition*>* attachedData = gmc->getComponent()->getAttachedData();
 
-    QList<QGraphicsItem*>* gmdd = getGraphicalModelDataDefinitions();
-    int gmdd_size = gmdd->size();
+        QPointF component_pos = gmc->getOldPosition();
+        qreal y_internal = component_pos.y();
+        qreal y_attached = component_pos.y();
 
+        //attached Data
+        for (auto it = attachedData->begin(); it != attachedData->end(); ++it) {
+            ModelDataDefinition* dataDefinition = it->second; // Obtém o valor (ModelDataDefinition*)
+
+            QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
+
+            qreal y = component_pos.y();
+            for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
+                GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
+                std::string name = gdd->getDataDefinition()->getName();
+                if (name == dataDefinition->getName()) {
+
+                    if (datadef_visited->contains(gdd)) {
+                        qreal x = (gdd->x() + component_pos.x()) / 2;
+                        gdd->setPos(x, y_attached - 150);
+                        gdd->setOldPosition(x, y_attached - 150);
+                    } else {
+
+                        datadef_visited->append(gdd);
+                        y_attached = y_attached - 150;
+
+                        gdd->setPos(component_pos.x(), y_attached);
+                        gdd->setOldPosition(component_pos.x(), y_attached);
+                        gdd->setColor(purple);
+                    }
+                }
+            }
+        }
+        //internal Data
+        for (auto it = internalData->begin(); it != internalData->end(); ++it) {
+            ModelDataDefinition* dataDefinition = it->second; // Obtém o valor (ModelDataDefinition*)
+
+            QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
+
+            for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
+                GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
+                std::string name = gdd->getDataDefinition()->getName();
+                if (name == dataDefinition->getName()) {
+                    datadef_visited->append(gdd);
+                    y_internal = y_internal + 150;
+
+                    gdd->setPos(component_pos.x(), y_internal);
+                    gdd->setOldPosition(component_pos.x(), y_internal);
+                }
+            }
+        }
+    }
+    //internalData of the DataDefinitions
+    for (int i = 0; i < datadef_visited->size(); i++) {
+        GraphicalModelDataDefinition* parentDataDefinition = datadef_visited->at(i);
+        std::map<std::string, ModelDataDefinition*>* internalData = parentDataDefinition->getDataDefinition()->getInternalData();
+
+        QPointF dataDefinition_pos = parentDataDefinition->getOldPosition();
+        qreal x = dataDefinition_pos.x();
+
+        for (auto it = internalData->begin(); it != internalData->end(); ++it) {
+            ModelDataDefinition* dataDefinition = it->second; // Obtém o valor (ModelDataDefinition*)
+            QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
+
+            for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
+                GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
+                std::string name = gdd->getDataDefinition()->getName();
+                if (name == dataDefinition->getName()) {
+                    datadef_visited->append(gdd);
+                    x = x - 200;
+
+                    gdd->setPos(x, dataDefinition_pos.y());
+                    gdd->setOldPosition(x, dataDefinition_pos.y());
+                }
+            }
+        }
+    }
+    _diagram = true;
+    delete datadef_visited;
+}
+
+bool ModelGraphicsScene::existDiagram() {
+    return _diagram;
+}
+
+void ModelGraphicsScene::destroyDiagram() {
+    QList<GraphicalModelDataDefinition*>* gmdds = getAllDataDefinitions();
+    for (int i = 0; i < gmdds->size(); i++) {
+        GraphicalModelDataDefinition* gmdd = gmdds->at(i);
+        removeGraphicalModelDataDefinition(gmdd);
+    }
+    _diagram = false;
+}
+
+void ModelGraphicsScene::hideDiagrams() {
+    QList<QGraphicsItem*>* dataDefinitions = getGraphicalModelDataDefinitions();
+    for (int i = 0; i < dataDefinitions->size(); i++) {
+        QGraphicsItem* itemData = dataDefinitions->at(i);
+        itemData->hide();
+        itemData->setFlag(QGraphicsItem::ItemIsSelectable, false);
+        itemData->setFlag(QGraphicsItem::ItemIsMovable, false);
+    }
+}
+
+void ModelGraphicsScene::showDiagrams() {
+    QList<QGraphicsItem*>* dataDefinitions = getGraphicalModelDataDefinitions();
+    if (dataDefinitions->size() > 0) {
+        for (int i = 0; i < dataDefinitions->size(); i++) {
+            QGraphicsItem* itemData = dataDefinitions->at(i);
+            itemData->show();
+            itemData->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            itemData->setFlag(QGraphicsItem::ItemIsMovable, true);
+        }
+    }
 }
 
 void ModelGraphicsScene::setSnapToGrid(bool activated)
@@ -1557,6 +1671,9 @@ QList<GraphicalModelComponent*> *ModelGraphicsScene::getAllComponents() {
     return &_allGraphicalModelComponents;
 }
 
+QList<GraphicalModelDataDefinition*> *ModelGraphicsScene::getAllDataDefinitions() {
+    return &_allGraphicalModelDataDefinitions;
+}
 
 QList<GraphicalModelComponent*>* ModelGraphicsScene::graphicalModelComponentItems(){
     QList<GraphicalModelComponent*>* list = new QList<GraphicalModelComponent*>();

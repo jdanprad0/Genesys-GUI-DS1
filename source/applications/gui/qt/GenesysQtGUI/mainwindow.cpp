@@ -2895,11 +2895,20 @@ void MainWindow::on_actionModelCheck_triggered()
 	_actualizeActions();
 	_actualizeTabPanes();
 	if (res) {
-        if (ui->actionDiagrams->isChecked()) {
-            ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
-            scene->showDiagrams();
+        ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
+        if (!scene->existDiagram()){
+            scene->createDiagrams();
+            if (!ui->actionDiagrams->isChecked()) {
+                scene->hideDiagrams();
+            }
+        } else {
+            scene->destroyDiagram();
+            scene->createDiagrams();
+            if (!ui->actionDiagrams->isChecked()) {
+                scene->hideDiagrams();
+            }
         }
-    QMessageBox::information(this, "Model Check", "Model successfully checked.");
+        QMessageBox::information(this, "Model Check", "Model successfully checked.");
 
 	} else {
 		QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
@@ -3061,4 +3070,11 @@ void MainWindow::on_actionSelect_all_triggered()
 
 void MainWindow::on_actionDiagrams_triggered()
 {
+    ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
+    if (ui->actionDiagrams->isChecked()) {
+        int a = 0;
+        if (scene->existDiagram()) scene->showDiagrams();
+    } else {
+        scene->hideDiagrams();
+    }
 }

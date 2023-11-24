@@ -24,9 +24,10 @@ public:
 	QRectF boundingRect() const override;
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     ModelDataDefinition* getDataDefinition() const;
-    QPointF getOldPosition();
-    void setOldPosition(QPointF newPosition);
-    QColor getColor();
+    QPointF getOldPosition() const;
+    void setOldPosition(qreal x, qreal y);
+    QColor getColor() const;
+    void setColor(QColor newColor);
     qreal getHeight() const;
 
 protected:
