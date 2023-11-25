@@ -9,6 +9,9 @@ AnimationTimer::AnimationTimer(ModelGraphicsScene* myScene) : _myScene(myScene),
     setAcceptTouchEvents(true);
     setActive(true);
     setSelected(false);
+
+    if (_timeFormat == Util::TimeFormat(12))
+        _hours = 12;
 }
 
 void AnimationTimer::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {

@@ -40,7 +40,6 @@
 #include <QAction>
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalComponentPort.h"
-#include "TraitsGUI.h"
 #include "../../../../kernel/simulator/ModelComponent.h"
 #include "../../../../kernel/simulator/Simulator.h"
 #include "../../../../kernel/simulator/Plugin.h"
@@ -187,7 +186,8 @@ public:
     QList<QGraphicsItemGroup*>*getGraphicalGroups() const;
 
 public:
-    void animateTransition(ModelComponent *source, ModelComponent *destination, QString image = "default.png");
+    void animateTransition(ModelComponent *source, ModelComponent *destination, QString image);
+    void animateQueue(ModelComponent *component);
     void animateCounter();
     void animateVariable();
     void animateTimer(double time);

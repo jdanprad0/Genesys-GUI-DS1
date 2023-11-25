@@ -14,6 +14,8 @@
 #include <QBrush>
 #include "../../../../kernel/simulator/ModelComponent.h"
 #include "../../../../kernel/simulator/Plugin.h"
+#include "../../../../plugins/data/Queue.h"
+#include "graphicals/GraphicalImageAnimation.h"
 #include "GraphicalComponentPort.h"
 #include "GraphicalModelDataDefinition.h"
 #include "TraitsGUI.h"
@@ -85,6 +87,32 @@ private:
     EntityType* _entityType = nullptr;
     unsigned int _ocupiedInputPorts = 0;
     unsigned int _ocupiedOutputPorts = 0;
+
+private:
+    QString _animationImageName = "default.png";
+    // Map que mapeia o ponteiro da fila do componente para seu índice (caso tiver mais de uma) e tamanho (usado para animação)
+    QMap<Queue *, QPair<unsigned int, unsigned int>> *_mapQueue = new QMap<Queue *, QPair<unsigned int, unsigned int>>();
+    // Irá conter referência para as imagens usadas para mostrar a fila do componente
+    QList<QList<GraphicalImageAnimation *> *> *_imagesQueue = new QList<QList<GraphicalImageAnimation *> *>;
+    bool _hasQueue = false;
+
+public:
+    QString getAnimationImageName();
+    void setAnimationImageName(QString name);
+    QMap<Queue *, QPair<unsigned int, unsigned int>>* getMapQueue();
+    QList<QList<GraphicalImageAnimation *> *>* getImagesQueue();
+
+    void verifyQueue();
+    bool hasQueue();
+    static bool compareQueuesById(const Queue* a, const Queue* b);
+    unsigned int getIndexQueue(Queue *queue);
+    unsigned int getSizeQueue(Queue *queue);
+    void populateMapQueue(QList<Queue *> queues);
+    void insertImageQueue(Queue *queue, GraphicalImageAnimation *image);
+    QList<GraphicalImageAnimation *> *removeImageQueue(Queue *queue, unsigned int quantityRemoved);
+    void actualizeMapQueue(Queue *queue);
+    void visivibleImageQueue(bool visivible);
+    void clearQueues();
 };
 
 #endif /* MODELCOMPONENTGRAPHICITEM_H */

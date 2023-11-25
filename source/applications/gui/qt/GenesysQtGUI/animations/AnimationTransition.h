@@ -7,9 +7,9 @@
 #include <QVariantAnimation>
 #include <QElapsedTimer>
 
+#include "graphicals/GraphicalImageAnimation.h"
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalConnection.h"
-#include "graphicals/GraphicalImageAnimation.h"
 
 // Em segundos
 #define TEMPO_EXECUCAO_ANIMACAO 1
@@ -51,7 +51,12 @@ public:
     void connectValueChangedSignal();
     // Conecta o sinal finished da animação ao slot onAnimationFinished
     void connectFinishedSignal();
-    // Função a ser chamada ao término da execução da animação
+    // verifica se precisa adiconar animação de fila e adiciona se for o caso
+    void verifyAddAnimationQueue();
+    // verifica se precisa remover animação de fila e remove se for o caso
+    void verifyRemoveAnimationQueue();
+    // retorna a posição em que a animação da fila será desenhada
+    QPointF calculatePositionImageQueue(GraphicalModelComponent *component, unsigned int indexQueue, unsigned int sizeQueue, unsigned int width, unsigned int height);
 
 public slots:
     // Slot para ser conectado ao sinal valueChanged

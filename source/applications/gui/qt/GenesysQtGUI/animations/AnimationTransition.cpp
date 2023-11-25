@@ -1,5 +1,6 @@
 #include "AnimationTransition.h"
 #include "ModelGraphicsScene.h"
+#include "graphicals/GraphicalImageAnimation.h"
 
 // Inicializando variáveis estáticas
 int* AnimationTransition::_timeExecution = new int(TEMPO_EXECUCAO_ANIMACAO); // Define um valor inicial para o timeExecution
@@ -204,4 +205,85 @@ void AnimationTransition::connectFinishedSignal() {
 
 void AnimationTransition::onAnimationFinished() {
     _myScene->removeItem(_imageAnimation);
+}
+
+void AnimationTransition::verifyAddAnimationQueue() {
+    if (_graphicalEndComponent) {
+        if (_graphicalEndComponent->hasQueue()) {
+            QList<Queue *> queues = _graphicalEndComponent->getMapQueue()->keys();
+
+            for (Queue *queue : queues) {
+                unsigned int newQueueSize = (unsigned int) queue->size();
+                unsigned int oldQueueSize = _graphicalEndComponent->getSizeQueue(queue);
+                unsigned int indexQueue = _graphicalEndComponent->getIndexQueue(queue);
+
+                if (newQueueSize > oldQueueSize) {
+                    unsigned int width = 30;
+                    unsigned int height = 30;
+                    QString animationImageName = _graphicalEndComponent->getAnimationImageName();
+
+                    QPointF position = calculatePositionImageQueue(_graphicalEndComponent, indexQueue, newQueueSize, width, height);
+
+                    GraphicalImageAnimation *image = new GraphicalImageAnimation(position, width, height, animationImageName);
+
+                    _graphicalEndComponent->insertImageQueue(queue, image);
+                    _myScene->addItem(image);
+                    _myScene->update();
+                }
+            }
+        }
+    }
+}
+
+void AnimationTransition::verifyRemoveAnimationQueue() {
+    if (_graphicalStartComponent) {
+        if (_graphicalStartComponent->hasQueue()) {
+            QList<Queue *> queues = _graphicalStartComponent->getMapQueue()->keys();
+
+            for (Queue *queue : queues) {
+                unsigned int newQueueSize = (unsigned int) queue->size();
+                unsigned int oldQueueSize = _graphicalStartComponent->getSizeQueue(queue);
+
+                if (newQueueSize < oldQueueSize) {
+                    unsigned int quantityRemoved = oldQueueSize - newQueueSize;
+
+                    QList<GraphicalImageAnimation *> *imageRemoved = _graphicalStartComponent->removeImageQueue(queue, quantityRemoved);
+                    if (imageRemoved) {
+                        for (unsigned int i = 0; i < quantityRemoved; i++) {
+                            // pega a imagem a ser removida
+                            GraphicalImageAnimation *image = imageRemoved->at(i);
+
+                            // remove ela da cena
+                            _myScene->removeItem(image);
+                            // libera o espaço de memória dela
+                            delete image;
+                        }
+                        // atualiza a cena
+                        _myScene->update();
+
+                        // limpa a lista que foi retornada
+                        imageRemoved->clear();
+                        // libera o espaço de memória da lista
+                        delete imageRemoved;
+                    }
+                }
+            }
+        }
+    }
+}
+
+QPointF AnimationTransition::calculatePositionImageQueue(GraphicalModelComponent *component, unsigned int indexQueue, unsigned int sizeQueue, unsigned int width, unsigned int height) {
+    unsigned int multiplierX = sizeQueue;
+    unsigned int multiplierY = indexQueue + 1;
+    unsigned int spaceBetween = 2;
+
+    qreal gmcPosX = component->sceneBoundingRect().topRight().x();
+    qreal gmcPosY = component->sceneBoundingRect().topRight().y();
+
+    qreal calculatePositionX = gmcPosX - ((multiplierX * width) + ((multiplierX - 1) * spaceBetween));
+    qreal calculatePositionY = gmcPosY - ((height * multiplierY) + (multiplierY * spaceBetween));
+
+    QPointF position(calculatePositionX, calculatePositionY);
+
+    return position;
 }

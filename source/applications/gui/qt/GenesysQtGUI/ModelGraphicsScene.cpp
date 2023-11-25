@@ -48,6 +48,7 @@
 #include "dialogs/DialogSelectCounter.h"
 #include "dialogs/DialogSelectVariable.h"
 #include "dialogs/DialogTimerConfigure.h"
+#include "animations/AnimationQueue.h"
 
 ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent) : QGraphicsScene(x, y, width, height, parent) {
     // grid
@@ -451,7 +452,6 @@ void ModelGraphicsScene::clearConnectionsComponent(GraphicalModelComponent* gmc)
 
 // trata da remocao das conexoes de entrada de um componente
 void ModelGraphicsScene::clearInputConnectionsComponent(GraphicalModelComponent* graphicalComponent) {
-    GraphicalConnection *graphConn; // conexao grafica
     GraphicalModelComponent *source; // origiem da conexao
 
     // varre todas as portas de entrada do componente a ser removido
@@ -540,8 +540,23 @@ void ModelGraphicsScene::removeConnectionInModel(GraphicalConnection* graphicalC
 }
 
 void ModelGraphicsScene::clearPorts(GraphicalConnection* connection, GraphicalModelComponent *source, GraphicalModelComponent *destination) {
-    source->getGraphicalOutputPorts().at(connection->getSource()->channel.portNumber)->removeGraphicalConnection(connection);
-    destination->getGraphicalInputPorts().at(connection->getDestination()->channel.portNumber)->removeGraphicalConnection(connection);
+    if (!source->getGraphicalOutputPorts().empty()) {
+        GraphicalComponentPort *outputPort = source->getGraphicalOutputPorts().at(connection->getSource()->channel.portNumber);
+        if (outputPort) {
+            if (!outputPort->getConnections()->empty()) {
+                outputPort->removeGraphicalConnection(connection);
+            }
+        }
+    }
+
+    if (!destination->getGraphicalInputPorts().empty()) {
+        GraphicalComponentPort *inputPort = destination->getGraphicalInputPorts().at(connection->getDestination()->channel.portNumber);
+        if (inputPort) {
+            if (!inputPort->getConnections()->empty()) {
+                inputPort->removeGraphicalConnection(connection);
+            }
+        }
+    }
 }
 
 // trata da conexao dos componentes (necessario que ambos estejam no modelo)
@@ -656,6 +671,8 @@ void ModelGraphicsScene::saveDataDefinitions() {
     QList<GraphicalModelComponent*> *components = this->graphicalModelComponentItems();
 
     for (GraphicalModelComponent* component : *components) {
+        component->verifyQueue();
+
         if (component->getInternalData()->empty() || component->getAttachedData()->empty()) {
             std::map<std::string, ModelDataDefinition*>* internalsData = component->getComponent()->getInternalData();
             std::map<std::string, ModelDataDefinition*>* attachedData = component->getComponent()->getAttachedData();
@@ -895,6 +912,20 @@ void ModelGraphicsScene::animateTransition(ModelComponent *source, ModelComponen
     loop.exec();
 
     _animationsTransition->removeOne(animationTransition);
+}
+
+void ModelGraphicsScene::animateQueue(ModelComponent *component) {
+    // Cria a animação
+    AnimationQueue *animationQueue = new AnimationQueue(this, component);
+
+    // Verifica necessidade de adição de imagem na fila
+    animationQueue->verifyAddAnimationQueue();
+
+    // Verifica necessidade de remoção de imagem da fila
+    animationQueue->verifyRemoveAnimationQueue();
+
+    // Libera o espaço de memória alocado pela animação
+    delete animationQueue;
 }
 
 void ModelGraphicsScene::animateCounter() {
@@ -1546,7 +1577,7 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
             if (!(qAbs(oldPos.x() - myQPointF.x()) <= 1.5 && qAbs(oldPos.y() - myQPointF.y()) <= 1.5)) {
                 items.append(component);
                 oldPositions.append(component->getOldPosition());
-                newPositions.append(component->pos());
+                newPositions.append(component->scenePos());
             }
         } else if (group) {
             myQPointF = group->pos();
