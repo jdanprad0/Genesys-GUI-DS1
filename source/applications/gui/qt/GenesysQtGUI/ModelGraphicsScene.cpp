@@ -442,6 +442,7 @@ void ModelGraphicsScene::removeGraphicalModelDataDefinition(GraphicalModelDataDe
     removeItem(gmdd);
     getGraphicalModelComponents()->removeOne(gmdd);
     getAllDataDefinitions()->removeOne(gmdd);
+    delete(gmdd);
 }
 
 void ModelGraphicsScene::removeGraphicalDiagramConnection(GraphicalDiagramConnection* connection ) {
@@ -776,7 +777,6 @@ void ModelGraphicsScene::createDiagrams()
 
             QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
 
-            qreal y = component_pos.y();
             for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
                 GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
                 std::string name = gdd->getDataDefinition()->getName();
@@ -784,8 +784,8 @@ void ModelGraphicsScene::createDiagrams()
 
                     if (datadef_visited->contains(gdd)) {
                         qreal x = (gdd->x() + component_pos.x()) / 2;
-                        gdd->setPos(x, y_attached - 150);
-                        gdd->setOldPosition(x, y_attached - 150);
+                        gdd->setPos(x, y_attached -150);
+                        gdd->setOldPosition(x, y_attached -150);
 
                         //criar conexao
                         GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
@@ -883,12 +883,16 @@ void ModelGraphicsScene::actualizeDiagramArrows() {
 
             removeGraphicalDiagramConnection(itemConnection);
         }
+        if (!visibleDiagram()) hideDiagrams();
     }
-
 }
 
 bool ModelGraphicsScene::existDiagram() {
     return _diagram;
+}
+
+bool ModelGraphicsScene::visibleDiagram() {
+    return _visibleDiagram;
 }
 
 void ModelGraphicsScene::destroyDiagram() {
@@ -923,6 +927,7 @@ void ModelGraphicsScene::hideDiagrams() {
         QGraphicsItem* itemConnection = connections->at(i);
         itemConnection->hide();
     }
+    _visibleDiagram = false;
 }
 
 void ModelGraphicsScene::showDiagrams() {
@@ -942,6 +947,7 @@ void ModelGraphicsScene::showDiagrams() {
             itemConnection->show();
         }
     }
+    _visibleDiagram = true;
 }
 
 void ModelGraphicsScene::setSnapToGrid(bool activated)
@@ -1470,7 +1476,9 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
 
     snapItemsToGrid();
-    if (existDiagram()) actualizeDiagramArrows();
+    if (existDiagram()) {
+        actualizeDiagramArrows();
+    }
 
     QList<QGraphicsItem *> items;
     QList<QPointF> oldPositions;

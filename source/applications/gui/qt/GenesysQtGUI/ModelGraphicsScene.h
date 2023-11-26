@@ -126,6 +126,7 @@ public:
     void showDiagrams();
     void hideDiagrams();
     bool existDiagram();
+    bool visibleDiagram();
     void destroyDiagram();
     void createDiagrams();
     QUndoStack* getUndoStack();
@@ -203,6 +204,7 @@ private:
     QAction* _currentAction = nullptr;
     bool _drawing = false;
     bool _diagram = false;
+    bool _visibleDiagram = false;
     unsigned short _connectingStep = 0; //0:nothing, 1:waiting click on source or destination, 2: click on source, 3: click on destination
 	bool _controlIsPressed = false;
     bool _snapToGrid = false;

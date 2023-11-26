@@ -3075,6 +3075,6 @@ void MainWindow::on_actionDiagrams_triggered()
         int a = 0;
         if (scene->existDiagram()) scene->showDiagrams();
     } else {
-        scene->hideDiagrams();
+        if (scene->existDiagram()) scene->hideDiagrams();
     }
 }
