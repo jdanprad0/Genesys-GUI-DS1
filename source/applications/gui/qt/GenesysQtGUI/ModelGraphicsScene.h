@@ -40,6 +40,7 @@
 #include <QAction>
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalComponentPort.h"
+#include "graphicals/GraphicalDiagramConnection.h"
 #include "TraitsGUI.h"
 #include "../../../../kernel/simulator/ModelComponent.h"
 #include "../../../../kernel/simulator/Simulator.h"
@@ -80,6 +81,7 @@ public: // editing graphic model
     GraphicalModelComponent* addGraphicalModelComponent(Plugin* plugin, ModelComponent* component, QPointF position, QColor color = Qt::blue, bool notify = false);
     GraphicalConnection* addGraphicalConnection(GraphicalComponentPort* sourcePort, GraphicalComponentPort* destinationPort, unsigned int portSourceConnection, unsigned int portDestinationConnection, bool notify = false);
 	GraphicalModelDataDefinition* addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color = Qt::blue);
+    GraphicalDiagramConnection* addGraphicalDiagramConnection(QGraphicsItem* dataDefinition, QGraphicsItem* linkedTo, GraphicalDiagramConnection::ConnectionType type);
     void addDrawing(QPointF endPoint, bool moving, bool notify = false);
 	void addAnimation();
     void startTextEditing();
@@ -96,6 +98,7 @@ public: // editing graphic model
     void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify = false);
     void removeConnectionInModel(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source);
 	void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
+    void removeGraphicalDiagramConnection(GraphicalDiagramConnection* connection);
     void removeDrawing(QGraphicsItem * item, bool notify = false);
 	void removeAnimation();
     void removeGroup(QGraphicsItemGroup* group, bool notify = false);
@@ -119,6 +122,7 @@ public:
     GRID *grid();
     void showGrid();
     void snapItemsToGrid();
+    void actualizeDiagramArrows();
     void showDiagrams();
     void hideDiagrams();
     bool existDiagram();
@@ -142,6 +146,7 @@ public:
     void setAction(QAction* action);
     QList<GraphicalModelComponent*> *getAllComponents();
     QList<GraphicalModelDataDefinition*> *getAllDataDefinitions();
+    QList<GraphicalDiagramConnection*> *getAllGraphicalDiagramsConnections();
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> getListComponentsGroup();
     void insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup);
     void insertOldPositionItem(QGraphicsItem *item, QPointF position);
@@ -152,6 +157,7 @@ public:
 	QList<QGraphicsItem*>*getGraphicalDrawings() const;
 	QList<QGraphicsItem*>*getGraphicalAnimations() const;
 	QList<QGraphicsItem*>*getGraphicalEntities() const;
+    QList<QGraphicsItem*>*getGraphicalDiagramsConnections() const;
     QList<QGraphicsItemGroup*>*getGraphicalGroups() const;
 
 protected: // virtual functions
@@ -182,6 +188,7 @@ private:
     QList<GraphicalModelComponent*> _allGraphicalModelComponents;
     QList<GraphicalConnection*> _allGraphicalConnections;
     QList<GraphicalModelDataDefinition*> _allGraphicalModelDataDefinitions;
+    QList<GraphicalDiagramConnection*> _allGraphicalDiagramConnections;
     QUndoStack *_undoStack = nullptr;
     QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *> > _listComponentsGroup;
     QMap<QGraphicsItem *, QPointF> _oldPositionsItems;
@@ -206,6 +213,7 @@ private:
 	QList<QGraphicsItem*>* _graphicalModelComponents = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalModelDataDefinitions = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalConnections = new QList<QGraphicsItem*>();
+    QList<QGraphicsItem*>* _graphicalDiagramConnections = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalAssociations = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalDrawings = new QList<QGraphicsItem*>();
 	QList<QGraphicsItem*>* _graphicalAnimations = new QList<QGraphicsItem*>();
