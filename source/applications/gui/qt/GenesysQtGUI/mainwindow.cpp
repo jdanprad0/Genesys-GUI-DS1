@@ -1433,14 +1433,22 @@ void MainWindow::_onSimulationPausedHandler(SimulationEvent * re) {
 void MainWindow::_onSimulationResumeHandler(SimulationEvent * re) {
     _actualizeActions();
 
-    if (!myScene()->getAnimationPaused()->empty()) {
-        AnimationTransition *animationPaused = myScene()->getAnimationPaused()->value(re->getCurrentEvent());
+    if (myScene()->getAnimationPaused()) {
+        if (!myScene()->getAnimationPaused()->empty()) {
+            QList<AnimationTransition *> *animationPaused = myScene()->getAnimationPaused()->value(re->getCurrentEvent());
 
-        if (animationPaused) {
+            if (animationPaused) {
+                if (!animationPaused->empty()) {
+                    for (AnimationTransition *animation : *animationPaused) {
+                        myScene()->runAnimateTransition(animation, re->getCurrentEvent(), true);
+                    }
+                    animationPaused->clear();
+                }
+            }
             myScene()->getAnimationPaused()->clear();
-            myScene()->runAnimateTransition(animationPaused, re->getCurrentEvent(), true);
         }
     }
+
     QCoreApplication::processEvents();
 }
 
@@ -2991,6 +2999,7 @@ void MainWindow::on_actionModelOpen_triggered()
     // load Model (in the simulator)
     Model *model = this->_loadGraphicalModel(fileName.toStdString());
     if (model != nullptr) {
+        _loaded = true;
         _initUiForNewModel(model);
 
         QMessageBox::information(this, "Open Model", "Model successfully oppened");
@@ -3065,8 +3074,6 @@ void MainWindow::on_actionModelClose_triggered()
     // volto o botao de grid para "não clicado"
     ui->actionShowGrid->setChecked(false);
 
-    _clearModelEditors();
-
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
     ui->graphicsView->getScene()->clearAnimationsQueue();
@@ -3088,6 +3095,9 @@ void MainWindow::on_actionModelClose_triggered()
     simulator->getModels()->remove(simulator->getModels()->current());
 
     ui->actionActivateGraphicalSimulation->setChecked(false);
+
+    _clearModelEditors();
+
     _actualizeActions();
     _actualizeTabPanes();
     //QMessageBox::information(this, "Close Model", "Model successfully closed");
@@ -3110,8 +3120,10 @@ bool MainWindow::_check(bool success)
 {
     _insertCommandInConsole("check");
 
-    // reinsere os data definitions no modelo de componentes restaurados
-    myScene()->insertRestoredDataDefinitions();
+    // reinsere os data definitions no modelo de componentes restauradosapenas se não for um modelo previamente carregado que ja tem seus data definitions
+    myScene()->insertRestoredDataDefinitions(_loaded);
+
+    _loaded = false;
 
     // Ativa visualização de animação
     ui->actionActivateGraphicalSimulation->setChecked(true);

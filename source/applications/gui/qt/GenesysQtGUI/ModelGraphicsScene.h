@@ -103,7 +103,6 @@ public: // editing graphic model
     void insertComponent(GraphicalModelComponent* gmc, QList<GraphicalConnection *> *inputConnections, QList<GraphicalConnection *> *outputConnections, bool addGMC = true, bool addAllGMC = true, bool notify = false);
     void removeGraphicalConnection(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source, GraphicalModelComponent *destination, bool notify = false);
     void removeConnectionInModel(GraphicalConnection* graphicalConnection, GraphicalModelComponent *source);
-    void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
     void addGeometry(QPointF endPoint, bool moving);
     void addDrawing(QGraphicsItem * item, bool notify = false);
     bool addDrawingGeometry(QGraphicsItem * item);
@@ -159,7 +158,7 @@ public:
     QList<AnimationCounter *> *getAnimationsCounter();
     QList<AnimationVariable *> *getAnimationsVariable();
     QList<AnimationTimer *> *getAnimationsTimer();
-    QMap<Event *, AnimationTransition *> *getAnimationPaused();
+    QMap<Event *, QList<AnimationTransition *> *> *getAnimationPaused();
     bool checkIgnoreEvent();
     void clearAnimations();
     void clearAnimationsTransition();
@@ -176,7 +175,7 @@ public:
     void setVariables();
     // TODO: Funções abaixo são usadas para reaver os dataDefinitions do componente nos dataDefinitions do modelo dos componentes deletados, "checados" e reinseridos (Control Z de um delete, por exemplo).
     // O kernel não trata este caso, ale acusa erro, pois não encontra os dataDefinitions do componente nos dataDefinitions do modelo, pois ele os remove como "órfãos" e não os reinsere quando voltados ao modelo.
-    void insertRestoredDataDefinitions();
+    void insertRestoredDataDefinitions(bool loaded);
     void saveDataDefinitions();
     // --------------------------------- //
 
@@ -249,7 +248,7 @@ private:
     AnimationCounter *_currentCounter;
     AnimationVariable *_currentVariable;
     AnimationTimer *_currentTimer;
-    QMap<Event *, AnimationTransition *> *_animationPaused = new QMap<Event *, AnimationTransition *>();
+    QMap<Event *, QList<AnimationTransition *> *> *_animationPaused = new QMap<Event *, QList<AnimationTransition *> *>();
 
 private:
     QList<QString> *_imagesAnimation = new QList<QString>;

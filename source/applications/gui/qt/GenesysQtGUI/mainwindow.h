@@ -296,6 +296,7 @@ private:
     QUndoView *undoView = nullptr;
     bool _graphicalSimulation = false;
     bool _modelCheked = false;
+    bool _loaded = false;
 	//CodeEditor* textCodeEdit_Model;
 };
 #endif // MAINWINDOW_H

@@ -147,6 +147,14 @@ GraphicalModelComponent* ModelGraphicsScene::addGraphicalModelComponent(Plugin* 
     // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
     _allGraphicalModelComponents.append(graphComp);
 
+    // Seta o EntityType
+    SourceModelComponent *isSrc = dynamic_cast<SourceModelComponent *>(graphComp->getComponent());
+
+    if (isSrc) {
+        EntityType* entityType = isSrc->getEntityType();
+        graphComp->setEntityType(entityType);
+    }
+
     // cria um objeto para undo e redo do add
     // ele propriamente adiciona o objeto na tela
     QUndoCommand *addUndoCommand = new AddUndoCommand(graphComp, this);
@@ -705,7 +713,7 @@ void ModelGraphicsScene::saveDataDefinitions() {
     }
 }
 
-void ModelGraphicsScene::insertRestoredDataDefinitions() {
+void ModelGraphicsScene::insertRestoredDataDefinitions(bool loaded) {
     QList<GraphicalModelComponent*> *components = this->graphicalModelComponentItems();
     QList<GraphicalModelComponent*> *allComponentes = this->getAllComponents();
 
@@ -743,6 +751,11 @@ void ModelGraphicsScene::insertRestoredDataDefinitions() {
                 }
             }
         }
+    }
+
+    if (loaded) {
+        std::list<ModelDataDefinition*>* entityTypes = _simulator->getModels()->current()->getDataManager()->getDataDefinitionList(Util::TypeOf<EntityType>())->list();
+        entityTypes->clear();
     }
 }
 
@@ -926,8 +939,6 @@ void ModelGraphicsScene::runAnimateTransition(AnimationTransition *animationTran
         handleAnimationStateChanged(newState, &loop, event, animationTransition);
     });
 
-    _animationPaused->insert(event, animationTransition);
-
     // Aguarda a conclusão da animação sem bloquear o restante do código
     loop.exec();
 
@@ -936,7 +947,11 @@ void ModelGraphicsScene::runAnimateTransition(AnimationTransition *animationTran
 
 void ModelGraphicsScene::handleAnimationStateChanged(QAbstractAnimation::State newState, QEventLoop* loop, Event* event, AnimationTransition* animationTransition) {
     if (newState == QAbstractAnimation::Paused) {
-        _animationPaused->insert(event, animationTransition);
+        if (!_animationPaused->contains(event)) {
+            QList<AnimationTransition *> *newList = new  QList<AnimationTransition *>();
+            _animationPaused->insert(event, newList);
+        }
+        _animationPaused->value(event)->append(animationTransition);
         if (loop) loop->quit();
     }
 }
@@ -1051,12 +1066,10 @@ void ModelGraphicsScene::clearAnimationsTimer() {
 
 void ModelGraphicsScene::clearAnimationsQueue() {
     // Limpa as animações de fila dos componentes
-    QList<QGraphicsItem *> *componentes = getGraphicalModelComponents();
+    QList<GraphicalModelComponent *> *componentes = getAllComponents();
 
-    for (QGraphicsItem* item : *componentes) {
-        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *>(item)) {
-            component->clearQueues();
-        }
+    for (GraphicalModelComponent* componente : *componentes) {
+        componente->clearQueues();
     }
 }
 
@@ -1483,10 +1496,12 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 //-------------------------
 
 bool ModelGraphicsScene::checkIgnoreEvent() {
-    if (_simulator->getModels()->current()->getSimulation()->isRunning()) {
-        return true;
-    } else {
-        return false;
+    if (_simulator->getModels()->current()->getSimulation()) {
+        if (_simulator->getModels()->current()->getSimulation()->isRunning()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
@@ -2129,7 +2144,7 @@ QList<AnimationTimer *> *ModelGraphicsScene::getAnimationsTimer() {
     return _animationsTimer;
 }
 
-QMap<Event *, AnimationTransition *>* ModelGraphicsScene::getAnimationPaused() {
+QMap<Event *, QList<AnimationTransition *> *>* ModelGraphicsScene::getAnimationPaused() {
     return _animationPaused;
 }
 
