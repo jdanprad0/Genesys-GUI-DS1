@@ -2152,7 +2152,6 @@ void ModelGraphicsScene::finishAnimationDrawing(QGraphicsSceneMouseEvent *mouseE
                 removeItem(_currentCounter);
                 _currentCounter->stopDrawing(mouseEvent);
                 addItem(_currentCounter);
-                _animationsCounter->append(_currentCounter);
                 animatedItem = _currentCounter;
                 _currentCounter = nullptr;
             }
@@ -2165,7 +2164,6 @@ void ModelGraphicsScene::finishAnimationDrawing(QGraphicsSceneMouseEvent *mouseE
                 removeItem(_currentVariable);
                 _currentVariable->stopDrawing(mouseEvent);
                 addItem(_currentVariable);
-                _animationsVariable->append(_currentVariable);
                 animatedItem = _currentVariable;
                 _currentVariable = nullptr;
             }
@@ -2178,7 +2176,6 @@ void ModelGraphicsScene::finishAnimationDrawing(QGraphicsSceneMouseEvent *mouseE
                 removeItem(_currentTimer);
                 _currentTimer->stopDrawing(mouseEvent);
                 addItem(_currentTimer);
-                _animationsTimer->append(_currentTimer);
                 animatedItem = _currentTimer;
                 _currentTimer = nullptr;
             }

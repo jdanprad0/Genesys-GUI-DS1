@@ -22,6 +22,7 @@ public:
     // Setters
     void setValue(double value);
     void setVariable(Variable *variable);
+    void setIdVariable(int id);
 
     // Outros
     void startDrawing(QGraphicsSceneMouseEvent *event); // Inicia o desenho da tela
@@ -38,6 +39,7 @@ private:
     bool _isDrawingInicialized = false;
     bool _isDrawingFinalized = false;
     Variable *_variable = nullptr;
+    int _idVariable = -1;
 };
 
 #endif // ANIMATIONVARIABLE_H

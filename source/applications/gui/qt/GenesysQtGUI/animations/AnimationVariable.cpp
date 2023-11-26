@@ -62,6 +62,10 @@ void AnimationVariable::setValue(double value) {
     update();
 }
 
+void AnimationVariable::setIdVariable(int id) {
+    _idVariable = id;
+}
+
 void AnimationVariable::setVariable(Variable *variable){
     _variable = variable;
 }

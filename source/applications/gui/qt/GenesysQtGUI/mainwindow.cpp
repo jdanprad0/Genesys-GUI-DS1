@@ -222,7 +222,7 @@ bool MainWindow::_saveGraphicalModel(QString filename)
         out << "#Genegys Graphic Model" << Qt::endl;
         QString line = "0\tView\t";
         line += "zoom=" + QString::number(ui->horizontalSlider_ZoomGraphical->value());
-        line += ", grid=10, rule=0, snap=0, viewpoint=(0,0)";
+        line += ", grid=" + QString::number(ui->actionShowGrid->isChecked()) + ", rule=0, snap="+ QString::number(ui->actionShowGrid->isChecked()) + ", viewpoint=(0,0)";
         out << line << Qt::endl;
 
         ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->getScene());
@@ -234,10 +234,88 @@ bool MainWindow::_saveGraphicalModel(QString filename)
                 GraphicalModelComponent *gmc = (GraphicalModelComponent *)item;
                 if (gmc)
                 {
-                    line = QString::fromStdString(std::to_string(gmc->getComponent()->getId()) + "\t" + gmc->getComponent()->getClassname() + "\t" + gmc->getComponent()->getName() + "\t" + "color=" + gmc->getColor().name().toStdString() + "\t" + "position=(" + std::to_string(gmc->scenePos().x()) + "," + std::to_string(gmc->scenePos().y()) + ")");
+                    line = QString::fromStdString(std::to_string(gmc->getComponent()->getId()) + "\t" + gmc->getComponent()->getClassname() + "\t" + gmc->getComponent()->getName() + "\t" + "color=" + gmc->getColor().name().toStdString() + "\t" + "position=(" + std::to_string(gmc->scenePos().x()) + "," + std::to_string(gmc->scenePos().y() + gmc->getHeight()/2) + ")");
                     out << line << Qt::endl;
                 }
             }
+
+            QList<AnimationCounter *> *counters = myScene()->getAnimationsCounter();
+
+            if (counters) {
+                if (!counters->empty()) {
+                    out << Qt::endl;
+                    out << "#Counters" << Qt::endl;
+                    int id = 0;
+                    for (AnimationCounter *counter : *counters) {
+                        int idCounter = -1;
+                        if (counter->getCounter() != nullptr) {
+                            idCounter = counter->getCounter()->getId();
+                        }
+                        line = QString("Counter_%1 \t id=%2 \t position=(%3,%4) \t width=%5 \t height=%6")
+                                   .arg(id)
+                                   .arg(idCounter)
+                                   .arg(counter->scenePos().x(), 0, 'f', 2)
+                                   .arg(counter->scenePos().y(), 0, 'f', 2)
+                                   .arg(counter->boundingRect().width(), 0, 'f', 2)
+                                   .arg(counter->boundingRect().height(), 0, 'f', 2);
+
+                        out << line << Qt::endl;
+                        id++;
+                    }
+                }
+            }
+
+            QList<AnimationVariable *> *variables = myScene()->getAnimationsVariable();
+
+            if (variables) {
+                if (!variables->empty()) {
+                    out << Qt::endl;
+                    out << "#Variables" << Qt::endl;
+                    int id = 0;
+                    for (AnimationVariable *variable : *variables) {
+                        int idVariable = -1;
+                        if (variable->getVariable() != nullptr) {
+                            idVariable = variable->getVariable()->getId();
+                        }
+                        line = QString("Variable_%1 \t id=%2 \t position=(%3,%4) \t width=%5 \t height=%6")
+                                   .arg(id)
+                                   .arg(idVariable)
+                                   .arg(variable->scenePos().x(), 0, 'f', 2)
+                                   .arg(variable->scenePos().y(), 0, 'f', 2)
+                                   .arg(variable->boundingRect().width(), 0, 'f', 2)
+                                   .arg(variable->boundingRect().height(), 0, 'f', 2);
+
+                        out << line << Qt::endl;
+                        id++;
+                    }
+                }
+            }
+
+            QList<AnimationTimer *> *timers = myScene()->getAnimationsTimer();
+
+            if (timers) {
+                if (!timers->empty()) {
+                    out << Qt::endl;
+                    out << "#Timers" << Qt::endl;
+                    int id = 0;
+                    for (AnimationTimer *timer : *timers) {
+                        line = QString("Timer_%1 \t hour=%2 \t minute=%3 \t second=%4 \t format=%5 \t position=(%6,%7) \t width=%8 \t height=%9")
+                                   .arg(id)
+                                   .arg(timer->getInitialHours())
+                                   .arg(timer->getInitialMinutes())
+                                   .arg(timer->getInitialSeconds())
+                                   .arg(static_cast<unsigned int>(timer->getTimeFormat()))
+                                   .arg(timer->scenePos().x(), 0, 'f', 2)
+                                   .arg(timer->scenePos().y(), 0, 'f', 2)
+                                   .arg(timer->boundingRect().width(), 0, 'f', 2)
+                                   .arg(timer->boundingRect().height(), 0, 'f', 2);
+
+                        out << line << Qt::endl;
+                        id++;
+                    }
+                }
+            }
+
             /*/Lines
             out << "LINE" << Qt::endl;
             for (QGraphicsItem *item : *ui->graphicsView->getScene()->getGraphicalModelComponents())
@@ -292,17 +370,65 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
 
     QStringList simulLang;
     QStringList gui;
+    QStringList counters;
+    QStringList variables;
+    QStringList timers;
 
     bool guiFlag = false;
+    bool counterFlag = false;
+    bool variableFlag = false;
+    bool timerFlag = false;
 
     for (const QString &line : lines) {
         if (line.startsWith("#Genegys Graphic Model")) {
             guiFlag = true;
+
+            counterFlag = false;
+            variableFlag = false;
+            timerFlag = false;
             continue;
         }
 
-        if (!guiFlag) simulLang.append(line);
-        else gui.append(line);
+        if (line.startsWith("#Counters")) {
+            counterFlag = true;
+
+            guiFlag = false;
+            variableFlag = false;
+            timerFlag = false;
+            continue;
+        }
+
+        if (line.startsWith("#Variables")) {
+            variableFlag = true;
+
+            guiFlag = false;
+            counterFlag = false;
+            timerFlag = false;
+            continue;
+        }
+
+        if (line.startsWith("#Timers")) {
+            timerFlag = true;
+
+            guiFlag = false;
+            counterFlag = false;
+            variableFlag = false;
+            continue;
+        }
+
+        if (!guiFlag && !timerFlag && !counterFlag && !variableFlag) {
+            simulLang.append(line);
+        } else {
+            if (counterFlag) {
+                counters.append(line);
+            } else if (variableFlag) {
+                variables.append(line);
+            } else if (timerFlag) {
+                timers.append(line);
+            } else {
+                gui.append(line);
+            }
+        }
     }
 
     file.close();
@@ -341,6 +467,34 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
             }
 
             if (firstLine) {
+                QRegularExpression regex("(\\d+)\\s*View\\s*zoom=(\\d+),\\s*grid=(\\d+),\\s*rule=(\\d+),\\s*snap=(\\d+),\\s*viewpoint=\\(([^,]+),([^\\)]+)\\)");
+                QRegularExpressionMatch match = regex.match(line);
+
+                if (match.hasMatch()) {
+                    int index = match.captured(1).toInt();
+                    int zoom = match.captured(2).toInt();
+                    int grid = match.captured(3).toInt();
+                    int rule = match.captured(4).toInt();
+                    int snap = match.captured(5).toInt();
+                    qreal viewpointX = match.captured(6).toDouble();
+                    qreal viewpointY = match.captured(7).toDouble();
+
+                    if (grid) {
+                        ui->actionShowGrid->setChecked(true);
+                        myScene()->showGrid();
+                    }
+
+                    if (snap) {
+                        ui->actionShowSnap->setChecked(true);
+                        myScene()->setSnapToGrid(true);
+                    }
+
+                    ui->horizontalSlider_ZoomGraphical->setValue(zoom + TraitsGUI<GMainWindow>::zoomButtonChange);
+                    double factor = ((double) zoom / 100.0)*(2 - 0.5) + 0.5;
+                    double scaleFactor = 1.0;
+                    scaleFactor *= factor;
+                    //ui->label_ModelGraphic->resize(scaleFactor * ui->label_ModelGraphic->pixmap()->size());
+                }
                 firstLine = false;
                 continue;
             }
@@ -428,6 +582,118 @@ Model *MainWindow::_loadGraphicalModel(std::string filename) {
                 GraphicalComponentPort* destport = destination->getGraphicalInputPorts().at(portDestination);
 
                 ui->graphicsView->getScene()->addGraphicalConnection(sourceport, destport, portSource, portDestination);
+            }
+        }
+
+
+        if (!counters.empty()) {
+            QRegularExpression regex("Counter_(\\d+) \\t id=(-?\\d+) \\t position=\\(([^,]+),([^\\)]+)\\) \\t width=([^\\t]+) \\t height=([^\\t]+)");
+
+            for (const QString& line : counters) {
+                if (line.trimmed().isEmpty()) {
+                    continue;
+                }
+
+                AnimationCounter *counter = new AnimationCounter();
+
+                QRegularExpressionMatch match = regex.match(line);
+
+                if (match.hasMatch()) {
+                    int id = match.captured(2).toInt();
+                    qreal posX = match.captured(3).toDouble();
+                    qreal posY = match.captured(4).toDouble();
+                    int width = match.captured(5).toDouble();
+                    int height = match.captured(6).toDouble();
+
+                    counter->setIdCounter(id);
+
+                    QRectF newRect = QRectF(0, 0, width, height);
+                    counter->setRect(newRect.normalized());
+                    counter->setPos(QPointF(posX, posY));
+
+                    myScene()->getAnimationsCounter()->append(counter);
+
+                    myScene()->addItem(counter);
+                } else {
+                    delete counter;
+                }
+            }
+        }
+
+        if (!variables.empty()) {
+            QRegularExpression regex("Variable_(\\d+) \\t id=(-?\\d+) \\t position=\\(([^,]+),([^\\)]+)\\) \\t width=([^\\t]+) \\t height=([^\\t]+)");
+
+            for (const QString& line : variables) {
+                if (line.trimmed().isEmpty()) {
+                    continue;
+                }
+
+                AnimationVariable *variable = new AnimationVariable();
+
+                QRegularExpressionMatch match = regex.match(line);
+
+                if (match.hasMatch()) {
+                    int id = match.captured(2).toInt();
+                    qreal posX = match.captured(3).toDouble();
+                    qreal posY = match.captured(4).toDouble();
+                    int width = match.captured(5).toDouble();
+                    int height = match.captured(6).toDouble();
+
+                    variable->setIdVariable(id);
+
+                    QRectF newRect = QRectF(0, 0, width, height);
+                    variable->setRect(newRect.normalized());
+                    variable->setPos(QPointF(posX, posY));
+
+                    myScene()->getAnimationsVariable()->append(variable);
+
+                    myScene()->addItem(variable);
+                } else {
+                    delete variable;
+                }
+            }
+        }
+
+        if (!timers.empty()) {
+            QRegularExpression regex("Timer_(\\d+) \\s* hour=(\\d+) \\s* minute=(\\d+) \\s* second=(\\d+) \\s* format=(\\d+) \\s* position=\\(([^,]+),([^\\)]+)\\) \\s* width=([^\\t]+) \\s* height=([^\\t]+)");
+
+            for (const QString& line : timers) {
+                if (line.trimmed().isEmpty()) {
+                    continue;
+                }
+
+                AnimationTimer *timer = new AnimationTimer(myScene());
+
+                QRegularExpressionMatch match = regex.match(line);
+
+                if (match.hasMatch()) {
+                    int hour = match.captured(2).toInt();
+                    int minute = match.captured(3).toInt();
+                    int second = match.captured(4).toInt();
+                    int format = match.captured(5).toInt();
+                    qreal posX = match.captured(6).toDouble();
+                    qreal posY = match.captured(7).toDouble();
+                    int width = match.captured(8).toDouble();
+                    int height = match.captured(9).toDouble();
+
+                    timer->setInitialHours(hour);
+                    timer->setInitialMinutes(minute);
+                    timer->setInitialSeconds(second);
+                    timer->setTimeFormat(Util::TimeFormat(format));
+
+                    timer->setTime(0.0);
+
+                    QRectF newRect = QRectF(0, 0, width, height);
+                    timer->setRect(newRect.normalized());
+                    timer->setPos(QPointF(posX, posY));
+
+                    myScene()->getAnimationsTimer()->append(timer);
+
+                    myScene()->addItem(timer);
+
+                } else {
+                    delete timer;
+                }
             }
         }
 

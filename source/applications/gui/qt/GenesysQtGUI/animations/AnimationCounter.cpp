@@ -71,6 +71,10 @@ void AnimationCounter::setCounter(Counter *counter){
     _counter = counter;
 }
 
+void AnimationCounter::setIdCounter(int id) {
+    _idCounter = id;
+}
+
 void AnimationCounter::startDrawing(QGraphicsSceneMouseEvent *event) {
     _isResizing = true;
     _startPoint = event->scenePos();

@@ -22,6 +22,7 @@ public:
     // Setters
     void setValue(double value);
     void setCounter(Counter *myCounter);
+    void setIdCounter(int id);
 
     // Outros
     void startDrawing(QGraphicsSceneMouseEvent *event); // Inicia o desenho da tela
@@ -38,6 +39,7 @@ private:
     bool _isDrawingInicialized = false;
     bool _isDrawingFinalized = false;
     Counter *_counter = nullptr;
+    int _idCounter = -1;
 };
 
 #endif // ANIMATIONCOUNTER_H
