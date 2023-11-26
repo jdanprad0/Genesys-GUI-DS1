@@ -17,7 +17,7 @@ GraphicalModelComponent* AnimationQueue::getGraphicalComponent() const {
     return _graphicalComponent;
 }
 
-// Verifica a necessidade de adicionar imagem na fila
+// Verifica a necessidade de adicionar imagem na fila com base no tamanho da fila do componente
 void AnimationQueue::verifyAddAnimationQueue(bool visivible) {
     if (_graphicalComponent) {
         if (_graphicalComponent->hasQueue()) {
@@ -41,9 +41,13 @@ void AnimationQueue::verifyAddAnimationQueue(bool visivible) {
 
                         GraphicalImageAnimation *image = new GraphicalImageAnimation(position, width, height, animationImageName);
 
-                        _graphicalComponent->insertImageQueue(queue, image);
-                        _myScene->addItem(image);
-                        image->setVisible(visivible);
+                        bool res = _graphicalComponent->insertImageQueue(queue, image);
+
+                        if (res) {
+                            _myScene->addItem(image);
+                            image->setVisible(visivible);
+                        }
+
                         _myScene->update();
                     }
                 }
@@ -52,7 +56,7 @@ void AnimationQueue::verifyAddAnimationQueue(bool visivible) {
     }
 }
 
-// Verifica a necessidade de remover imagem da fila
+// Verifica a necessidade de remover imagem da fila com base no tamanho da fila do componente
 void AnimationQueue::verifyRemoveAnimationQueue() {
     if (_graphicalComponent) {
         if (_graphicalComponent->hasQueue()) {
@@ -67,12 +71,13 @@ void AnimationQueue::verifyRemoveAnimationQueue() {
 
                     QList<GraphicalImageAnimation *> *imageRemoved = _graphicalComponent->removeImageQueue(queue, quantityRemoved);
                     if (imageRemoved) {
-                        for (unsigned int i = 0; i < quantityRemoved; i++) {
+                        for (unsigned int i = 0; i < (unsigned int) imageRemoved->size(); i++) {
                             // pega a imagem a ser removida
                             GraphicalImageAnimation *image = imageRemoved->at(i);
 
                             // remove ela da cena
                             _myScene->removeItem(image);
+
                             // libera o espaço de memória dela
                             delete image;
                         }
@@ -81,6 +86,7 @@ void AnimationQueue::verifyRemoveAnimationQueue() {
 
                         // limpa a lista que foi retornada
                         imageRemoved->clear();
+
                         // libera o espaço de memória da lista
                         delete imageRemoved;
                     }
@@ -104,9 +110,13 @@ void AnimationQueue::addAnimationQueue(bool visivible) {
 
             GraphicalImageAnimation *image = new GraphicalImageAnimation(position, width, height, animationImageName);
 
-            _graphicalComponent->insertImageQueue(image);
-            _myScene->addItem(image);
-            image->setVisible(visivible);
+            bool res = _graphicalComponent->insertImageQueue(image);
+
+            if (res) {
+                _myScene->addItem(image);
+                image->setVisible(visivible);
+            }
+
             _myScene->update();
         }
     }
@@ -120,16 +130,20 @@ void AnimationQueue::removeAnimationQueue() {
             unsigned int images = 1;
 
             if (_graphicalComponent->getComponent()->getClassname() == "Batch") {
-                images = (unsigned int) _graphicalComponent->getImagesQueue()->at(0)->size();
+                if (!_graphicalComponent->getImagesQueue()->empty())
+                    images = (unsigned int) _graphicalComponent->getImagesQueue()->at(0)->size();
             }
 
             for (unsigned int i = 0; i < images; i++) {
                 GraphicalImageAnimation *imageRemoved = _graphicalComponent->removeImageQueue();
+
                 if (imageRemoved) {
                     _myScene->removeItem(imageRemoved);
+
                     delete imageRemoved;
-                    _myScene->update();
                 }
+
+                _myScene->update();
             }
         }
     }

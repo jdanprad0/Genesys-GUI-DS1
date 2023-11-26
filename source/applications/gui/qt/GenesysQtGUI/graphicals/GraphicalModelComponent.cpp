@@ -439,50 +439,71 @@ void GraphicalModelComponent::populateMapQueue(QList<Queue *> queues) {
     }
 }
 
-void GraphicalModelComponent::insertImageQueue(Queue *queue, GraphicalImageAnimation *image) {
-    QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(getIndexQueue(queue));
-    imagesList->append(image);
-    actualizeMapQueue(queue);
+bool GraphicalModelComponent::insertImageQueue(Queue *queue, GraphicalImageAnimation *image) {
+    if ((unsigned int) _imagesQueue->size() == getIndexQueue(queue) + 1) {
+        QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(getIndexQueue(queue));
+        imagesList->append(image);
+        actualizeMapQueue(queue);
+
+        return true;
+    }
+
+    return false;
 }
 
-void GraphicalModelComponent::insertImageQueue(GraphicalImageAnimation *image) {
-    QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(0);
-    imagesList->append(image);
+bool GraphicalModelComponent::insertImageQueue(GraphicalImageAnimation *image) {
+    if (!_imagesQueue->empty()) {
+        QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(0);
+        imagesList->append(image);
+        return true;
+    }
+    return false;
 }
 
 QList<GraphicalImageAnimation *>* GraphicalModelComponent::removeImageQueue(Queue *queue, unsigned int quantityRemoved) {
-    QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(getIndexQueue(queue));
+    if ((unsigned int) _imagesQueue->size() == getIndexQueue(queue) + 1) {
+        QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(getIndexQueue(queue));
 
-    QList<GraphicalImageAnimation *> *imagesRemoved = new QList<GraphicalImageAnimation *>();
+        if (imagesList) {
+            if (!imagesList->empty()) {
+                QList<GraphicalImageAnimation *> *imagesRemoved = new QList<GraphicalImageAnimation *>();
 
-    for (unsigned int i = 0; i < quantityRemoved; i++) {
-        imagesRemoved->append(imagesList->last());
-        imagesList->removeLast();
+                if (quantityRemoved > (unsigned int) imagesList->size()) {
+                    quantityRemoved = imagesList->size();
+                }
+
+                for (unsigned int i = 0; i < quantityRemoved; i++) {
+                    imagesRemoved->append(imagesList->last());
+                    imagesList->removeLast();
+                }
+
+                actualizeMapQueue(queue);
+
+                if (!imagesRemoved->empty())
+                    return imagesRemoved;
+            }
+        }
     }
-
-    actualizeMapQueue(queue);
-
-    if (!imagesRemoved->empty())
-        return imagesRemoved;
-    else
-        return nullptr;
+    return nullptr;
 }
 
 GraphicalImageAnimation* GraphicalModelComponent::removeImageQueue() {
-    QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(0);
+    if (!_imagesQueue->empty()) {
+        QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(0);
 
-    if (imagesList) {
-        if (!imagesList->empty()) {
-            GraphicalImageAnimation* imageRemoved = imagesList->last();
+        if (imagesList) {
+            if (!imagesList->empty()) {
+                GraphicalImageAnimation* imageRemoved = imagesList->last();
 
-            if (imageRemoved) {
-                imagesList->removeLast();
-                return imageRemoved;
+                if (imageRemoved) {
+                    imagesList->removeLast();
+                    return imageRemoved;
+                }
             }
-            else
-                return nullptr;
         }
     }
+
+    return nullptr;
 }
 
 void GraphicalModelComponent::actualizeMapQueue(Queue *queue) {

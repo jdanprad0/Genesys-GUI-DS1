@@ -1258,6 +1258,7 @@ QMap<QGraphicsItemGroup *, QList<GraphicalModelComponent *>> ModelGraphicsScene:
 }
 
 void ModelGraphicsScene::clearAnimations() {
+    this->clearAnimationsQueue();
     this->clearAnimationsTransition();
     this->clearAnimationsCounter();
     this->clearAnimationsVariable();
@@ -1276,28 +1277,43 @@ void ModelGraphicsScene::clearAnimationsTransition() {
 
 void ModelGraphicsScene::clearAnimationsCounter() {
     // Limpa lista de animações de contadores
-    if (_animationsCounter) {
+    if (_animationsCounter)
         _animationsCounter->clear();
+
+    if (_counters)
         _counters->clear();
-    }
+
     _currentCounter = nullptr;
 }
 
 void ModelGraphicsScene::clearAnimationsVariable() {
     // Limpa lista de animações de variáveis
-    if (_animationsVariable) {
+    if (_animationsVariable)
         _animationsVariable->clear();
+
+    if (_variables)
         _variables->clear();
-    }
+
     _currentVariable = nullptr;
 }
 
 void ModelGraphicsScene::clearAnimationsTimer() {
     // Limpa lista de animações de tempo
-    if (_animationsTimer) {
+    if (_animationsTimer)
         _animationsTimer->clear();
-    }
+
     _currentTimer = nullptr;
+}
+
+void ModelGraphicsScene::clearAnimationsQueue() {
+    // Limpa as animações de fila dos componentes
+    QList<QGraphicsItem *> *componentes = getGraphicalModelComponents();
+
+    for (QGraphicsItem* item : *componentes) {
+        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *>(item)) {
+            component->clearQueues();
+        }
+    }
 }
 
 void ModelGraphicsScene::insertComponentGroup(QGraphicsItemGroup *group, QList<GraphicalModelComponent *> componentsGroup) {
@@ -1414,7 +1430,7 @@ void ModelGraphicsScene::groupComponents(bool notify) {
     }
 }
 
-void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group, bool deleteUndo) {
+void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *graphicalComponents,  QGraphicsItemGroup *group) {
     // cria um grupo auxiliar
     QGraphicsItemGroup *newGroup = new QGraphicsItemGroup();
 
@@ -1426,22 +1442,7 @@ void ModelGraphicsScene::groupModelComponents(QList<GraphicalModelComponent *> *
     for (int i = 0; i < graphicalComponents->size(); i++) {
         if (ModelComponent *component = dynamic_cast<ModelComponent *>(graphicalComponents->at(i)->getComponent())) {
             newGroup->addToGroup(graphicalComponents->at(i));
-
-            qreal x1 = graphicalComponents->at(i)->pos().x();
-            qreal x2 = graphicalComponents->at(i)->pos().y();
-
-            if ((x1 == 0 || x2 == 0) && deleteUndo == false) {
-                int a = 1;
-            }
         }
-
-        qreal x1 = graphicalComponents->at(i)->pos().x();
-        qreal x2 = graphicalComponents->at(i)->pos().y();
-
-        if ((x1 == 0 || x2 == 0) && deleteUndo == false) {
-            int a = 1;
-        }
-
     }
 
     // pega as coordenadas do retangulo do grupo
@@ -1737,7 +1738,19 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 // PROTECTED VIRTUAL FUNCTIONS
 //-------------------------
 
+bool ModelGraphicsScene::checkIgnoreEvent() {
+    if (_simulator->getModels()->current()->getSimulation()->isRunning()) {
+        return true;
+    } else {
+        return false;
+    }
+}
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
+    if (checkIgnoreEvent()) {
+        mouseEvent->ignore();
+        return;
+    }
+
     QGraphicsScene::mousePressEvent(mouseEvent);
 
     if (mouseEvent->button() == Qt::LeftButton) {
@@ -1845,6 +1858,11 @@ void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
 }
 
 void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent) {
+    if (checkIgnoreEvent()) {
+        mouseEvent->ignore();
+        return;
+    }
+
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
 
     snapItemsToGrid();
@@ -1934,6 +1952,11 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
 }
 
 void ModelGraphicsScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *mouseEvent) {
+    if (checkIgnoreEvent()) {
+        mouseEvent->ignore();
+        return;
+    }
+
     QGraphicsScene::mouseDoubleClickEvent(mouseEvent);
 
     QGraphicsItem* item = this->itemAt(mouseEvent->scenePos(), QTransform());
@@ -2159,6 +2182,11 @@ void ModelGraphicsScene::finishAnimationDrawing(QGraphicsSceneMouseEvent *mouseE
     }
 }
 void ModelGraphicsScene::mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent) {
+    if (checkIgnoreEvent()) {
+        mouseEvent->ignore();
+        return;
+    }
+
     QGraphicsScene::mouseMoveEvent(mouseEvent);
 
     ((ModelGraphicsView *) (this->parent()))->notifySceneMouseEventHandler(mouseEvent); // to show coords
@@ -2221,6 +2249,11 @@ void ModelGraphicsScene::focusOutEvent(QFocusEvent *focusEvent) {
 }
 
 void ModelGraphicsScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
+    if (checkIgnoreEvent()) {
+        event->ignore();
+        return;
+    }
+
     QGraphicsScene::dropEvent(event);
     if (this->_objectBeingDragged != nullptr) {
         QTreeWidgetItem*    treeItem = /*dynamic_cast<QTreeWidgetItem*>*/(_objectBeingDragged);
@@ -2414,11 +2447,11 @@ GraphicalModelComponent* ModelGraphicsScene::findGraphicalModelComponent(Util::i
 
 void ModelGraphicsScene::clearAnimationsValues() {
     for (AnimationCounter* counter : *_animationsCounter) {
-        counter->setValue(0);
+        counter->setValue(0.0);
     }
 
     for (AnimationVariable* variable : *_animationsVariable) {
-        variable->setValue(0);
+        variable->setValue(0.0);
     }
 
     for (AnimationTimer* timer : *_animationsTimer) {

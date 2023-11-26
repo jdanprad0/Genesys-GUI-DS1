@@ -108,9 +108,9 @@ public:
     unsigned int getIndexQueue(Queue *queue);
     unsigned int getSizeQueue(Queue *queue);
     void populateMapQueue(QList<Queue *> queues);
-    void insertImageQueue(Queue *queue, GraphicalImageAnimation *image);
+    bool insertImageQueue(Queue *queue, GraphicalImageAnimation *image);
     QList<GraphicalImageAnimation *> *removeImageQueue(Queue *queue, unsigned int quantityRemoved);
-    void insertImageQueue(GraphicalImageAnimation *image);
+    bool insertImageQueue(GraphicalImageAnimation *image);
     GraphicalImageAnimation *removeImageQueue();
     void actualizeMapQueue(Queue *queue);
     void visivibleImageQueue(bool visivible);

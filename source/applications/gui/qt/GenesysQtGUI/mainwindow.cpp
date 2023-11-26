@@ -535,50 +535,60 @@ void MainWindow::_actualizeActions() {
     ui->graphicsView->setEnabled(opened);
     ui->tabWidgetCentral->setEnabled(opened);
     // model
+    ui->menuModel->setEnabled(!running);
+    ui->actionModelNew->setEnabled(!running);
     ui->actionModelSave->setEnabled(opened && !running);
     ui->actionModelOpen->setEnabled(!running);
     ui->actionModelClose->setEnabled(opened && !running);
     ui->actionModelInformation->setEnabled(opened);
     ui->actionModelCheck->setEnabled(opened && !running);
     //edit
-    ui->toolBarEdit->setEnabled(opened);
-    ui->menuEdit->setEnabled(opened);
+    ui->toolBarEdit->setEnabled(opened && !running);
+    ui->menuEdit->setEnabled(opened && !running);
     // view
-    ui->menuView->setEnabled(opened);
-    ui->toolBarView->setEnabled(opened);
-    ui->toolBarAnimate->setEnabled(opened);
-    ui->toolBarGraphicalModel->setEnabled(opened);
-    ui->toolBarDraw->setEnabled(opened);
+    ui->menuView->setEnabled(opened && !running);
+    ui->toolBarView->setEnabled(opened && !running);
+    ui->toolBarAnimate->setEnabled(opened && !running);
+    ui->toolBarGraphicalModel->setEnabled(opened && !running);
+    ui->toolBarDraw->setEnabled(opened && !running);
     // simulation
     ui->menuSimulation->setEnabled(opened);
-    ui->actionSimulationConfigure->setEnabled(opened);
+    ui->actionSimulationConfigure->setEnabled(opened && !running);
     ui->actionSimulationStart->setEnabled(opened && !running);
     ui->actionSimulationStep->setEnabled(opened && !running);
     ui->actionSimulationStop->setEnabled(opened && (running || paused));
     ui->actionSimulationPause->setEnabled(opened && running);
     ui->actionSimulationResume->setEnabled(opened && paused);
     ui->actionActivateGraphicalSimulation->setEnabled(opened);
+    ui->actionSimulatorsPluginManager->setEnabled(!running);
+    ui->actionSimulatorPreferences->setEnabled(!running);
+
     // debug
-    ui->tableWidget_Breakpoints->setEnabled(opened);
-    ui->tableWidget_Entities->setEnabled(opened);
-    ui->tableWidget_Variables->setEnabled(opened);
+    ui->tableWidget_Breakpoints->setEnabled(opened && !running);
+    ui->tableWidget_Entities->setEnabled(opened && !running);
+    ui->tableWidget_Variables->setEnabled(opened && !running);
+
+    // Property Editor
+    ui->treeViewPropertyEditor->setEnabled(!running);
 
     // based on SELECTED GRAPHICAL OBJECTS or on COMMANDS DONE (UNDO/REDO)
-    ui->toolBarArranje->setEnabled(opened);
+    ui->toolBarArranje->setEnabled(opened && !running);
     // TODO: MUDAR, ESTÁ HARDCODED, DEVERIA SER DISPONIBILIZADO COM UM COMPONENENTE FOSSE
     // TODO: SELECIONADO
-    ui->actionEditCopy->setEnabled(0);
-    ui->actionEditCut->setEnabled(0);
-    ui->actionEditDelete->setEnabled(numSelectedGraphicals>0);
+    ui->actionEditCopy->setEnabled(0 && !running);
+    ui->actionEditCut->setEnabled(0 && !running);
+    ui->actionEditDelete->setEnabled((numSelectedGraphicals>0) && !running);
 
     // sliders
-    ui->horizontalSlider_ZoomGraphical->setEnabled(opened);
+    ui->horizontalSlider_ZoomGraphical->setEnabled(opened && !running);
     if (_modelWasOpened && !opened) {
         _clearModelEditors();
     }
 
     //slider animation speed
     ui->horizontalSliderAnimationSpeed->setEnabled(running && !paused);
+
+    ui->actionSelectAll->setEnabled(opened && !running);
 
     _modelWasOpened = opened;
 }
@@ -1442,14 +1452,7 @@ void MainWindow::_onSimulationEndHandler(SimulationEvent * re) {
         QCoreApplication::processEvents();
     }
 
-    // Limpa as animações de fila dos componentes
-    QList<QGraphicsItem *> *componentes = myScene()->getGraphicalModelComponents();
-
-    for (QGraphicsItem* item : *componentes) {
-        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *>(item)) {
-            component->clearQueues();
-        }
-    }
+    myScene()->clearAnimationsQueue();
 
     _modelCheked = false;
 }
@@ -2920,7 +2923,7 @@ void MainWindow::_initUiForNewModel(Model* m) {
 void MainWindow::_actualizeUndo() {
     undoView = new QUndoView(ui->graphicsView->getScene()->getUndoStack());
     undoView->setWindowTitle(tr("Command List"));
-    undoView->setVisible(true);
+    undoView->setVisible(false);
     undoView->setAttribute(Qt::WA_QuitOnClose, false);
 }
 
@@ -3066,6 +3069,7 @@ void MainWindow::on_actionModelClose_triggered()
 
     // limpando tudo a que se refere à cena
     ui->graphicsView->getScene()->getUndoStack()->clear();
+    ui->graphicsView->getScene()->clearAnimationsQueue();
     ui->graphicsView->getScene()->getGraphicalModelComponents()->clear();
     ui->graphicsView->getScene()->getGraphicalConnections()->clear();
     ui->graphicsView->getScene()->getAllComponents()->clear();
@@ -3339,15 +3343,6 @@ void MainWindow::on_actionSimulatorsPluginManager_triggered()
     dialog->show();
 }
 
-//void MainWindow::on_actionSelect_all_triggered()
-//{
-//    QList<QGraphicsItem *> itensToScene = ui->graphicsView->getScene()->items();
-//    for (unsigned int i = 0; i < (unsigned int) itensToScene.size(); i++) {
-//        itensToScene.at(i)->setSelected(true);
-//    }
-//}
-
-
 //void MainWindow::on_actionteste_triggered()
 //{
 //    _graphicalSimulation = (!_graphicalSimulation);
@@ -3378,7 +3373,7 @@ void MainWindow::on_actionActivateGraphicalSimulation_triggered()
 
 void MainWindow::on_horizontalSliderAnimationSpeed_valueChanged(int value)
 {
-    double newValue = ((double) value) / 20;
+    double newValue = ((double) value) / 2;
 
     AnimationTransition::setTimeExecution(newValue);
 }
@@ -3391,6 +3386,16 @@ void MainWindow::on_actionDiagrams_triggered()
         if (scene->existDiagram()) scene->showDiagrams();
     } else {
         if (scene->existDiagram()) scene->hideDiagrams();
+    }
+}
+
+
+void MainWindow::on_actionSelectAll_triggered()
+{
+    QList<QGraphicsItem *> itensToScene = myScene()->items();
+
+    foreach (QGraphicsItem* item, itensToScene) {
+        item->setSelected(true);
     }
 }
 

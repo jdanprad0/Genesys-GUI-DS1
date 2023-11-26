@@ -28,8 +28,8 @@ public:
     void continueDrawing(QGraphicsSceneMouseEvent *event); // Continua o desenho na tela
     void stopDrawing(QGraphicsSceneMouseEvent *event); // Finaliza o desenho na tela
     void adjustSizeAndPosition(QGraphicsSceneMouseEvent *event); // Ajusta posição e dimensão do retângulo no final
-    bool isDrawingInicialized(); // Diz se a variável começou a ser desenhada
-    bool isDrawingFinalized(); // Diz se a variável terminou de ser desenhada
+    bool isDrawingInicialized(); // Diz se o contador começou a ser desenhada
+    bool isDrawingFinalized(); // Diz se o contador terminou de ser desenhada
 
 private:
     double _value = 0.0;

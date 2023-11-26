@@ -22,9 +22,9 @@ public:
     void removeAnimationQueue();
 
     // faz a animação de acordo com o tamanho da fila, mas não ficou muito condizente com a visualização da animação
-    // verifica se precisa adiconar animação de fila e adiciona se for o caso (observando valores da fila)
+    // verifica se precisa adiconar animação e adiciona se for o caso (observando valores da fila)
     void verifyAddAnimationQueue(bool visivible);
-    // verifica se precisa remover animação de fila e remove se for o caso (observando valores da fila)
+    // verifica se precisa remover animação e remove se for o caso (observando valores da fila)
     void verifyRemoveAnimationQueue();
 
     // retorna a posição em que a animação da fila será desenhada
