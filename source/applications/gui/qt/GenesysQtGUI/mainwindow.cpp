@@ -3142,8 +3142,21 @@ bool MainWindow::_check(bool success)
     _actualizeTabPanes();
 
     if (res) {
+        ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
         // Mensagem de sucesso
         if (success)
+            if (!scene->existDiagram()){
+                scene->createDiagrams();
+                if (!ui->actionDiagrams->isChecked()) {
+                    scene->hideDiagrams();
+                }
+            } else {
+                scene->destroyDiagram();
+                scene->createDiagrams();
+                if (!ui->actionDiagrams->isChecked()) {
+                    scene->hideDiagrams();
+                }
+            }
             QMessageBox::information(this, "Model Check", "Model successfully checked.");
 
         // Salva os data definitions dos componentes atuais
@@ -3232,7 +3245,6 @@ void MainWindow::on_treeWidgetDataDefnitions_itemDoubleClicked(QTreeWidgetItem *
         item->setFlags(item->flags() & ~Qt::ItemIsEditable);
 
     }
-
 }
 
 void MainWindow::on_treeWidgetDataDefnitions_itemChanged(QTreeWidgetItem *item, int column)
@@ -3376,6 +3388,17 @@ void MainWindow::on_horizontalSliderAnimationSpeed_valueChanged(int value)
     double newValue = ((double) value) / 2;
 
     AnimationTransition::setTimeExecution(newValue);
+}
+
+
+void MainWindow::on_actionDiagrams_triggered()
+{
+    ModelGraphicsScene* scene = (ModelGraphicsScene*) (ui->graphicsView->scene());
+    if (ui->actionDiagrams->isChecked()) {
+        if (scene->existDiagram()) scene->showDiagrams();
+    } else {
+        if (scene->existDiagram()) scene->hideDiagrams();
+    }
 }
 
 

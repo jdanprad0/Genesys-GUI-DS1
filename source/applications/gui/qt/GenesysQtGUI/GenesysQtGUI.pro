@@ -169,7 +169,8 @@ SOURCES += \
 	graphicals/GraphicalAssociation.cpp \
 	graphicals/GraphicalComponentPort.cpp \
 	graphicals/GraphicalConnection.cpp \
-    graphicals/GraphicalImageAnimation.cpp \
+        graphicals/GraphicalDiagramConnection.cpp \
+        graphicals/GraphicalImageAnimation.cpp \
 	graphicals/GraphicalModelComponent.cpp \
 	graphicals/GraphicalModelDataDefinition.cpp \
 	main.cpp \
@@ -369,7 +370,8 @@ HEADERS += \
 	graphicals/GraphicalAssociation.h \
 	graphicals/GraphicalComponentPort.h \
 	graphicals/GraphicalConnection.h \
-    graphicals/GraphicalImageAnimation.h \
+        graphicals/GraphicalDiagramConnection.h \
+        graphicals/GraphicalImageAnimation.h \
 	graphicals/GraphicalModelComponent.h \
 	graphicals/GraphicalModelDataDefinition.h \
 	mainwindow.h \

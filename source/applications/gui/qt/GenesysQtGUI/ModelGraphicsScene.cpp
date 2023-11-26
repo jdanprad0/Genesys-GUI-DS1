@@ -34,11 +34,15 @@
 #include <QTreeWidget>
 #include <QMessageBox>
 #include <QUndoCommand>
+#include <iterator>
+#include <string>
+#include <list>
 #include "ModelGraphicsScene.h"
 #include "ModelGraphicsView.h"
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalComponentPort.h"
 #include "graphicals/GraphicalConnection.h"
+#include "graphicals/GraphicalDiagramConnection.h"
 #include "actions/AddUndoCommand.h"
 #include "actions/DeleteUndoCommand.h"
 #include "actions/MoveUndoCommand.h"
@@ -192,6 +196,31 @@ GraphicalConnection* ModelGraphicsScene::addGraphicalConnection(GraphicalCompone
     }
 
     return graphicconnection;
+}
+
+GraphicalModelDataDefinition* ModelGraphicsScene::addGraphicalModelDataDefinition(Plugin* plugin, ModelDataDefinition* element, QPointF position, QColor color) {
+    // cria o componente gráfico
+    GraphicalModelDataDefinition* graphDataDef = new GraphicalModelDataDefinition(plugin, element, position, color);
+
+    // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
+    _allGraphicalModelDataDefinitions.append(graphDataDef);
+    getGraphicalModelDataDefinitions()->append(graphDataDef);
+
+    addItem(graphDataDef);
+
+    return graphDataDef;
+}
+
+GraphicalDiagramConnection* ModelGraphicsScene::addGraphicalDiagramConnection(QGraphicsItem* dataDefinition, QGraphicsItem* linkedTo, GraphicalDiagramConnection::ConnectionType type) {
+    GraphicalDiagramConnection* connection = new GraphicalDiagramConnection(dataDefinition,linkedTo,type);
+
+    // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
+    _allGraphicalDiagramConnections.append(connection);
+    getGraphicalDiagramsConnections()->append(connection);
+
+    addItem(connection);
+
+    return connection;
 }
 
 
@@ -451,6 +480,22 @@ void ModelGraphicsScene::insertComponent(GraphicalModelComponent* gmc, QList<Gra
 
         notifyGraphicalModelChange(eventType, eventObjectType, gmc);
     }
+}
+
+void ModelGraphicsScene::removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd) {
+    //graphically
+    removeItem(gmdd);
+    getGraphicalModelComponents()->removeOne(gmdd);
+    getAllDataDefinitions()->removeOne(gmdd);
+    delete(gmdd);
+}
+
+void ModelGraphicsScene::removeGraphicalDiagramConnection(GraphicalDiagramConnection* connection ) {
+    //graphically
+    removeItem(connection);
+    getGraphicalDiagramsConnections()->removeOne(connection);
+    getAllGraphicalDiagramsConnections()->removeOne(connection);
+    delete(connection);
 }
 
 // trata da remocao das conexoes de um componente
@@ -899,6 +944,217 @@ void ModelGraphicsScene::showGrid()
 
     // troco o valor de visible
     _grid.visible = !_grid.visible;
+}
+
+void ModelGraphicsScene::createDiagrams()
+{
+    Model * m = _simulator->getModels()->current();
+    ModelDataManager* dataManager = m->getDataManager();
+
+    QColor purple(128,0,128);
+    QColor grey(220,220,220);
+    //creating graphicalModelDataDefinitions
+    for (std::string dataTypename : *m->getDataManager()->getDataDefinitionClassnames()) {
+        std::list<ModelDataDefinition*>* listDataDefinitions = dataManager->getDataDefinitionList(dataTypename)->list();
+
+        for (auto it = listDataDefinitions->begin(); it != listDataDefinitions->end(); ++it) {
+            ModelDataDefinition* datadef = *it;
+            std::string pluginName = datadef->getName();
+            Plugin* plugin = _simulator->getPlugins()->find(pluginName);
+            addGraphicalModelDataDefinition(plugin, datadef, QPointF(0, 0), grey);
+        }
+    }
+    //organizing diagram
+    QList<GraphicalModelDataDefinition*>* datadef_visited = new QList<GraphicalModelDataDefinition*>();
+    QList<GraphicalModelComponent*>* gmcs = getAllComponents();
+    //internal and attached data of the modelComponents
+    for (int i = 0; i < gmcs->size(); i++) {
+        GraphicalModelComponent* gmc = gmcs->at(i);
+        std::map<std::string, ModelDataDefinition*>* internalData = gmc->getComponent()->getInternalData();
+        std::map<std::string, ModelDataDefinition*>* attachedData = gmc->getComponent()->getAttachedData();
+
+        QPointF component_pos = gmc->getOldPosition();
+        qreal y_internal = component_pos.y();
+        qreal y_attached = component_pos.y();
+
+        //attached Data
+        for (auto it = attachedData->begin(); it != attachedData->end(); ++it) {
+            ModelDataDefinition* dataDefinition = it->second; // Obtém o valor (ModelDataDefinition*)
+
+            QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
+
+            for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
+                GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
+                std::string name = gdd->getDataDefinition()->getName();
+                if (name == dataDefinition->getName()) {
+                    if (getGraphicalModelComponents()->contains(gmc)) {
+                        if (datadef_visited->contains(gdd)) {
+                            qreal x = (gdd->x() + component_pos.x()) / 2;
+                            gdd->setPos(x, y_attached -150);
+                            gdd->setOldPosition(x, y_attached -150);
+
+                            //criar conexao
+                            GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
+                            addItem(arrowLine);
+                            _allGraphicalDiagramConnections.append(arrowLine);
+                            getGraphicalDiagramsConnections()->append(arrowLine);
+
+                        } else {
+
+                            datadef_visited->append(gdd);
+                            y_attached = y_attached - 150;
+
+                            gdd->setPos(component_pos.x(), y_attached);
+                            gdd->setOldPosition(component_pos.x(), y_attached);
+                            gdd->setColor(purple);
+
+                            //criar conexao
+                            GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
+                            addItem(arrowLine);
+                            _allGraphicalDiagramConnections.append(arrowLine);
+                            getGraphicalDiagramsConnections()->append(arrowLine);
+                        }
+                    }
+                }
+            }
+        }
+        //internal Data
+        for (auto it = internalData->begin(); it != internalData->end(); ++it) {
+            ModelDataDefinition* dataDefinition = it->second; // Obtém o valor (ModelDataDefinition*)
+
+            QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
+
+            for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
+                GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
+                std::string name = gdd->getDataDefinition()->getName();
+                if (name == dataDefinition->getName()) {
+                    datadef_visited->append(gdd);
+                    y_internal = y_internal + 150;
+
+                    gdd->setPos(component_pos.x(), y_internal);
+                    gdd->setOldPosition(component_pos.x(), y_internal);
+                    GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::INTERNAL);
+                    addItem(arrowLine);
+                    _allGraphicalDiagramConnections.append(arrowLine);
+                    getGraphicalDiagramsConnections()->append(arrowLine);
+                }
+            }
+        }
+    }
+    //internalData of the DataDefinitions
+    for (int i = 0; i < datadef_visited->size(); i++) {
+        GraphicalModelDataDefinition* parentDataDefinition = datadef_visited->at(i);
+        std::map<std::string, ModelDataDefinition*>* internalData = parentDataDefinition->getDataDefinition()->getInternalData();
+
+        QPointF dataDefinition_pos = parentDataDefinition->getOldPosition();
+        qreal x = dataDefinition_pos.x();
+
+        for (auto it = internalData->begin(); it != internalData->end(); ++it) {
+            ModelDataDefinition* dataDefinition = it->second; // Obtém o valor (ModelDataDefinition*)
+            QList<GraphicalModelDataDefinition*>* graphicalDataDefinitions = getAllDataDefinitions();
+
+            for (int j = 0; j < graphicalDataDefinitions->size(); j++) {
+                GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
+                std::string name = gdd->getDataDefinition()->getName();
+                if (name == dataDefinition->getName()) {
+                    datadef_visited->append(gdd);
+                    x = x - 200;
+
+                    gdd->setPos(x, dataDefinition_pos.y());
+                    gdd->setOldPosition(x, dataDefinition_pos.y());
+                    GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, parentDataDefinition, GraphicalDiagramConnection::ConnectionType::INTERNAL);
+                    addItem(arrowLine);
+                    _allGraphicalDiagramConnections.append(arrowLine);
+                    getGraphicalDiagramsConnections()->append(arrowLine);
+                }
+            }
+        }
+    }
+    _diagram = true;
+    actualizeDiagramArrows();
+    delete datadef_visited;
+}
+
+void ModelGraphicsScene::actualizeDiagramArrows() {
+
+    if (existDiagram()) {
+        QList<GraphicalDiagramConnection*>* connections = getAllGraphicalDiagramsConnections();
+        int size_connections = connections->size();
+        for (int i = 0; i < size_connections; i++) {
+
+            GraphicalDiagramConnection* itemConnection = connections->first();
+
+            QGraphicsItem * item_1 = itemConnection->getDataDefinition();
+            QGraphicsItem * item_2 = itemConnection->getLinkedDataDefinition();
+            addGraphicalDiagramConnection(item_1, item_2, itemConnection->getConnectionType());
+
+            removeGraphicalDiagramConnection(itemConnection);
+        }
+        if (!visibleDiagram()) hideDiagrams();
+    }
+}
+
+bool ModelGraphicsScene::existDiagram() {
+    return _diagram;
+}
+
+bool ModelGraphicsScene::visibleDiagram() {
+    return _visibleDiagram;
+}
+
+void ModelGraphicsScene::destroyDiagram() {
+    QList<GraphicalModelDataDefinition*>* gmdds = getAllDataDefinitions();
+    int size_gmdds = gmdds->size();
+    for (int i = 0; i < size_gmdds; i++) {
+        GraphicalModelDataDefinition* gmdd = gmdds->first();
+        removeGraphicalModelDataDefinition(gmdd);
+    }
+
+    QList<GraphicalDiagramConnection*>* connections = getAllGraphicalDiagramsConnections();
+    int size_connections = connections->size();
+    for (int i = 0; i < size_connections; i++) {
+        GraphicalDiagramConnection* itemConnection = connections->first();
+        removeGraphicalDiagramConnection(itemConnection);
+    }
+
+    _diagram = false;
+}
+
+void ModelGraphicsScene::hideDiagrams() {
+    QList<QGraphicsItem*>* dataDefinitions = getGraphicalModelDataDefinitions();
+    for (int i = 0; i < dataDefinitions->size(); i++) {
+        QGraphicsItem* itemData = dataDefinitions->at(i);
+        itemData->hide();
+        itemData->setFlag(QGraphicsItem::ItemIsSelectable, false);
+        itemData->setFlag(QGraphicsItem::ItemIsMovable, false);
+    }
+
+    QList<QGraphicsItem*>* connections = getGraphicalDiagramsConnections();
+    for (int i = 0; i < connections->size(); i++) {
+        QGraphicsItem* itemConnection = connections->at(i);
+        itemConnection->hide();
+    }
+    _visibleDiagram = false;
+}
+
+void ModelGraphicsScene::showDiagrams() {
+    QList<QGraphicsItem*>* dataDefinitions = getGraphicalModelDataDefinitions();
+    if (dataDefinitions->size() > 0) {
+        for (int i = 0; i < dataDefinitions->size(); i++) {
+            QGraphicsItem* itemData = dataDefinitions->at(i);
+            itemData->show();
+            itemData->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            itemData->setFlag(QGraphicsItem::ItemIsMovable, true);
+        }
+    }
+    QList<QGraphicsItem*>* connections = getGraphicalDiagramsConnections();
+    if (connections->size() > 0) {
+        for (int i = 0; i < connections->size(); i++) {
+            QGraphicsItem* itemConnection = connections->at(i);
+            itemConnection->show();
+        }
+    }
+    _visibleDiagram = true;
 }
 
 void ModelGraphicsScene::setSnapToGrid(bool activated)
@@ -1625,6 +1881,9 @@ void ModelGraphicsScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
 
     snapItemsToGrid();
+    if (existDiagram()) {
+        actualizeDiagramArrows();
+    }
 
     QList<QGraphicsItem *> items;
     QList<QPointF> oldPositions;
@@ -1812,6 +2071,14 @@ QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalConnections() const {
 
 QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalModelComponents() const {
     return _graphicalModelComponents;
+}
+
+QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalModelDataDefinitions() const {
+    return _graphicalModelDataDefinitions;
+}
+
+QList<QGraphicsItem*>*ModelGraphicsScene::getGraphicalDiagramsConnections() const {
+    return _graphicalDiagramConnections;
 }
 
 QList<QGraphicsItemGroup*>*ModelGraphicsScene::getGraphicalGroups() const {
@@ -2011,6 +2278,8 @@ void ModelGraphicsScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
             Plugin* plugin = _simulator->getPlugins()->find(pluginname.toStdString());
             if (plugin != nullptr) {
                 if (plugin->getPluginInfo()->isComponent()) {
+                    destroyDiagram();
+
                     event->setDropAction(Qt::IgnoreAction);
                     event->accept();
                     // create component in the model
@@ -2060,7 +2329,7 @@ void ModelGraphicsScene::keyPressEvent(QKeyEvent *keyEvent) {
             return;
         }
 
-
+        destroyDiagram();
         QUndoCommand *deleteUndoCommand = new DeleteUndoCommand(selected, this);
         _undoStack->push(deleteUndoCommand);
     }
@@ -2130,6 +2399,13 @@ QList<GraphicalModelComponent*> *ModelGraphicsScene::getAllComponents() {
     return &_allGraphicalModelComponents;
 }
 
+QList<GraphicalModelDataDefinition*> *ModelGraphicsScene::getAllDataDefinitions() {
+    return &_allGraphicalModelDataDefinitions;
+}
+
+QList<GraphicalDiagramConnection*> *ModelGraphicsScene::getAllGraphicalDiagramsConnections() {
+    return &_allGraphicalDiagramConnections;
+}
 QList<AnimationTransition *> *ModelGraphicsScene::getAnimationsTransition() {
     return _animationsTransition;
 }

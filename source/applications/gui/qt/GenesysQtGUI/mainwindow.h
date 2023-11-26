@@ -157,6 +157,8 @@ private slots:
     void on_horizontalSliderAnimationSpeed_valueChanged(int value);
     void on_actionSelectAll_triggered();
 
+    void on_actionDiagrams_triggered();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
