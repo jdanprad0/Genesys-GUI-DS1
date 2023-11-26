@@ -143,7 +143,15 @@ SOURCES += \
     actions/MoveUndoCommand.cpp \
     actions/PasteUndoCommand.cpp \
     actions/UngroupUndoCommand.cpp \
+    animations/AnimationCounter.cpp \
+    animations/AnimationQueue.cpp \
+    animations/AnimationTimer.cpp \
+    animations/AnimationTransition.cpp \
+    animations/AnimationVariable.cpp \
     dialogs/DialogFind.cpp \
+    dialogs/DialogSelectCounter.cpp \
+    dialogs/DialogSelectVariable.cpp \
+    dialogs/DialogTimerConfigure.cpp \
 	dialogs/Dialogmodelinformation.cpp \
 	dialogs/dialogBreakpoint.cpp \
 	dialogs/dialogpluginmanager.cpp \
@@ -161,7 +169,8 @@ SOURCES += \
 	graphicals/GraphicalAssociation.cpp \
 	graphicals/GraphicalComponentPort.cpp \
 	graphicals/GraphicalConnection.cpp \
-    graphicals/GraphicalDiagramConnection.cpp \
+        graphicals/GraphicalDiagramConnection.cpp \
+        graphicals/GraphicalImageAnimation.cpp \
 	graphicals/GraphicalModelComponent.cpp \
 	graphicals/GraphicalModelDataDefinition.cpp \
 	main.cpp \
@@ -343,7 +352,15 @@ HEADERS += \
     actions/MoveUndoCommand.h \
     actions/PasteUndoCommand.h \
     actions/UngroupUndoCommand.h \
+    animations/AnimationCounter.h \
+    animations/AnimationQueue.h \
+    animations/AnimationTimer.h \
+    animations/AnimationTransition.h \
+    animations/AnimationVariable.h \
     dialogs/DialogFind.h \
+    dialogs/DialogSelectCounter.h \
+    dialogs/DialogSelectVariable.h \
+    dialogs/DialogTimerConfigure.h \
 	dialogs/Dialogmodelinformation.h \
 	dialogs/dialogBreakpoint.h \
 	dialogs/dialogpluginmanager.h \
@@ -353,13 +370,15 @@ HEADERS += \
 	graphicals/GraphicalAssociation.h \
 	graphicals/GraphicalComponentPort.h \
 	graphicals/GraphicalConnection.h \
-    graphicals/GraphicalDiagramConnection.h \
+        graphicals/GraphicalDiagramConnection.h \
+        graphicals/GraphicalImageAnimation.h \
 	graphicals/GraphicalModelComponent.h \
 	graphicals/GraphicalModelDataDefinition.h \
 	mainwindow.h \
 	qcustomplot.h
 
 FORMS += \
+	dialogs/DialogTimerConfigure.ui \
 	dialogs/Dialogmodelinformation.ui \
 	dialogs/dialogBreakpoint.ui \
 	dialogs/dialogpluginmanager.ui \
