@@ -781,32 +781,33 @@ void ModelGraphicsScene::createDiagrams()
                 GraphicalModelDataDefinition* gdd = graphicalDataDefinitions->at(j);
                 std::string name = gdd->getDataDefinition()->getName();
                 if (name == dataDefinition->getName()) {
+                    if (getGraphicalModelComponents()->contains(gmc)) {
+                        if (datadef_visited->contains(gdd)) {
+                            qreal x = (gdd->x() + component_pos.x()) / 2;
+                            gdd->setPos(x, y_attached -150);
+                            gdd->setOldPosition(x, y_attached -150);
 
-                    if (datadef_visited->contains(gdd)) {
-                        qreal x = (gdd->x() + component_pos.x()) / 2;
-                        gdd->setPos(x, y_attached -150);
-                        gdd->setOldPosition(x, y_attached -150);
+                            //criar conexao
+                            GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
+                            addItem(arrowLine);
+                            _allGraphicalDiagramConnections.append(arrowLine);
+                            getGraphicalDiagramsConnections()->append(arrowLine);
 
-                        //criar conexao
-                        GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
-                        addItem(arrowLine);
-                        _allGraphicalDiagramConnections.append(arrowLine);
-                        getGraphicalDiagramsConnections()->append(arrowLine);
+                        } else {
 
-                    } else {
+                            datadef_visited->append(gdd);
+                            y_attached = y_attached - 150;
 
-                        datadef_visited->append(gdd);
-                        y_attached = y_attached - 150;
+                            gdd->setPos(component_pos.x(), y_attached);
+                            gdd->setOldPosition(component_pos.x(), y_attached);
+                            gdd->setColor(purple);
 
-                        gdd->setPos(component_pos.x(), y_attached);
-                        gdd->setOldPosition(component_pos.x(), y_attached);
-                        gdd->setColor(purple);
-
-                        //criar conexao
-                        GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
-                        addItem(arrowLine);
-                        _allGraphicalDiagramConnections.append(arrowLine);
-                        getGraphicalDiagramsConnections()->append(arrowLine);
+                            //criar conexao
+                            GraphicalDiagramConnection* arrowLine = new GraphicalDiagramConnection(gdd, gmc, GraphicalDiagramConnection::ConnectionType::ATTACHED);
+                            addItem(arrowLine);
+                            _allGraphicalDiagramConnections.append(arrowLine);
+                            getGraphicalDiagramsConnections()->append(arrowLine);
+                        }
                     }
                 }
             }
