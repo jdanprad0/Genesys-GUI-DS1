@@ -530,6 +530,7 @@ void MainWindow::_actualizeActions() {
         paused = simulator->getModels()->current()->getSimulation()->isPaused();
         numSelectedGraphicals = 0;//@TODO get total of selected graphical objects (this should br on another "actualize", I think
     }
+
     //
     ui->graphicsView->setEnabled(opened);
     ui->tabWidgetCentral->setEnabled(opened);
@@ -575,6 +576,10 @@ void MainWindow::_actualizeActions() {
     if (_modelWasOpened && !opened) {
         _clearModelEditors();
     }
+
+    //slider animation speed
+    ui->horizontalSliderAnimationSpeed->setEnabled(running && !paused);
+
     _modelWasOpened = opened;
 }
 
@@ -796,24 +801,23 @@ void MainWindow::_onMoveEntityEvent(SimulationEvent *re) {
     myScene()->animateVariable();
 
     // Cria a animação de transição
-    if (ui->actionActivateGraphicalSimulation->isChecked() && re) {
+    if (re) {
         if (re->getCurrentEvent()) {
             if (re->getCurrentEvent()->getComponent()) {
                 ModelComponent *source = re->getCurrentEvent()->getComponent();
                 ModelComponent *destination = re->getDestinationComponent();
-                GraphicalModelComponent *graphicalComponentSrc = myScene()->findGraphicalModelComponent(source->getId());
 
-                myScene()->animateTransition(source, destination, graphicalComponentSrc->getAnimationImageName());
-                myScene()->animateQueue(source);
-                myScene()->animateQueue(destination);
+                // Remove animação de fila se for o caso
+                myScene()->animateQueueRemove(source);
+
+                myScene()->animateTransition(source, destination, ui->actionActivateGraphicalSimulation->isChecked(), re->getCurrentEvent());
             }
         }
     }
 }
 
 void MainWindow::_onAfterProcessEvent(SimulationEvent *re) {
-    // Cria as animações de contadores, variáveis, tempo (atualiza assim que termina) e fila
-    myScene()->animateQueue(re->getCurrentEvent()->getComponent());
+    // Cria as animações de contadores, variáveis e tempo (atualiza assim que termina)
     myScene()->animateCounter();
     myScene()->animateVariable();
     myScene()->animateTimer(simulator->getModels()->current()->getSimulation()->getSimulatedTime());
@@ -1418,15 +1422,36 @@ void MainWindow::_onSimulationPausedHandler(SimulationEvent * re) {
 
 void MainWindow::_onSimulationResumeHandler(SimulationEvent * re) {
     _actualizeActions();
+
+    if (!myScene()->getAnimationPaused()->empty()) {
+        AnimationTransition *animationPaused = myScene()->getAnimationPaused()->value(re->getCurrentEvent());
+
+        if (animationPaused) {
+            myScene()->getAnimationPaused()->clear();
+            myScene()->runAnimateTransition(animationPaused, re->getCurrentEvent(), true);
+        }
+    }
     QCoreApplication::processEvents();
 }
 
 void MainWindow::_onSimulationEndHandler(SimulationEvent * re) {
+    myScene()->getAnimationPaused()->clear();
     _actualizeActions();
     ui->tabWidgetCentral->setCurrentIndex(CONST.TabCentralReportsIndex);
     for (unsigned int i = 0; i < 50; i++) {
         QCoreApplication::processEvents();
     }
+
+    // Limpa as animações de fila dos componentes
+    QList<QGraphicsItem *> *componentes = myScene()->getGraphicalModelComponents();
+
+    for (QGraphicsItem* item : *componentes) {
+        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *>(item)) {
+            component->clearQueues();
+        }
+    }
+
+    _modelCheked = false;
 }
 
 void MainWindow::_onProcessEventHandler(SimulationEvent * re) {
@@ -1479,14 +1504,14 @@ void MainWindow::sceneChanged(const QList<QRectF> &region) {
 
     ui->graphicsView->scene()->update();
 
-    QList<QGraphicsItem *> items = ui->graphicsView->getScene()->items();
+    bool res = _checkItemsScene();
 
-    if (items.empty()) {
-        ui->actionEditCut->setEnabled(false);
-        ui->actionEditCopy->setEnabled(false);
-    } else {
+    if (res) {
         ui->actionEditCut->setEnabled(true);
         ui->actionEditCopy->setEnabled(true);
+    } else {
+        ui->actionEditCut->setEnabled(false);
+        ui->actionEditCopy->setEnabled(false);
     }
 
     if (!_draw_copy->empty() || !_gmc_copies->empty() || !_group_copy->empty() || !_ports_copies->empty()) {
@@ -1501,6 +1526,21 @@ void MainWindow::sceneChanged(const QList<QRectF> &region) {
     ui->graphicsView->scene()->update();
 }
 
+bool MainWindow::_checkItemsScene() {
+    bool res = false;
+
+    QList<QGraphicsItem *> *components = myScene()->getGraphicalModelComponents();
+    QList<QGraphicsItem *> *geometries = myScene()->getGraphicalGeometries();
+    QList<AnimationCounter *> *counters = myScene()->getAnimationsCounter();
+    QList<AnimationVariable *> *variables = myScene()->getAnimationsVariable();
+    QList<AnimationTimer *> *timers = myScene()->getAnimationsTimer();
+
+    if (!components->empty() || !geometries->empty() || !counters->empty() || !variables->empty() || !timers->empty()) {
+        res = true;
+    }
+
+    return res;
+}
 void MainWindow::sceneFocusItemChanged(QGraphicsItem *newFocusItem, QGraphicsItem *oldFocusItem, Qt::FocusReason reason) {
     // int a = 0;
 }
@@ -1548,14 +1588,13 @@ void MainWindow::_initModelGraphicsView() {
 void MainWindow::_setOnEventHandlers() {
     simulator->getModels()->current()->getOnEvents()->addOnReplicationStartHandler(this, &MainWindow::_onReplicationStartHandler);
     simulator->getModels()->current()->getOnEvents()->addOnSimulationStartHandler(this, &MainWindow::_onSimulationStartHandler);
-    simulator->getModels()->current()->getOnEvents()->addOnSimulationEndHandler(this, &MainWindow::_onSimulationEndHandler);
     simulator->getModels()->current()->getOnEvents()->addOnSimulationPausedHandler(this, &MainWindow::_onSimulationPausedHandler);
     simulator->getModels()->current()->getOnEvents()->addOnSimulationResumeHandler(this, &MainWindow::_onSimulationResumeHandler);
+    simulator->getModels()->current()->getOnEvents()->addOnSimulationEndHandler(this, &MainWindow::_onSimulationEndHandler);
     simulator->getModels()->current()->getOnEvents()->addOnProcessEventHandler(this, &MainWindow::_onProcessEventHandler);
     simulator->getModels()->current()->getOnEvents()->addOnEntityCreateHandler(this, &MainWindow::_onEntityCreateHandler);
     simulator->getModels()->current()->getOnEvents()->addOnEntityRemoveHandler(this, &MainWindow::_onEntityRemoveHandler);
     simulator->getModels()->current()->getOnEvents()->addOnEntityMoveHandler(this, &MainWindow::_onMoveEntityEvent);
-    simulator->getModels()->current()->getOnEvents()->addOnSimulationStartHandler(this, &MainWindow::_onMoveEntityEvent);
     simulator->getModels()->current()->getOnEvents()->addOnAfterProcessEventHandler(this, &MainWindow::_onAfterProcessEvent);
     //@Todo: Check for new events that were created later
 }
@@ -1974,31 +2013,64 @@ void MainWindow::on_tabWidgetReports_currentChanged(int index) {
 
 
 void MainWindow::on_actionSimulationStop_triggered() {
+    AnimationTransition::setRunning(false);
+    AnimationTransition::setPause(false);
+
     _insertCommandInConsole("stop");
+
     simulator->getModels()->current()->getSimulation()->stop();
+
     _actualizeActions();
 }
 
 void MainWindow::on_actionSimulationStart_triggered() {
-    _insertCommandInConsole("start");
-    if (_setSimulationModelBasedOnText())
-        simulator->getModels()->current()->getSimulation()->start();
+    AnimationTransition::setRunning(true);
+    AnimationTransition::setPause(false);
+
+    bool res = true;
+
+    // Checha o modelo antes de começar
+    if (!_modelCheked) {
+        res = _check(false);
+    }
+
+    if (res) {
+        _insertCommandInConsole("start");
+        if (_setSimulationModelBasedOnText())
+            simulator->getModels()->current()->getSimulation()->start();
+    }
 }
 
 void MainWindow::on_actionSimulationStep_triggered() {
-    _insertCommandInConsole("step");
+    AnimationTransition::setRunning(true);
+    AnimationTransition::setPause(false);
 
-    if (_setSimulationModelBasedOnText())
-        simulator->getModels()->current()->getSimulation()->step();
+    bool res = true;
+
+    if (!_modelCheked) {
+        res = _check(false);
+    }
+
+    if (res) {
+        _insertCommandInConsole("step");
+
+        if (_setSimulationModelBasedOnText())
+            simulator->getModels()->current()->getSimulation()->step();
+    }
 }
 
 void MainWindow::on_actionSimulationPause_triggered() {
+    AnimationTransition::setRunning(true);
+    AnimationTransition::setPause(true);
 
     _insertCommandInConsole("pause");
     simulator->getModels()->current()->getSimulation()->pause();
 }
 
 void MainWindow::on_actionSimulationResume_triggered() {
+    AnimationTransition::setRunning(true);
+    AnimationTransition::setPause(false);
+
     _insertCommandInConsole("resume");
 
     if (_setSimulationModelBasedOnText())
@@ -2917,6 +2989,7 @@ void MainWindow::on_actionModelOpen_triggered()
     Model *model = this->_loadGraphicalModel(fileName.toStdString());
     if (model != nullptr) {
         _initUiForNewModel(model);
+
         QMessageBox::information(this, "Open Model", "Model successfully oppened");
     } else {
         QMessageBox::warning(this, "Open Model", "Error while opening model");
@@ -3026,11 +3099,20 @@ void MainWindow::on_actionModelInformation_triggered()
 
 void MainWindow::on_actionModelCheck_triggered()
 {
+    _check();
+}
+
+bool MainWindow::_check(bool success)
+{
     _insertCommandInConsole("check");
 
     // reinsere os data definitions no modelo de componentes restaurados
     myScene()->insertRestoredDataDefinitions();
 
+    // Ativa visualização de animação
+    ui->actionActivateGraphicalSimulation->setChecked(true);
+
+    // Valida o modelo
     bool res = simulator->getModels()->current()->check();
 
     // cria o StatisticsCollector pro EntityType se necessário
@@ -3039,11 +3121,14 @@ void MainWindow::on_actionModelCheck_triggered()
     // limpa o valor dos contadores, variáveis e timer na cena
     myScene()->clearAnimationsValues();
 
+    // Atualiza as ações e painéis
     _actualizeActions();
     _actualizeTabPanes();
 
     if (res) {
-        QMessageBox::information(this, "Model Check", "Model successfully checked.");
+        // Mensagem de sucesso
+        if (success)
+            QMessageBox::information(this, "Model Check", "Model successfully checked.");
 
         // Salva os data definitions dos componentes atuais
         myScene()->saveDataDefinitions();
@@ -3051,9 +3136,15 @@ void MainWindow::on_actionModelCheck_triggered()
         // Seta os em uma lista os contadores e variáveis criadas
         myScene()->setCounters();
         myScene()->setVariables();
+
+        _modelCheked = true;
     } else {
+        // Mensagem de erro
         QMessageBox::critical(this, "Model Check", "Model has erros. See the console for more information.");
+        _modelCheked = false;
     }
+
+    return res;
 }
 
 void MainWindow::setStatisticsCollector() {
@@ -3249,4 +3340,34 @@ void MainWindow::on_actionSimulatorsPluginManager_triggered()
 //{
 //    _graphicalSimulation = (!_graphicalSimulation);
 //}
+
+
+void MainWindow::on_actionActivateGraphicalSimulation_triggered()
+{
+    bool visivible = true;
+
+    if (!ui->actionActivateGraphicalSimulation->isChecked()) {
+        AnimationTransition::setRunning(false);
+        visivible = false;
+    } else {
+        AnimationTransition::setRunning(true);
+    }
+
+    // Esconde ou exibe animação de fila
+    QList<QGraphicsItem *> *componentes = myScene()->getGraphicalModelComponents();
+
+    for (QGraphicsItem* item : *componentes) {
+        if (GraphicalModelComponent *component = dynamic_cast<GraphicalModelComponent *>(item)) {
+            component->visivibleImageQueue(visivible);
+        }
+    }
+}
+
+
+void MainWindow::on_horizontalSliderAnimationSpeed_valueChanged(int value)
+{
+    double newValue = ((double) value) / 20;
+
+    AnimationTransition::setTimeExecution(newValue);
+}
 

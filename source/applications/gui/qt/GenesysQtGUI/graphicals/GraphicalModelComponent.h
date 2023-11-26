@@ -110,6 +110,8 @@ public:
     void populateMapQueue(QList<Queue *> queues);
     void insertImageQueue(Queue *queue, GraphicalImageAnimation *image);
     QList<GraphicalImageAnimation *> *removeImageQueue(Queue *queue, unsigned int quantityRemoved);
+    void insertImageQueue(GraphicalImageAnimation *image);
+    GraphicalImageAnimation *removeImageQueue();
     void actualizeMapQueue(Queue *queue);
     void visivibleImageQueue(bool visivible);
     void clearQueues();

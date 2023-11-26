@@ -153,6 +153,10 @@ private slots:
     void on_actionShowSnap_triggered();
     void on_actionGModelShowConnect_triggered();
 
+    void on_actionActivateGraphicalSimulation_triggered();
+
+    void on_horizontalSliderAnimationSpeed_valueChanged(int value);
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -233,10 +237,12 @@ private: // interface and model main elements to join
 	Ui::MainWindow *ui;
 	Simulator* simulator;
 private: // misc useful
+    bool _check(bool success = true);
 	bool _textModelHasChanged = false;
 	bool _graphicalModelHasChanged = false;
     QString _autoLoadPluginsFilename = "autoloadplugins.txt";
 	bool _modelWasOpened = false;
+    bool _checkItemsScene();
 	QString _modelfilename;
 	std::map<std::string /*category*/,QColor>* _pluginCategoryColor = new std::map<std::string,QColor>();
     int _zoomValue; // todo should be set for each open graphical model, such as view rect, etc
@@ -289,6 +295,7 @@ private:
 
     QUndoView *undoView = nullptr;
     bool _graphicalSimulation = false;
+    bool _modelCheked = false;
 	//CodeEditor* textCodeEdit_Model;
 };
 #endif // MAINWINDOW_H

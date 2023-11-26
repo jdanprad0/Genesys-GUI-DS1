@@ -34,7 +34,6 @@
 #include <QTreeWidget>
 #include <QMessageBox>
 #include <QUndoCommand>
-#include <QEventLoop>
 #include "ModelGraphicsScene.h"
 #include "ModelGraphicsView.h"
 #include "graphicals/GraphicalModelComponent.h"
@@ -49,6 +48,8 @@
 #include "dialogs/DialogSelectVariable.h"
 #include "dialogs/DialogTimerConfigure.h"
 #include "animations/AnimationQueue.h"
+#include <QCoreApplication>
+#include <QThread>
 
 ModelGraphicsScene::ModelGraphicsScene(qreal x, qreal y, qreal width, qreal height, QObject *parent) : QGraphicsScene(x, y, width, height, parent) {
     // grid
@@ -896,17 +897,36 @@ bool ModelGraphicsScene::getSnapToGrid() {
     return _snapToGrid;
 }
 
-void ModelGraphicsScene::animateTransition(ModelComponent *source, ModelComponent *destination, QString image) {
+void ModelGraphicsScene::animateTransition(ModelComponent *source, ModelComponent *destination, bool viewSimulation, Event *event) {
     // Cria a animação
-    AnimationTransition *animationTransition = new AnimationTransition(this, source, destination, image);
+    AnimationTransition *animationTransition = new AnimationTransition(this, source, destination, viewSimulation);
+
+    if (animationTransition->getGraphicalStartComponent() != nullptr && animationTransition->getGraphicalEndComponent() != nullptr && viewSimulation) {
+        runAnimateTransition(animationTransition, event);
+    } else {
+        animationTransition->stopAnimation();
+    }
+}
+
+void ModelGraphicsScene::runAnimateTransition(AnimationTransition *animationTransition, Event *event, bool restart) {
     _animationsTransition->append(animationTransition);
 
-    // Inicia a animação
-    animationTransition->startAnimation();
+    // Inicia ou reinicia a animação
+    if (restart)
+        animationTransition->restartAnimation();
+    else
+        animationTransition->startAnimation();
 
     // Cria um loop de eventos para aguardar a conclusão da animação
     QEventLoop loop;
     connect(animationTransition, &AnimationTransition::finished, &loop, &QEventLoop::quit);
+
+    // Conecta o sinal de stateChanged para sair do loop quando a animação for pausada
+    connect(animationTransition, &QAbstractAnimation::stateChanged, [this, &loop, event, animationTransition](QAbstractAnimation::State newState, QAbstractAnimation::State oldState) {
+        handleAnimationStateChanged(newState, &loop, event, animationTransition);
+    });
+
+    _animationPaused->insert(event, animationTransition);
 
     // Aguarda a conclusão da animação sem bloquear o restante do código
     loop.exec();
@@ -914,19 +934,35 @@ void ModelGraphicsScene::animateTransition(ModelComponent *source, ModelComponen
     _animationsTransition->removeOne(animationTransition);
 }
 
-void ModelGraphicsScene::animateQueue(ModelComponent *component) {
+void ModelGraphicsScene::handleAnimationStateChanged(QAbstractAnimation::State newState, QEventLoop* loop, Event* event, AnimationTransition* animationTransition) {
+    if (newState == QAbstractAnimation::Paused) {
+        _animationPaused->insert(event, animationTransition);
+        if (loop) loop->quit();
+    }
+}
+
+void ModelGraphicsScene::animateQueueInsert(ModelComponent *component, bool visivible) {
     // Cria a animação
     AnimationQueue *animationQueue = new AnimationQueue(this, component);
 
-    // Verifica necessidade de adição de imagem na fila
-    animationQueue->verifyAddAnimationQueue();
-
-    // Verifica necessidade de remoção de imagem da fila
-    animationQueue->verifyRemoveAnimationQueue();
+    // Adiciona uma imagem na fila
+    animationQueue->addAnimationQueue(visivible);
 
     // Libera o espaço de memória alocado pela animação
     delete animationQueue;
 }
+
+void ModelGraphicsScene::animateQueueRemove(ModelComponent *component) {
+    // Cria a animação
+    AnimationQueue *animationQueue = new AnimationQueue(this, component);
+
+    // Remove uma imagem da fila
+    animationQueue->removeAnimationQueue();
+
+    // Libera o espaço de memória alocado pela animação
+    delete animationQueue;
+}
+
 
 void ModelGraphicsScene::animateCounter() {
     for (unsigned int i = 0; i < (unsigned int) _animationsCounter->size(); i++) {
@@ -2058,6 +2094,10 @@ QList<AnimationVariable *> *ModelGraphicsScene::getAnimationsVariable() {
 }
 QList<AnimationTimer *> *ModelGraphicsScene::getAnimationsTimer() {
     return _animationsTimer;
+}
+
+QMap<Event *, AnimationTransition *>* ModelGraphicsScene::getAnimationPaused() {
+    return _animationPaused;
 }
 
 QList<GraphicalConnection*> *ModelGraphicsScene::getAllConnections() {

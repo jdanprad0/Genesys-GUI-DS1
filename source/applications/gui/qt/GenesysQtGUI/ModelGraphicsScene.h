@@ -38,6 +38,7 @@
 #include <QTreeWidgetItem>
 #include <QUndoStack>
 #include <QAction>
+#include <QEventLoop>
 #include "graphicals/GraphicalModelComponent.h"
 #include "graphicals/GraphicalComponentPort.h"
 #include "../../../../kernel/simulator/ModelComponent.h"
@@ -158,6 +159,7 @@ public:
     QList<AnimationCounter *> *getAnimationsCounter();
     QList<AnimationVariable *> *getAnimationsVariable();
     QList<AnimationTimer *> *getAnimationsTimer();
+    QMap<Event *, AnimationTransition *> *getAnimationPaused();
     void clearAnimations();
     void clearAnimationsTransition();
     void clearAnimationsCounter();
@@ -186,8 +188,11 @@ public:
     QList<QGraphicsItemGroup*>*getGraphicalGroups() const;
 
 public:
-    void animateTransition(ModelComponent *source, ModelComponent *destination, QString image);
-    void animateQueue(ModelComponent *component);
+    void animateTransition(ModelComponent *source, ModelComponent *destination, bool viewSimulation, Event *event);
+    void runAnimateTransition(AnimationTransition *animationTransition, Event *event, bool restart = false);
+    void handleAnimationStateChanged(QAbstractAnimation::State newState, QEventLoop* loop, Event* event, AnimationTransition* animationTransition);
+    void animateQueueInsert(ModelComponent *component, bool visivible);
+    void animateQueueRemove(ModelComponent *component);
     void animateCounter();
     void animateVariable();
     void animateTimer(double time);
@@ -242,6 +247,7 @@ private:
     AnimationCounter *_currentCounter;
     AnimationVariable *_currentVariable;
     AnimationTimer *_currentTimer;
+    QMap<Event *, AnimationTransition *> *_animationPaused = new QMap<Event *, AnimationTransition *>();
 
 private:
     QList<QString> *_imagesAnimation = new QList<QString>;

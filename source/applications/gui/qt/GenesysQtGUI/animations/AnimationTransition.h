@@ -12,7 +12,7 @@
 #include "graphicals/GraphicalConnection.h"
 
 // Em segundos
-#define TEMPO_EXECUCAO_ANIMACAO 1
+#define TEMPO_EXECUCAO_ANIMACAO 2.5
 
 class ModelGraphicsScene;
 
@@ -20,7 +20,7 @@ class AnimationTransition : public QVariantAnimation
 {
 public:
     // Construtor
-    AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, const QString imageName);
+    AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, bool viewSimulation);
     // Destrutor
     ~AnimationTransition();
 
@@ -28,14 +28,16 @@ public:
     GraphicalModelComponent* getGraphicalStartComponent() const;
     GraphicalModelComponent* getGraphicalEndComponent() const;
     GraphicalConnection* getGraphicalConnection() const;
-    static int getTimeExecution();
+    static double getTimeExecution();
     QList<QPointF> getPointsForAnimation() const;
     GraphicalImageAnimation* getImageAnimation() const;
     unsigned int getPortNumber() const;
 
     // Setters
     void setImageAnimation(GraphicalImageAnimation* imageAnimation);
-    static void setTimeExecution(int timeExecution);
+    static void setTimeExecution(double timeExecution);
+    static void setPause(bool pause);
+    static void setRunning(bool running);
 
     // Inicia a animação
     void startAnimation();
@@ -51,12 +53,6 @@ public:
     void connectValueChangedSignal();
     // Conecta o sinal finished da animação ao slot onAnimationFinished
     void connectFinishedSignal();
-    // verifica se precisa adiconar animação de fila e adiciona se for o caso
-    void verifyAddAnimationQueue();
-    // verifica se precisa remover animação de fila e remove se for o caso
-    void verifyRemoveAnimationQueue();
-    // retorna a posição em que a animação da fila será desenhada
-    QPointF calculatePositionImageQueue(GraphicalModelComponent *component, unsigned int indexQueue, unsigned int sizeQueue, unsigned int width, unsigned int height);
 
 public slots:
     // Slot para ser conectado ao sinal valueChanged
@@ -69,12 +65,17 @@ private:
     GraphicalModelComponent* _graphicalStartComponent;
     GraphicalModelComponent* _graphicalEndComponent;
     GraphicalConnection* _graphicalConnection;
-    static int *_timeExecution;
-    static int _oldTimeExecution;
+    static double _timeExecution;
+    static double _oldTimeExecution;
+    static bool _pause;
+    static bool _running;
     QList<QPointF> _pointsForAnimation;
     GraphicalImageAnimation* _imageAnimation;
     unsigned int _portNumber;
     qreal _currentProgress;
+    bool _viewSimulation;
+    int _currentSegment = 0;
+    double _currentDistance = 0.0;
 };
 
 #endif // ANIMATIONTRANSITION_H

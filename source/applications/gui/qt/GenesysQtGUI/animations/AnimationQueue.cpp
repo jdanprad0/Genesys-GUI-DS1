@@ -18,7 +18,7 @@ GraphicalModelComponent* AnimationQueue::getGraphicalComponent() const {
 }
 
 // Verifica a necessidade de adicionar imagem na fila
-void AnimationQueue::verifyAddAnimationQueue() {
+void AnimationQueue::verifyAddAnimationQueue(bool visivible) {
     if (_graphicalComponent) {
         if (_graphicalComponent->hasQueue()) {
             QList<Queue *> queues = _graphicalComponent->getMapQueue()->keys();
@@ -43,6 +43,7 @@ void AnimationQueue::verifyAddAnimationQueue() {
 
                         _graphicalComponent->insertImageQueue(queue, image);
                         _myScene->addItem(image);
+                        image->setVisible(visivible);
                         _myScene->update();
                     }
                 }
@@ -89,9 +90,54 @@ void AnimationQueue::verifyRemoveAnimationQueue() {
     }
 }
 
+// Se o componente for um componente de fila, adiciona animação
+void AnimationQueue::addAnimationQueue(bool visivible) {
+    if (_graphicalComponent) {
+        if (_graphicalComponent->hasQueue()) {
+            QString animationImageName = _graphicalComponent->getAnimationImageName();
+            unsigned int width = 30;
+            unsigned int height = 30;
+
+            unsigned int sizeQueue = (unsigned int) _graphicalComponent->getImagesQueue()->at(0)->size();
+
+            QPointF position = calculatePositionImageQueue(0, sizeQueue, width, height);
+
+            GraphicalImageAnimation *image = new GraphicalImageAnimation(position, width, height, animationImageName);
+
+            _graphicalComponent->insertImageQueue(image);
+            _myScene->addItem(image);
+            image->setVisible(visivible);
+            _myScene->update();
+        }
+    }
+}
+
+// Se o componente for um componente de fila, remove a animação
+void AnimationQueue::removeAnimationQueue() {
+    if (_graphicalComponent) {
+        if (_graphicalComponent->hasQueue()) {
+
+            unsigned int images = 1;
+
+            if (_graphicalComponent->getComponent()->getClassname() == "Batch") {
+                images = (unsigned int) _graphicalComponent->getImagesQueue()->at(0)->size();
+            }
+
+            for (unsigned int i = 0; i < images; i++) {
+                GraphicalImageAnimation *imageRemoved = _graphicalComponent->removeImageQueue();
+                if (imageRemoved) {
+                    _myScene->removeItem(imageRemoved);
+                    delete imageRemoved;
+                    _myScene->update();
+                }
+            }
+        }
+    }
+}
+
 // Calcula onde a imagem será colocada
 QPointF AnimationQueue::calculatePositionImageQueue(unsigned int indexQueue, unsigned int sizeQueue, unsigned int width, unsigned int height) {
-    unsigned int multiplierX = sizeQueue;
+    unsigned int multiplierX = sizeQueue + 1;
     unsigned int multiplierY = indexQueue + 1;
     unsigned int spaceBetween = 2;
 

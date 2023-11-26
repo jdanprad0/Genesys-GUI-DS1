@@ -401,6 +401,11 @@ void GraphicalModelComponent::verifyQueue() {
         }
     }
 
+    if (_component->getClassname() == "PickStation") {
+        _imagesQueue->append(new QList<GraphicalImageAnimation *>);
+        _hasQueue = true;
+    }
+
     if (!queues.empty()) {
         populateMapQueue(queues);
         _hasQueue = true;
@@ -440,6 +445,11 @@ void GraphicalModelComponent::insertImageQueue(Queue *queue, GraphicalImageAnima
     actualizeMapQueue(queue);
 }
 
+void GraphicalModelComponent::insertImageQueue(GraphicalImageAnimation *image) {
+    QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(0);
+    imagesList->append(image);
+}
+
 QList<GraphicalImageAnimation *>* GraphicalModelComponent::removeImageQueue(Queue *queue, unsigned int quantityRemoved) {
     QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(getIndexQueue(queue));
 
@@ -456,6 +466,23 @@ QList<GraphicalImageAnimation *>* GraphicalModelComponent::removeImageQueue(Queu
         return imagesRemoved;
     else
         return nullptr;
+}
+
+GraphicalImageAnimation* GraphicalModelComponent::removeImageQueue() {
+    QList<GraphicalImageAnimation *> *imagesList = _imagesQueue->at(0);
+
+    if (imagesList) {
+        if (!imagesList->empty()) {
+            GraphicalImageAnimation* imageRemoved = imagesList->last();
+
+            if (imageRemoved) {
+                imagesList->removeLast();
+                return imageRemoved;
+            }
+            else
+                return nullptr;
+        }
+    }
 }
 
 void GraphicalModelComponent::actualizeMapQueue(Queue *queue) {
