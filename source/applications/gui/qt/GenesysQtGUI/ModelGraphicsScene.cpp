@@ -203,7 +203,7 @@ GraphicalModelDataDefinition* ModelGraphicsScene::addGraphicalModelDataDefinitio
     GraphicalModelDataDefinition* graphDataDef = new GraphicalModelDataDefinition(plugin, element, position, color);
 
     // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
-    _allGraphicalModelDataDefinitions.append(graphDataDef);
+    getAllDataDefinitions()->append(graphDataDef);
     getGraphicalModelDataDefinitions()->append(graphDataDef);
 
     addItem(graphDataDef);
@@ -215,7 +215,7 @@ GraphicalDiagramConnection* ModelGraphicsScene::addGraphicalDiagramConnection(QG
     GraphicalDiagramConnection* connection = new GraphicalDiagramConnection(dataDefinition,linkedTo,type);
 
     // adiciona o objeto criado na lista de componentes graficos para nao perder a referencia
-    _allGraphicalDiagramConnections.append(connection);
+    getAllGraphicalDiagramsConnections()->append(connection);
     getGraphicalDiagramsConnections()->append(connection);
 
     addItem(connection);
@@ -1121,37 +1121,34 @@ void ModelGraphicsScene::destroyDiagram() {
 }
 
 void ModelGraphicsScene::hideDiagrams() {
-    QList<QGraphicsItem*>* dataDefinitions = getGraphicalModelDataDefinitions();
+    QList<GraphicalModelDataDefinition*>* dataDefinitions = getAllDataDefinitions();
     for (int i = 0; i < dataDefinitions->size(); i++) {
-        QGraphicsItem* itemData = dataDefinitions->at(i);
-        itemData->hide();
-        itemData->setFlag(QGraphicsItem::ItemIsSelectable, false);
-        itemData->setFlag(QGraphicsItem::ItemIsMovable, false);
+        dataDefinitions->at(i)->hide();
+        dataDefinitions->at(i)->setFlag(QGraphicsItem::ItemIsSelectable, false);
+        dataDefinitions->at(i)->setFlag(QGraphicsItem::ItemIsMovable, false);
     }
 
-    QList<QGraphicsItem*>* connections = getGraphicalDiagramsConnections();
+    QList<GraphicalDiagramConnection*>* connections = getAllGraphicalDiagramsConnections();
     for (int i = 0; i < connections->size(); i++) {
-        QGraphicsItem* itemConnection = connections->at(i);
-        itemConnection->hide();
+        connections->at(i)->hide();
     }
     _visibleDiagram = false;
 }
 
 void ModelGraphicsScene::showDiagrams() {
-    QList<QGraphicsItem*>* dataDefinitions = getGraphicalModelDataDefinitions();
+    QList<GraphicalModelDataDefinition*>* dataDefinitions = getAllDataDefinitions();
     if (dataDefinitions->size() > 0) {
         for (int i = 0; i < dataDefinitions->size(); i++) {
-            QGraphicsItem* itemData = dataDefinitions->at(i);
-            itemData->show();
-            itemData->setFlag(QGraphicsItem::ItemIsSelectable, true);
-            itemData->setFlag(QGraphicsItem::ItemIsMovable, true);
+
+            dataDefinitions->at(i)->show();
+            dataDefinitions->at(i)->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            dataDefinitions->at(i)->setFlag(QGraphicsItem::ItemIsMovable, true);
         }
     }
-    QList<QGraphicsItem*>* connections = getGraphicalDiagramsConnections();
+    QList<GraphicalDiagramConnection*>* connections = getAllGraphicalDiagramsConnections();
     if (connections->size() > 0) {
         for (int i = 0; i < connections->size(); i++) {
-            QGraphicsItem* itemConnection = connections->at(i);
-            itemConnection->show();
+            connections->at(i)->show();
         }
     }
     _visibleDiagram = true;

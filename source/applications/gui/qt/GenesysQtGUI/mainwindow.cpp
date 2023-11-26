@@ -3147,15 +3147,9 @@ bool MainWindow::_check(bool success)
         if (success)
             if (!scene->existDiagram()){
                 scene->createDiagrams();
-                if (!ui->actionDiagrams->isChecked()) {
-                    scene->hideDiagrams();
-                }
             } else {
                 scene->destroyDiagram();
                 scene->createDiagrams();
-                if (!ui->actionDiagrams->isChecked()) {
-                    scene->hideDiagrams();
-                }
             }
             QMessageBox::information(this, "Model Check", "Model successfully checked.");
 
