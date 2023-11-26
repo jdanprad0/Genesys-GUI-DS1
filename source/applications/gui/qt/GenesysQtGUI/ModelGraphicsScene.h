@@ -109,6 +109,7 @@ public: // editing graphic model
     void addDrawing(QGraphicsItem * item, bool notify = false);
     bool addDrawingGeometry(QGraphicsItem * item);
     bool addDrawingAnimation(QGraphicsItem * item);
+    void removeGraphicalModelDataDefinition(GraphicalModelDataDefinition* gmdd);
     void removeGraphicalDiagramConnection(GraphicalDiagramConnection* connection);
     void removeDrawing(QGraphicsItem * item, bool notify = false);
     bool removeDrawingGeometry(QGraphicsItem * item);
