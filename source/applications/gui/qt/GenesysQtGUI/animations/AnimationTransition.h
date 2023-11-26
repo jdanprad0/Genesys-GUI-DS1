@@ -74,8 +74,6 @@ private:
     unsigned int _portNumber;
     qreal _currentProgress;
     bool _viewSimulation;
-    int _currentSegment = 0;
-    double _currentDistance = 0.0;
 };
 
 #endif // ANIMATIONTRANSITION_H

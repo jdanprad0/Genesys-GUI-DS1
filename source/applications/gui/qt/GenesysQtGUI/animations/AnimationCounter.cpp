@@ -135,12 +135,13 @@ void AnimationCounter::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
     qreal width = maximunX - minimunX;
     qreal height = maximunY - minimunY;
 
-    // Calcula o novo retângulo com base na diferença de posição do mouse
+    // Cria um novo retângulo com as dimensões calculadas
     QRectF newRect = QRectF(0, 0, width, height);
 
     // Troca o retângulo atual para o novo com as modificações
     setRect(newRect.normalized());
 
+    // define a posição
     QPointF position = QPointF(minimunX, minimunY);
 
     // Seta a posição

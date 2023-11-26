@@ -7,10 +7,12 @@
 #include "graphicals/GraphicalImageAnimation.h"
 
 // Inicializando variáveis estáticas
+
 double AnimationTransition::_timeExecution = TEMPO_EXECUCAO_ANIMACAO; // Define um valor inicial para o timeExecution
-bool AnimationTransition::_pause = false; // Define um valor inicial para o pause
-bool AnimationTransition::_running = true; // Define um valor inicial para o stop
 double AnimationTransition::_oldTimeExecution = TEMPO_EXECUCAO_ANIMACAO;
+
+bool AnimationTransition::_pause = false; // Define um valor inicial para o pause
+bool AnimationTransition::_running = true; // Define um valor inicial para o running
 
 AnimationTransition::AnimationTransition(ModelGraphicsScene* myScene, ModelComponent* graphicalStartComponent, ModelComponent* graphicalEndComponent, bool viewSimulation) :
     _myScene(myScene),
@@ -129,6 +131,9 @@ void AnimationTransition::startAnimation() {
     // Adiciona a imagem na cena
     _myScene->addItem(_imageAnimation);
 
+    // Atualiza a cena
+    _myScene->update();
+
     // Inicia a animação
     start();
 }
@@ -139,6 +144,9 @@ void AnimationTransition::stopAnimation() {
 
     // Para a animação
     stop();
+
+    // Atualiza a cena
+    _myScene->update();
 
     // Emite o sinal de encerramento de animação (caso opte por encerrar por essa função)
     emit finished();
@@ -236,6 +244,8 @@ void AnimationTransition::onAnimationValueChanged(const QVariant& value) {
 
         // Nova posição da imagem
         _imageAnimation->setPos(imagePosition);
+
+        // Atualiza a cena
         _myScene->update();
     }
 }
@@ -250,5 +260,9 @@ void AnimationTransition::onAnimationFinished() {
     if(_graphicalEndComponent != nullptr)
         _myScene->animateQueueInsert(_graphicalEndComponent->getComponent(), _viewSimulation);
 
+    // Remove o item da cena
     _myScene->removeItem(_imageAnimation);
+
+    // Atualiza a cena
+    _myScene->update();
 }

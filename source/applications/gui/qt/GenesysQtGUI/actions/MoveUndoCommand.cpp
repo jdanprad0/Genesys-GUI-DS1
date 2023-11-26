@@ -4,24 +4,6 @@
 MoveUndoCommand::MoveUndoCommand(QList<QGraphicsItem*> item, ModelGraphicsScene *scene, QList<QPointF> &oldPos, QList<QPointF> &newPos, QUndoCommand *parent)
     : QUndoCommand(parent), _myGraphicalItem(item), _myGraphicsScene(scene), _myOldPos(oldPos), _myNewPos(newPos) {
     setText(QObject::tr("Move"));
-
-    for (int i = 0; i < oldPos.size(); i++) {
-        qreal x1 = oldPos.at(i).x();
-        qreal x2 = oldPos.at(i).y();
-
-        if (x1 == 0 || x2 == 0) {
-            int a = 1;
-        }
-    }
-
-    for (int i = 0; i < newPos.size(); i++) {
-        qreal x1 = newPos.at(i).x();
-        qreal x2 = newPos.at(i).y();
-
-        if (x1 == 0 || x2 == 0) {
-            int a = 1;
-        }
-    }
 }
 
 MoveUndoCommand::~MoveUndoCommand() {}

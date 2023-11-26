@@ -88,7 +88,6 @@ Util::TimeFormat AnimationTimer::getTimeFormat() {
 }
 
 // Setters
-
 void AnimationTimer::setTime(double value) {
     _time = value * _conversionFactorToSeconds;
     convertSeconds();
@@ -141,7 +140,7 @@ void AnimationTimer::continueDrawing(QGraphicsSceneMouseEvent *event) {
         // Calcula a diferença entre a posição atual do mouse e a posição inicial do retângulo
         QPointF delta = newPos - _startPoint;
 
-        // Calcula o novo retângulo com base na diferença de posição do mouse
+        // Cria o novo retângulo com base na diferença de posição do mouse
         QRectF newRect = QRectF(0, 0, delta.x(), delta.y());
 
         // Troca o retângulo atual para o novo com as modificações
@@ -191,12 +190,13 @@ void AnimationTimer::adjustSizeAndPosition(QGraphicsSceneMouseEvent *event) {
     qreal width = maximunX - minimunX;
     qreal height = maximunY - minimunY;
 
-    // Calcula o novo retângulo com base na diferença de posição do mouse
+    // Cria um novo retângulo com as dimensões calculadas
     QRectF newRect = QRectF(0, 0, width, height);
 
     // Troca o retângulo atual para o novo com as modificações
     setRect(newRect.normalized());
 
+    // Pega a posição
     QPointF position = QPointF(minimunX, minimunY);
 
     // Seta a posição
@@ -234,6 +234,7 @@ void AnimationTimer::convertSeconds() {
     _hours += _minutes / 60;
     _minutes %= 60;
 
+    // Arruma de acordo com o formato de horas
     if (timeFormatValue == 24) {
         _hours %= timeFormatValue;
     } else {
