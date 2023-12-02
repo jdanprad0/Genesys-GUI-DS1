@@ -1754,14 +1754,23 @@ void ModelGraphicsScene::arranjeModels(int direction) {
 //-------------------------
 
 bool ModelGraphicsScene::checkIgnoreEvent() {
-    if (_simulator->getModels()->current()->getSimulation()) {
-        if (_simulator->getModels()->current()->getSimulation()->isRunning()) {
-            return true;
-        } else {
-            return false;
+    if (_simulator) {
+        if (_simulator->getModels()) {
+            if (_simulator->getModels()->current()) {
+                if (_simulator->getModels()->current()->getSimulation()) {
+                    if (_simulator->getModels()->current()->getSimulation()->isRunning()) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
         }
     }
+    
+    return false;
 }
+
 void ModelGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
     if (checkIgnoreEvent()) {
         mouseEvent->ignore();

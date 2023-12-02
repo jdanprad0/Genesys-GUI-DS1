@@ -2342,7 +2342,10 @@ void MainWindow::on_actionSimulationStart_triggered() {
     AnimationTransition::setRunning(true);
     AnimationTransition::setPause(false);
 
-    if (myScene()->existDiagram()) myScene()->hideDiagrams();
+    if (myScene()->existDiagram()) {
+        ui->actionDiagrams->setChecked(false);
+        myScene()->hideDiagrams();
+    }
 
     bool res = true;
 
@@ -2362,7 +2365,10 @@ void MainWindow::on_actionSimulationStep_triggered() {
     AnimationTransition::setRunning(true);
     AnimationTransition::setPause(false);
 
-    if (myScene()->existDiagram()) myScene()->hideDiagrams();
+    if (myScene()->existDiagram()) {
+        ui->actionDiagrams->setChecked(false);
+        myScene()->hideDiagrams();
+    }
 
     bool res = true;
 
@@ -3394,6 +3400,14 @@ void MainWindow::on_actionModelClose_triggered()
     ui->graphicsView->getScene()->grid()->clear();
     // volto o botao de grid para "não clicado"
     ui->actionShowGrid->setChecked(false);
+
+    // se os diagramas existem, esconde eles antes de limpar
+    if (myScene()->existDiagram()) {
+        myScene()->hideDiagrams();
+    }
+    
+    // mantém o botão de diagramas em não clicado
+    ui->actionDiagrams->setChecked(false);
 
     // remove listas de diagramas
     ui->graphicsView->getScene()->getAllGraphicalDiagramsConnections()->clear();
